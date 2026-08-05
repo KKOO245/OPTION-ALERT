@@ -86,6 +86,34 @@ def load_tickers():
     return tickers
 
 
+# ---------- 抓取标的现价 ----------
+def fetch_underlying_price(ticker_symbol):
+    """返回 (现价, 前收盘价)，都拿不到时返回 (None, None)"""
+    tk = yf.Ticker(ticker_symbol)
+    price, prev_close = None, None
+
+    # 方法1：fast_info(比较快，通常够用)
+    try:
+        fi = tk.fast_info
+        price = fi.get("last_price") if hasattr(fi, "get") else getattr(fi, "last_price", None)
+        prev_close = fi.get("previous_close") if hasattr(fi, "get") else getattr(fi, "previous_close", None)
+    except Exception as e:
+        print(f"[警告] fast_info获取{ticker_symbol}现价失败: {e}")
+
+    # 方法2：如果方法1没拿到，退而用history兜底
+    if price is None:
+        try:
+            hist = tk.history(period="5d")
+            if not hist.empty:
+                price = float(hist["Close"].iloc[-1])
+                if len(hist) > 1:
+                    prev_close = float(hist["Close"].iloc[-2])
+        except Exception as e:
+            print(f"[警告] history获取{ticker_symbol}现价失败: {e}")
+
+    return price, prev_close
+
+
 # ---------- 抓取期权链 ----------
 def fetch_option_chain(ticker_symbol, max_days=FETCH_WINDOW_DAYS):
     tk = yf.Ticker(ticker_symbol)
@@ -252,6 +280,10 @@ def build_html_report(report_date, session_name, per_ticker_sections):
       table.option-table td { padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;}
       .analysis { background:#f4f7fb; padding:10px 14px; border-left:4px solid #1a3e6f;
                   white-space:pre-line; font-size:14px; margin-bottom:24px;}
+    .price-banner { background:#1a3e6f; color:white; padding:10px 14px; border-radius:6px;
+                    font-size:16px; margin-bottom:10px; }
+    .price-banner .up { color:#8fffb0; }
+    .price-banner .down { color:#ffb0b0; }
     </style>
     """
     html = f"<html><head>{style}</head><body>"
@@ -303,14 +335,29 @@ def main():
 
     for ticker_symbol in tickers:
         print(f"处理 {ticker_symbol} ...")
+        price, prev_close = fetch_underlying_price(ticker_symbol)
+        if price is not None:
+            if prev_close:
+                change_pct = (price - prev_close) / prev_close * 100
+                arrow = "▲" if change_pct >= 0 else "▼"
+                css_cls = "up" if change_pct >= 0 else "down"
+                price_line = (f"{ticker_symbol} 现价: ${price:,.2f}　"
+                               f"<span class='{css_cls}'>{arrow} {change_pct:+.2f}%</span>"
+                               f"　(较前收盘 ${prev_close:,.2f})")
+            else:
+                price_line = f"{ticker_symbol} 现价: ${price:,.2f}"
+        else:
+            price_line = f"{ticker_symbol} 现价: 暂未获取到(可能是数据源临时问题)"
+        price_banner_html = f"<div class='price-banner'>{price_line}</div>"
+
         df_all = fetch_option_chain(ticker_symbol)
         if df_all.empty:
-            sections.append(f"<h3>{ticker_symbol}</h3><p>未能获取到期权数据。</p>")
+            sections.append(f"<h2>{ticker_symbol}</h2>{price_banner_html}<p>未能获取到期权数据。</p>")
             continue
 
         nearest_exp, second_window = get_expiration_windows(df_all)
         if nearest_exp is None:
-            sections.append(f"<h3>{ticker_symbol}</h3><p>未找到有效的到期日。</p>")
+            sections.append(f"<h2>{ticker_symbol}</h2>{price_banner_html}<p>未找到有效的到期日。</p>")
             continue
 
         near_calls, near_puts = top5_for_expirations(df_all, [nearest_exp])
@@ -330,7 +377,8 @@ def main():
             "openInterest": "今日未平仓", "openInterest_prev": "上次未平仓", "oi_change": "变化量"
         }
 
-        section = f"<h3>📌 {ticker_symbol} — 最近到期日 {nearest_exp} Top{TOP_N} 看涨(按未平仓量)</h3>"
+        section = f"<h2>{ticker_symbol}</h2>{price_banner_html}"
+        section += f"<h3>📌 {ticker_symbol} — 最近到期日 {nearest_exp} Top{TOP_N} 看涨(按未平仓量)</h3>"
         section += df_to_html_table(near_calls, cols_map)
         section += f"<h3>📌 {ticker_symbol} — 最近到期日 {nearest_exp} Top{TOP_N} 看跌(按未平仓量)</h3>"
         section += df_to_html_table(near_puts, cols_map)
