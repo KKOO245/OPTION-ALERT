@@ -1,25 +1,31 @@
 # -*- coding: utf-8 -*-
 """
-SOXX(及其他自定义ticker)期权日报生成脚本
+SOXX(及其他自定义ticker)期权日报生成脚本 — v2
 ------------------------------------------------
-功能：
-1. 读取 config/tickers.txt 里的股票代码
-2. 抓取每个ticker未来 ~90 天内到期的所有期权(看涨+看跌)
-3. 从中筛选未来 30 天内到期的合约，按未平仓量(Open Interest)排序，
-   分别取看涨、看跌前5名
-4. 与"昨天保存的快照"对比，找出未来90天内到期的合约中：
-   - 未平仓量增加最多的（可能是新建仓位）
-   - 成交量/未平仓量比值最高的（可能当天有大单介入）
-5. 生成简单的规则型文字分析
-6. 把结果拼成HTML邮件并发送
+本版本逻辑：
+
+1. 找出"最近到期日"(比如今天是最近一个周五到期，就是这个日期)，
+   列出这一天到期的期权里，未平仓量最高的5个看涨 + 5个看跌(含行权价、最新价)
+
+2. 找出"离今天大约一个月"的到期日(比如今天+30天前后最接近的那个到期日，
+   通常是月度到期日)，同样列出未平仓量最高的5个看涨 + 5个看跌
+
+3. 在"一个月以内到期"的所有合约里，对比今天和前一个交易日的未平仓量，
+   列出增加最多的5个合约(疑似有资金新建仓位)
+
+4. 每天多伦多时间上午10:30和下午4:30各发一封邮件。因为GitHub Actions的定时
+   任务只能设固定UTC时间，没法跟着夏令时自动变化，所以这里用了一个技巧：
+   工作流会在覆盖两种夏令时/冬令时可能性的4个UTC时间点各触发一次，
+   脚本自己检查"现在的多伦多本地时间是否接近10:30或16:30"，
+   不是的话直接跳过、不发邮件、不消耗额外资源。这样全年都不用手动调整时间。
 
 本脚本设计给完全不懂Python的人使用：正常情况下你不需要改这个文件，
 只需要改 config/tickers.txt 来增删关注的股票。
 """
 
 import os
-import json
 import datetime
+from zoneinfo import ZoneInfo
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -32,9 +38,39 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TICKERS_FILE = os.path.join(BASE_DIR, "config", "tickers.txt")
 HISTORY_DIR = os.path.join(BASE_DIR, "data", "history")
 
-NEAR_TERM_DAYS = 30   # "近期"报告窗口：未来30天到期
-FAR_TERM_DAYS = 90    # "异动扫描"窗口：未来90天到期
-TOP_N = 5             # 每类取前几名
+FETCH_WINDOW_DAYS = 40   # 抓取数据的窗口(留一点buffer，确保能覆盖到月度到期日)
+ANOMALY_WINDOW_DAYS = 30  # "一个月以内"异动扫描窗口
+TOP_N = 5
+
+TORONTO_TZ = ZoneInfo("America/Toronto")
+# 每天想发送的两个时间点(多伦多本地时间)
+TARGET_SESSIONS = [
+    ("早报", 10, 30),
+    ("午报", 16, 30),
+]
+TOLERANCE_MINUTES = 20  # 允许GitHub Actions触发延迟的容差
+
+
+# ---------- 判断现在是不是该发送的时段 ----------
+def get_current_session():
+    now = datetime.datetime.now(TORONTO_TZ)
+
+    # 手动测试用：workflow_dispatch里勾选"强制发送"时，跳过时间检查
+    if os.environ.get("FORCE_SEND", "false").lower() == "true":
+        # 挑离现在最近的一个时段名称，只是用来给邮件标题用，不影响内容
+        closest = min(
+            TARGET_SESSIONS,
+            key=lambda s: abs((now.replace(hour=s[1], minute=s[2], second=0, microsecond=0) - now).total_seconds())
+        )
+        print(f"[FORCE_SEND] 手动测试模式，忽略时间检查，强制按「{closest[0]}」发送。")
+        return closest[0], now
+
+    for name, hh, mm in TARGET_SESSIONS:
+        target = now.replace(hour=hh, minute=mm, second=0, microsecond=0)
+        diff_minutes = abs((now - target).total_seconds()) / 60
+        if diff_minutes <= TOLERANCE_MINUTES:
+            return name, now
+    return None, now
 
 
 # ---------- 读取ticker列表 ----------
@@ -50,9 +86,7 @@ def load_tickers():
 
 
 # ---------- 抓取期权链 ----------
-def fetch_option_chain(ticker_symbol, max_days):
-    """抓取某个ticker在未来max_days天内到期的所有看涨/看跌合约，
-    返回一个合并后的DataFrame，多一列 days_to_exp / type / expiration"""
+def fetch_option_chain(ticker_symbol, max_days=FETCH_WINDOW_DAYS):
     tk = yf.Ticker(ticker_symbol)
     today = datetime.date.today()
 
@@ -89,10 +123,8 @@ def fetch_option_chain(ticker_symbol, max_days):
         return pd.DataFrame()
 
     df = pd.concat(frames, ignore_index=True)
-    # 只保留有用的列，缺失的用0/空填上，避免后面报错
     keep_cols = ["ticker", "contractSymbol", "expiration", "days_to_exp", "type",
-                 "strike", "lastPrice", "bid", "ask", "volume", "openInterest",
-                 "impliedVolatility"]
+                 "strike", "lastPrice", "bid", "ask", "volume", "openInterest"]
     for c in keep_cols:
         if c not in df.columns:
             df[c] = None
@@ -102,16 +134,26 @@ def fetch_option_chain(ticker_symbol, max_days):
     return df
 
 
-# ---------- 近期 Top5 (按未平仓量) ----------
-def get_top_by_oi(df_all, near_days=NEAR_TERM_DAYS, top_n=TOP_N):
-    df_near = df_all[df_all["days_to_exp"] <= near_days]
-    top_calls = (df_near[df_near["type"] == "Call"]
-                 .sort_values("openInterest", ascending=False)
-                 .head(top_n))
-    top_puts = (df_near[df_near["type"] == "Put"]
-                .sort_values("openInterest", ascending=False)
-                .head(top_n))
-    return df_near, top_calls, top_puts
+# ---------- 挑出"最近到期日"和"约一个月后到期日" ----------
+def pick_key_expirations(df_all):
+    exps = sorted(df_all["expiration"].unique())
+    if not exps:
+        return None, None
+    nearest_exp = exps[0]
+    today = datetime.date.today()
+    monthly_exp = min(
+        exps,
+        key=lambda e: abs((datetime.datetime.strptime(e, "%Y-%m-%d").date() - today).days - 30)
+    )
+    return nearest_exp, monthly_exp
+
+
+# ---------- 某个到期日的Top5(按未平仓量) ----------
+def top5_for_expiration(df_all, exp_date, top_n=TOP_N):
+    subset = df_all[df_all["expiration"] == exp_date]
+    top_calls = subset[subset["type"] == "Call"].sort_values("openInterest", ascending=False).head(top_n)
+    top_puts = subset[subset["type"] == "Put"].sort_values("openInterest", ascending=False).head(top_n)
+    return top_calls, top_puts
 
 
 # ---------- 历史快照存取(用于异动检测) ----------
@@ -122,54 +164,46 @@ def load_prev_snapshot(ticker_symbol):
     return pd.read_csv(path)
 
 
-def save_snapshot(ticker_symbol, df_far):
+def save_snapshot(ticker_symbol, df_all):
     os.makedirs(HISTORY_DIR, exist_ok=True)
     path = os.path.join(HISTORY_DIR, f"{ticker_symbol}.csv")
-    snap = df_far[["contractSymbol", "openInterest", "volume"]].copy()
+    snap = df_all[["contractSymbol", "openInterest", "volume"]].copy()
     snap["snapshot_date"] = datetime.date.today().isoformat()
     snap.to_csv(path, index=False)
 
 
-# ---------- 异动检测(未来90天窗口) ----------
-def detect_unusual_activity(ticker_symbol, df_far, top_n=TOP_N):
+# ---------- 未平仓量异动(一个月窗口内, 今天 vs 昨天) ----------
+def detect_oi_surge(ticker_symbol, df_all, top_n=TOP_N):
     prev = load_prev_snapshot(ticker_symbol)
     if prev is None:
-        return None, None  # 第一次跑，还没有对比数据
+        return None  # 第一次跑，还没有对比数据
 
-    merged = df_far.merge(
-        prev[["contractSymbol", "openInterest", "volume"]],
+    scope = df_all[df_all["days_to_exp"] <= ANOMALY_WINDOW_DAYS]
+    merged = scope.merge(
+        prev[["contractSymbol", "openInterest"]],
         on="contractSymbol", how="left", suffixes=("", "_prev")
     )
     merged["openInterest_prev"] = merged["openInterest_prev"].fillna(0)
     merged["oi_change"] = merged["openInterest"] - merged["openInterest_prev"]
-    merged["vol_oi_ratio"] = merged["volume"] / merged["openInterest"].replace(0, 1)
 
-    # 未平仓量增加最多的合约(新建仓位信号)
-    oi_surge = merged[merged["oi_change"] > 0].sort_values(
-        "oi_change", ascending=False).head(top_n)
-
-    # 成交量/未平仓比最高的合约(当天可能有大单介入)
-    vol_spike = merged[merged["volume"] > 50].sort_values(
-        "vol_oi_ratio", ascending=False).head(top_n)
-
-    return oi_surge, vol_spike
+    surge = merged[merged["oi_change"] > 0].sort_values("oi_change", ascending=False).head(top_n)
+    return surge
 
 
 # ---------- 简单规则型文字分析 ----------
-def build_analysis_text(ticker_symbol, df_near, oi_surge, vol_spike):
-    lines = []
-    call_oi = df_near[df_near["type"] == "Call"]["openInterest"].sum()
-    put_oi = df_near[df_near["type"] == "Put"]["openInterest"].sum()
-    ratio = put_oi / call_oi if call_oi > 0 else float("nan")
+def build_analysis_text(ticker_symbol, df_all, oi_surge):
+    scope = df_all[df_all["days_to_exp"] <= ANOMALY_WINDOW_DAYS]
+    call_oi = scope[scope["type"] == "Call"]["openInterest"].sum()
+    put_oi = scope[scope["type"] == "Put"]["openInterest"].sum()
 
     if call_oi + put_oi == 0:
-        lines.append(f"{ticker_symbol}: 未来{NEAR_TERM_DAYS}天内没有获取到有效的期权持仓数据。")
-        return "\n".join(lines)
+        return f"{ticker_symbol}: 未来{ANOMALY_WINDOW_DAYS}天内没有获取到有效的期权持仓数据。"
 
-    lines.append(
-        f"{ticker_symbol} 未来{NEAR_TERM_DAYS}天到期期权：看涨总未平仓 {int(call_oi):,}，"
+    ratio = put_oi / call_oi if call_oi > 0 else float("nan")
+    lines = [
+        f"{ticker_symbol} 未来{ANOMALY_WINDOW_DAYS}天到期期权：看涨总未平仓 {int(call_oi):,}，"
         f"看跌总未平仓 {int(put_oi):,}，Put/Call 未平仓比 = {ratio:.2f}。"
-    )
+    ]
     if ratio > 1.2:
         lines.append("→ 未平仓量偏向看跌一方，市场对下行保护/投机需求较高。")
     elif ratio < 0.8:
@@ -180,28 +214,22 @@ def build_analysis_text(ticker_symbol, df_near, oi_surge, vol_spike):
     if oi_surge is not None and len(oi_surge) > 0:
         top1 = oi_surge.iloc[0]
         lines.append(
-            f"→ 未来{FAR_TERM_DAYS}天窗口内，未平仓量增幅最大的合约是 "
-            f"{top1['type']} {top1['strike']} 到期日 {top1['expiration']}，"
-            f"较前一交易日增加 {int(top1['oi_change']):,} 张，值得关注是否有新增布局。"
+            f"→ 未平仓量增幅最大的合约是 {top1['type']} 行权价 {top1['strike']} "
+            f"(到期日 {top1['expiration']})，较上一次快照增加 {int(top1['oi_change']):,} 张，"
+            f"值得关注是否有新增布局。"
         )
-    if vol_spike is not None and len(vol_spike) > 0:
-        top1 = vol_spike.iloc[0]
-        lines.append(
-            f"→ 成交量相对未平仓量比值最高的合约是 "
-            f"{top1['type']} {top1['strike']} 到期日 {top1['expiration']}"
-            f"(成交量 {int(top1['volume']):,} / 未平仓 {int(top1['openInterest']):,})，"
-            f"当天换手异常活跃，可能有资金短线介入。"
-        )
-    if (oi_surge is None) and (vol_spike is None):
-        lines.append("→ 这是第一次运行，还没有前一天的数据可以对比，明天起会显示未平仓量与成交量的变化。")
+    elif oi_surge is None:
+        lines.append("→ 这是该ticker第一次运行，还没有前一次的数据可以对比，"
+                      "下一次运行起会显示未平仓量的变化。")
+    else:
+        lines.append("→ 本次没有观察到明显的未平仓量增仓。")
 
-    lines.append("（以上为基于未平仓量/成交量的量化观察，不构成投资建议。）")
+    lines.append("（以上为基于未平仓量的量化观察，不构成投资建议。）")
     return "\n".join(lines)
 
 
 # ---------- 把DataFrame转成HTML表格 ----------
 def df_to_html_table(df, cols_map):
-    """cols_map: {原始列名: 显示名}"""
     if df is None or len(df) == 0:
         return "<p style='color:#888'>（无数据）</p>"
     df2 = df[list(cols_map.keys())].rename(columns=cols_map)
@@ -210,7 +238,7 @@ def df_to_html_table(df, cols_map):
 
 
 # ---------- 组装整封邮件的HTML ----------
-def build_html_report(report_date, per_ticker_sections):
+def build_html_report(report_date, session_name, per_ticker_sections):
     style = """
     <style>
       body { font-family: -apple-system, Arial, sans-serif; color:#222; }
@@ -224,7 +252,7 @@ def build_html_report(report_date, per_ticker_sections):
     </style>
     """
     html = f"<html><head>{style}</head><body>"
-    html += f"<h2>期权市场日报 — {report_date}</h2>"
+    html += f"<h2>期权市场{session_name} — {report_date}</h2>"
     html += "".join(per_ticker_sections)
     html += "<p style='font-size:11px;color:#999'>数据来源: Yahoo Finance (yfinance)，" \
             "数据可能有延迟，仅供参考，不构成投资建议。</p>"
@@ -255,60 +283,69 @@ def send_email(subject, html_body):
 
 # ---------- 主流程 ----------
 def main():
+    session_name, now = get_current_session()
+    if session_name is None:
+        print(f"当前多伦多时间 {now.strftime('%Y-%m-%d %H:%M %Z')} 不在预定发送时段(10:30/16:30)内，跳过本次运行。")
+        return
+
+    is_afternoon_session = (session_name == "午报")
+
     tickers = load_tickers()
     if not tickers:
         print("config/tickers.txt 里没有找到任何ticker，退出。")
         return
 
-    report_date = datetime.date.today().isoformat()
+    report_date = now.strftime("%Y-%m-%d")
     sections = []
 
     for ticker_symbol in tickers:
         print(f"处理 {ticker_symbol} ...")
-        df_all = fetch_option_chain(ticker_symbol, FAR_TERM_DAYS)
+        df_all = fetch_option_chain(ticker_symbol)
         if df_all.empty:
             sections.append(f"<h3>{ticker_symbol}</h3><p>未能获取到期权数据。</p>")
             continue
 
-        df_near, top_calls, top_puts = get_top_by_oi(df_all)
-        oi_surge, vol_spike = detect_unusual_activity(ticker_symbol, df_all)
-        analysis_text = build_analysis_text(ticker_symbol, df_near, oi_surge, vol_spike)
+        nearest_exp, monthly_exp = pick_key_expirations(df_all)
+        if nearest_exp is None:
+            sections.append(f"<h3>{ticker_symbol}</h3><p>未找到有效的到期日。</p>")
+            continue
+
+        near_calls, near_puts = top5_for_expiration(df_all, nearest_exp)
+        month_calls, month_puts = top5_for_expiration(df_all, monthly_exp)
+        oi_surge = detect_oi_surge(ticker_symbol, df_all)
+        analysis_text = build_analysis_text(ticker_symbol, df_all, oi_surge)
 
         cols_map = {
-            "expiration": "到期日", "strike": "行权价", "lastPrice": "最新价",
-            "bid": "买价", "ask": "卖价", "volume": "成交量", "openInterest": "未平仓量",
-            "impliedVolatility": "隐含波动率"
+            "type": "类型", "strike": "行权价", "lastPrice": "最新价", "openInterest": "未平仓量"
         }
         surge_cols_map = {
             "type": "类型", "expiration": "到期日", "strike": "行权价",
-            "openInterest": "今日未平仓", "openInterest_prev": "昨日未平仓", "oi_change": "变化量"
-        }
-        spike_cols_map = {
-            "type": "类型", "expiration": "到期日", "strike": "行权价",
-            "volume": "成交量", "openInterest": "未平仓量", "vol_oi_ratio": "量/仓比"
+            "openInterest": "今日未平仓", "openInterest_prev": "上次未平仓", "oi_change": "变化量"
         }
 
-        section = f"<h3>📈 {ticker_symbol} — 未来{NEAR_TERM_DAYS}天到期 Top{TOP_N} 看涨(按未平仓量)</h3>"
-        section += df_to_html_table(top_calls, cols_map)
-        section += f"<h3>📉 {ticker_symbol} — 未来{NEAR_TERM_DAYS}天到期 Top{TOP_N} 看跌(按未平仓量)</h3>"
-        section += df_to_html_table(top_puts, cols_map)
+        section = f"<h3>📌 {ticker_symbol} — 最近到期日 {nearest_exp} Top{TOP_N} 看涨(按未平仓量)</h3>"
+        section += df_to_html_table(near_calls, cols_map)
+        section += f"<h3>📌 {ticker_symbol} — 最近到期日 {nearest_exp} Top{TOP_N} 看跌(按未平仓量)</h3>"
+        section += df_to_html_table(near_puts, cols_map)
 
-        if oi_surge is not None:
-            section += f"<h3>🔺 {ticker_symbol} — 未来{FAR_TERM_DAYS}天窗口 未平仓量增幅最大</h3>"
-            section += df_to_html_table(oi_surge, surge_cols_map)
-        if vol_spike is not None:
-            section += f"<h3>⚡ {ticker_symbol} — 未来{FAR_TERM_DAYS}天窗口 成交量/未平仓比最高(疑似大单介入)</h3>"
-            section += df_to_html_table(vol_spike, spike_cols_map)
+        section += f"<h3>📅 {ticker_symbol} — 约一个月后到期日 {monthly_exp} Top{TOP_N} 看涨(按未平仓量)</h3>"
+        section += df_to_html_table(month_calls, cols_map)
+        section += f"<h3>📅 {ticker_symbol} — 约一个月后到期日 {monthly_exp} Top{TOP_N} 看跌(按未平仓量)</h3>"
+        section += df_to_html_table(month_puts, cols_map)
+
+        section += f"<h3>🔺 {ticker_symbol} — 一个月内到期期权 未平仓量增幅Top{TOP_N}(今天 vs 上次)</h3>"
+        section += df_to_html_table(oi_surge, surge_cols_map)
 
         section += f"<div class='analysis'>{analysis_text}</div>"
         sections.append(section)
 
-        # 保存今天的快照，供明天对比
-        save_snapshot(ticker_symbol, df_all)
+        # 只在"午报"时段保存快照，避免同一天两次运行互相冲掉对比基准
+        if is_afternoon_session:
+            save_snapshot(ticker_symbol, df_all)
 
-    html = build_html_report(report_date, sections)
+    html = build_html_report(report_date, session_name, sections)
     tickers_str = ", ".join(tickers)
-    send_email(f"期权日报 {report_date} — {tickers_str}", html)
+    send_email(f"期权{session_name} {report_date} — {tickers_str}", html)
 
 
 if __name__ == "__main__":
