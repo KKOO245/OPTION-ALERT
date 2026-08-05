@@ -1,0 +1,156 @@
+# SOXX 期权日报机器人 — 使用说明
+
+这是一个全自动的项目：每天早上自动抓取期权数据、生成分析、发邮件给你。
+你不需要每天开电脑，也几乎不需要碰代码，只需要按下面的步骤**配置一次**。
+
+---
+
+## 这个项目做什么
+
+对 `config/tickers.txt` 里列出的每个股票代码(默认是SOXX)：
+
+1. **近期Top榜**：抓未来30天内到期的所有期权，按未平仓量(Open Interest)排序，
+   给出看涨、看跌各前5名(价格、未平仓量等)
+2. **异动扫描**：对比"今天"和"昨天"的数据，在未来90天到期的期权里找出：
+   - 未平仓量增加最多的合约(可能是新建仓位)
+   - 成交量/未平仓量比值最高的合约(当天可能有大单介入)
+3. **简单文字分析**：基于Put/Call未平仓比例、异动情况生成规则型解读
+4. 把以上内容整理成一封HTML邮件发给你
+
+> ⚠️ 数据来自免费的Yahoo Finance接口，可能有几分钟到几十分钟延迟；
+> 文字分析是基于数据的规则生成，不构成投资建议。
+
+---
+
+## 第一步：把代码放到你自己的GitHub仓库
+
+你已经装好了 git，打开终端(Terminal / Git Bash / VS Code的终端都行)：
+
+```bash
+# 1. 先在 github.com 网页上点右上角 "+" -> "New repository"
+#    仓库名字随便取，比如 soxx-options-report
+#    创建时不要勾选"Add README"，保持空仓库
+
+# 2. 把我给你的这一整个文件夹内容放进一个本地目录，然后：
+cd 你放代码的目录
+git init
+git add .
+git commit -m "初始化期权日报项目"
+git branch -M main
+git remote add origin https://github.com/你的用户名/soxx-options-report.git
+git push -u origin main
+```
+
+如果push时要求登录，GitHub现在需要用"Personal Access Token"代替密码，
+网页会引导你生成，或者直接用 VS Code 里的 Source Control 面板(图形界面)完成push更简单。
+
+---
+
+## 第二步：申请一个Gmail"应用专用密码"(不是你的Gmail登录密码)
+
+用来让程序自动登录发信，不会暴露你的真实密码。
+
+1. 打开 https://myaccount.google.com/security
+2. 确认已开启"两步验证"(2-Step Verification)，没开的话先开启
+3. 打开 https://myaccount.google.com/apppasswords
+4. 应用名称随便填，比如"options-report"，点生成
+5. 会得到一个16位的密码(类似 `abcd efgh ijkl mnop`)，**复制下来**，去掉空格
+   （这个密码只显示一次，如果没保存，删掉重新生成一个）
+
+如果你想用QQ邮箱/163邮箱而不是Gmail，也可以，只是需要在邮箱设置里开启"SMTP服务"
+拿到对应的授权码，然后在下一步把 `SMTP_HOST` 改成对应的服务器地址(QQ邮箱是
+`smtp.qq.com`，163是 `smtp.163.com`)，告诉我一声我可以帮你改。
+
+---
+
+## 第三步：在GitHub仓库里设置密钥(Secrets)
+
+密钥不会被任何人看到，包括你自己(设置后无法查看，只能覆盖)，很安全。
+
+1. 打开你的仓库网页 → 点 `Settings` → 左边菜单 `Secrets and variables` → `Actions`
+2. 点 `New repository secret`，依次添加下面3个：
+
+| Name | Value |
+|---|---|
+| `EMAIL_ADDRESS` | 你的Gmail地址，例如 `yourname@gmail.com` |
+| `EMAIL_APP_PASSWORD` | 第二步拿到的16位应用专用密码 |
+| `RECIPIENT_EMAIL` | 你想收报告的邮箱(可以跟发件邮箱一样) |
+
+---
+
+## 第四步：手动测试一次
+
+不用等到明天早上，现在就可以测试：
+
+1. 打开仓库网页 → 点顶部 `Actions` 标签
+2. 左边会看到 `每日期权报告` 这个workflow，点进去
+3. 右边有个 `Run workflow` 按钮，点一下 → 再点绿色确认按钮
+4. 等大约1分钟，刷新页面，能看到一个新的运行记录
+   - 绿色✔️ = 成功，去检查邮箱(包括垃圾邮件文件夹)
+   - 红色❌ = 失败，点进去看日志(log)，通常是Secret名字打错或密码没删空格
+
+---
+
+## 第五步：以后怎么增加/删除股票代码
+
+打开仓库里的 `config/tickers.txt` 文件，直接在GitHub网页上点右上角的铅笔✏️编辑：
+
+```
+SOXX
+NVDA
+AMD
+```
+
+每行一个代码，改完点 `Commit changes` 保存，下次自动运行就会包含新增的ticker。
+一开始新增的ticker不会有"异动"数据(因为还没有昨天的快照)，从第二天开始才会显示对比。
+
+---
+
+## 关于运行时间
+
+默认是每天美东时间早上8-9点左右(UTC 13:00)运行，只在周一到周五。
+如果想改时间，编辑 `.github/workflows/daily-options-report.yml` 里的这一行：
+
+```yaml
+- cron: "0 13 * * 1-5"
+```
+
+cron格式是：`分 时 日 月 星期`，全部是**UTC时间**。比如想改成UTC 12:30，就写 `30 12 * * 1-5`。
+
+> 注意：GitHub Actions的定时任务不保证100%准点，高峰期可能延迟几分钟到十几分钟，
+> 这是GitHub免费额度的正常现象，不是bug。
+
+---
+
+## 文件结构说明
+
+```
+soxx-options-report/
+├── config/
+│   └── tickers.txt          ← 你唯一需要经常编辑的文件
+├── data/
+│   └── history/             ← 程序自动保存的每日快照，不用管
+├── src/
+│   └── options_report.py    ← 主程序逻辑
+├── .github/workflows/
+│   └── daily-options-report.yml   ← 定时任务配置
+├── requirements.txt          ← Python依赖包列表
+└── README.md                 ← 就是这份文件
+```
+
+---
+
+## 常见问题
+
+**Q: 我完全不想碰代码，以后只想改ticker列表，可以吗？**
+可以，正常使用只需要编辑 `config/tickers.txt`。
+
+**Q: 数据准吗？**
+yfinance是免费接口，官方Yahoo Finance网页显示什么，它基本就返回什么，可能有延迟，
+但对于"每日参考"这个用途完全够用。如果以后想要更实时/更准确的数据(比如盘中期权异动)，
+可以换成付费数据源(Tradier、Polygon.io等)，我可以再帮你改。
+
+**Q: Actions没有触发/一直失败？**
+去 `Actions` 标签页点进失败的记录看红色报错文字，最常见的是Secret名字拼错、
+应用专用密码里多了空格，或者免费账户github actions分钟数用完(个人账户每月2000分钟，
+这个任务每次运行不到2分钟，完全够用)。

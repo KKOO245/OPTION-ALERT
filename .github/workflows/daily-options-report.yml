@@ -1,0 +1,41 @@
+name: 每日期权报告
+
+on:
+  schedule:
+    # UTC 13:00 ≈ 美东上午9点(冬令时EST)或上午8点(遇到夏令时会差1小时，属正常现象)
+    # 只在周一到周五运行(周末没有新的期权数据)
+    - cron: "0 13 * * 1-5"
+  workflow_dispatch: {}   # 允许你在GitHub网页上手动点击"Run workflow"立即测试
+
+permissions:
+  contents: write   # 需要写权限，用来把每天的数据快照存回仓库(供第二天对比异动)
+
+jobs:
+  send-report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 拉取仓库代码
+        uses: actions/checkout@v4
+
+      - name: 设置Python环境
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 安装依赖
+        run: pip install -r requirements.txt
+
+      - name: 运行期权报告脚本并发送邮件
+        env:
+          EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
+          EMAIL_APP_PASSWORD: ${{ secrets.EMAIL_APP_PASSWORD }}
+          RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
+        run: python src/options_report.py
+
+      - name: 保存今天的数据快照(用于明天检测异动)
+        run: |
+          git config user.name "options-report-bot"
+          git config user.email "options-report-bot@users.noreply.github.com"
+          git add data/history
+          git diff --cached --quiet || git commit -m "更新期权数据快照 $(date -u +'%Y-%m-%d')"
+          git push
