@@ -39,7 +39,8 @@ TICKERS_FILE = os.path.join(BASE_DIR, "config", "tickers.txt")
 HISTORY_DIR = os.path.join(BASE_DIR, "data", "history")
 
 FETCH_WINDOW_DAYS = 40   # 抓取数据的窗口(留一点buffer，确保能覆盖到月度到期日)
-ANOMALY_WINDOW_DAYS = 30  # "一个月以内"异动扫描窗口
+ANOMALY_WINDOW_DAYS = 35  # "一个月以内"窗口(留一点buffer，确保能覆盖到月度到期日，
+                           # 比如今天到下个月同一天有时是31-35天，避免把它排除在外)
 TOP_N = 5
 
 TORONTO_TZ = ZoneInfo("America/Toronto")
@@ -134,23 +135,25 @@ def fetch_option_chain(ticker_symbol, max_days=FETCH_WINDOW_DAYS):
     return df
 
 
-# ---------- 挑出"最近到期日"和"约一个月后到期日" ----------
-def pick_key_expirations(df_all):
+# ---------- 挑出"最近到期日"和"次近到期日~一个月内"的窗口 ----------
+def get_expiration_windows(df_all):
+    """返回 (最近到期日, [第二窗口涵盖的所有到期日列表])
+    第二窗口 = 除最近到期日以外、且在ANOMALY_WINDOW_DAYS天以内的所有到期日，
+    比如最近到期日是8/7，第二窗口就是 8/14, 8/21, 8/28, 9/4 这些的集合。"""
     exps = sorted(df_all["expiration"].unique())
     if not exps:
-        return None, None
+        return None, []
     nearest_exp = exps[0]
-    today = datetime.date.today()
-    monthly_exp = min(
-        exps,
-        key=lambda e: abs((datetime.datetime.strptime(e, "%Y-%m-%d").date() - today).days - 30)
-    )
-    return nearest_exp, monthly_exp
+    others = [e for e in exps if e != nearest_exp]
+    second_window = [e for e in others
+                      if (datetime.datetime.strptime(e, "%Y-%m-%d").date()
+                          - datetime.date.today()).days <= ANOMALY_WINDOW_DAYS]
+    return nearest_exp, second_window
 
 
-# ---------- 某个到期日的Top5(按未平仓量) ----------
-def top5_for_expiration(df_all, exp_date, top_n=TOP_N):
-    subset = df_all[df_all["expiration"] == exp_date]
+# ---------- 某个到期日(或多个到期日合并)的Top5(按未平仓量) ----------
+def top5_for_expirations(df_all, exp_dates, top_n=TOP_N):
+    subset = df_all[df_all["expiration"].isin(exp_dates)]
     top_calls = subset[subset["type"] == "Call"].sort_values("openInterest", ascending=False).head(top_n)
     top_puts = subset[subset["type"] == "Put"].sort_values("openInterest", ascending=False).head(top_n)
     return top_calls, top_puts
@@ -197,11 +200,11 @@ def build_analysis_text(ticker_symbol, df_all, oi_surge):
     put_oi = scope[scope["type"] == "Put"]["openInterest"].sum()
 
     if call_oi + put_oi == 0:
-        return f"{ticker_symbol}: 未来{ANOMALY_WINDOW_DAYS}天内没有获取到有效的期权持仓数据。"
+        return f"{ticker_symbol}: 近一个月内到期期权没有获取到有效的持仓数据。"
 
     ratio = put_oi / call_oi if call_oi > 0 else float("nan")
     lines = [
-        f"{ticker_symbol} 未来{ANOMALY_WINDOW_DAYS}天到期期权：看涨总未平仓 {int(call_oi):,}，"
+        f"{ticker_symbol} 近一个月内到期期权：看涨总未平仓 {int(call_oi):,}，"
         f"看跌总未平仓 {int(put_oi):,}，Put/Call 未平仓比 = {ratio:.2f}。"
     ]
     if ratio > 1.2:
@@ -305,18 +308,22 @@ def main():
             sections.append(f"<h3>{ticker_symbol}</h3><p>未能获取到期权数据。</p>")
             continue
 
-        nearest_exp, monthly_exp = pick_key_expirations(df_all)
+        nearest_exp, second_window = get_expiration_windows(df_all)
         if nearest_exp is None:
             sections.append(f"<h3>{ticker_symbol}</h3><p>未找到有效的到期日。</p>")
             continue
 
-        near_calls, near_puts = top5_for_expiration(df_all, nearest_exp)
-        month_calls, month_puts = top5_for_expiration(df_all, monthly_exp)
+        near_calls, near_puts = top5_for_expirations(df_all, [nearest_exp])
+        month_calls, month_puts = top5_for_expirations(df_all, second_window)
         oi_surge = detect_oi_surge(ticker_symbol, df_all)
         analysis_text = build_analysis_text(ticker_symbol, df_all, oi_surge)
 
         cols_map = {
             "type": "类型", "strike": "行权价", "lastPrice": "最新价", "openInterest": "未平仓量"
+        }
+        cols_map_with_exp = {
+            "type": "类型", "expiration": "到期日", "strike": "行权价",
+            "lastPrice": "最新价", "openInterest": "未平仓量"
         }
         surge_cols_map = {
             "type": "类型", "expiration": "到期日", "strike": "行权价",
@@ -328,10 +335,14 @@ def main():
         section += f"<h3>📌 {ticker_symbol} — 最近到期日 {nearest_exp} Top{TOP_N} 看跌(按未平仓量)</h3>"
         section += df_to_html_table(near_puts, cols_map)
 
-        section += f"<h3>📅 {ticker_symbol} — 约一个月后到期日 {monthly_exp} Top{TOP_N} 看涨(按未平仓量)</h3>"
-        section += df_to_html_table(month_calls, cols_map)
-        section += f"<h3>📅 {ticker_symbol} — 约一个月后到期日 {monthly_exp} Top{TOP_N} 看跌(按未平仓量)</h3>"
-        section += df_to_html_table(month_puts, cols_map)
+        if second_window:
+            window_label = f"{second_window[0]} 至 {second_window[-1]}" if len(second_window) > 1 else second_window[0]
+        else:
+            window_label = "(无更多到期日数据)"
+        section += f"<h3>📅 {ticker_symbol} — {window_label} 合并 Top{TOP_N} 看涨(按未平仓量)</h3>"
+        section += df_to_html_table(month_calls, cols_map_with_exp)
+        section += f"<h3>📅 {ticker_symbol} — {window_label} 合并 Top{TOP_N} 看跌(按未平仓量)</h3>"
+        section += df_to_html_table(month_puts, cols_map_with_exp)
 
         section += f"<h3>🔺 {ticker_symbol} — 一个月内到期期权 未平仓量增幅Top{TOP_N}(今天 vs 上次)</h3>"
         section += df_to_html_table(oi_surge, surge_cols_map)
