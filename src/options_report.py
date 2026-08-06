@@ -49,7 +49,9 @@ TARGET_SESSIONS = [
     ("早报", 10, 30),
     ("午报", 16, 30),
 ]
-TOLERANCE_MINUTES = 20  # 允许GitHub Actions触发延迟的容差
+TOLERANCE_MINUTES = 60  # 允许GitHub Actions触发延迟的容差(免费额度的定时任务
+                         # 实际触发时间可能比设定时间晚20分钟到1小时以上，这是
+                         # GitHub本身的已知限制，不是脚本的bug，所以给足够的余量)
 
 
 # ---------- 判断现在是不是该发送的时段 ----------
