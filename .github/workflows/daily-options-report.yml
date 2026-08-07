@@ -2,19 +2,13 @@ name: 每日期权报告
 
 on:
   schedule:
-    # 说明：多伦多时间10:30和16:30，会因夏令时(EDT, UTC-4)/冬令时(EST, UTC-5)
-    # 而对应不同的UTC时间。这里同时设置两种可能的UTC时间点(共4个)，
-    # 具体是否真正发送邮件，由脚本内部检测当前多伦多本地时间来决定——
-    # 不是目标时段就会自动跳过、不发邮件，所以全年不需要手动改这个文件。
-    #
-    # UTC 14:30 -> 多伦多 10:30 (夏令时 EDT，约3月-11月)
-    # UTC 15:30 -> 多伦多 10:30 (冬令时 EST，约11月-3月)
-    # UTC 20:30 -> 多伦多 16:30 (夏令时 EDT)
-    # UTC 21:30 -> 多伦多 16:30 (冬令时 EST)
-    - cron: "30 14 * * 1-5"
-    - cron: "30 15 * * 1-5"
-    - cron: "30 20 * * 1-5"
-    - cron: "30 21 * * 1-5"
+    # 每15分钟检查一次，只在 UTC 12:00-23:45 这个窗口内(覆盖多伦多时间
+    # 大约早7点到晚8点，不管夏令时/冬令时，10:30和16:30这两个目标时间点
+    # 前后都留了2.5-3.5小时的缓冲，用来应对GitHub免费额度定时任务可能出现
+    # 的延迟)。具体是否真正发邮件，由脚本内部检测当前多伦多本地时间来决定，
+    # 命中10:30或16:30附近才会真的发送，其余检查几十秒内就直接结束，
+    # 不会真的抓数据/发邮件，所以不会浪费太多免费的Actions分钟数。
+    - cron: "*/15 12-23 * * 1-5"
   workflow_dispatch:      # 允许你在GitHub网页上手动点击"Run workflow"立即测试
     inputs:
       force_send:
@@ -36,11 +30,12 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: "pip"   # 缓存依赖包，加快"跳过型"运行的速度，省Actions分钟数
 
       - name: 安装依赖
         run: pip install -r requirements.txt
 
-      - name: 运行期权报告脚本(非目标时段会自动跳过，不发邮件)
+      - name: 运行期权报告脚本(非目标时段/今天已发送过会自动跳过，不发邮件)
         env:
           EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
           EMAIL_APP_PASSWORD: ${{ secrets.EMAIL_APP_PASSWORD }}
@@ -48,10 +43,10 @@ jobs:
           FORCE_SEND: ${{ github.event.inputs.force_send }}
         run: python src/options_report.py
 
-      - name: 保存今天的数据快照(仅"午报"时段会真正写入)
+      - name: 保存数据快照/发送记录(没有实际变化时这一步不会产生新提交)
         run: |
           git config user.name "options-report-bot"
           git config user.email "options-report-bot@users.noreply.github.com"
           git add data/history
-          git diff --cached --quiet || git commit -m "更新期权数据快照 $(date -u +'%Y-%m-%d')"
+          git diff --cached --quiet || git commit -m "更新期权数据快照 $(date -u +'%Y-%m-%d %H:%M')"
           git push

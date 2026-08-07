@@ -13,17 +13,19 @@ SOXX(及其他自定义ticker)期权日报生成脚本 — v2
 3. 在"一个月以内到期"的所有合约里，对比今天和前一个交易日的未平仓量，
    列出增加最多的5个合约(疑似有资金新建仓位)
 
-4. 每天多伦多时间上午10:30和下午4:30各发一封邮件。因为GitHub Actions的定时
-   任务只能设固定UTC时间，没法跟着夏令时自动变化，所以这里用了一个技巧：
-   工作流会在覆盖两种夏令时/冬令时可能性的4个UTC时间点各触发一次，
-   脚本自己检查"现在的多伦多本地时间是否接近10:30或16:30"，
-   不是的话直接跳过、不发邮件、不消耗额外资源。这样全年都不用手动调整时间。
+4. 每天多伦多时间上午10:30和下午4:30各发一封邮件。GitHub Actions免费额度的定时
+   任务实际触发时间可能比设定时间晚几十分钟甚至几个小时(这是GitHub的已知限制)，
+   所以工作流改成了"每15分钟检查一次"，脚本自己判断"现在的多伦多本地时间是否
+   接近10:30或16:30"，命中就发，没命中就跳过。为了避免15分钟检查一次导致同一个
+   时段被连续触发好几次、发出好几封重复邮件，脚本会把"今天这个时段已经发过了"
+   记录在 data/history/_sent_log.json 里，同一天同一时段只会真正发送一次。
 
 本脚本设计给完全不懂Python的人使用：正常情况下你不需要改这个文件，
 只需要改 config/tickers.txt 来增删关注的股票。
 """
 
 import os
+import json
 import datetime
 from zoneinfo import ZoneInfo
 import smtplib
@@ -49,9 +51,8 @@ TARGET_SESSIONS = [
     ("早报", 10, 30),
     ("午报", 16, 30),
 ]
-TOLERANCE_MINUTES = 60  # 允许GitHub Actions触发延迟的容差(免费额度的定时任务
-                         # 实际触发时间可能比设定时间晚20分钟到1小时以上，这是
-                         # GitHub本身的已知限制，不是脚本的bug，所以给足够的余量)
+TOLERANCE_MINUTES = 20  # 因为现在改成每15分钟检查一次(见workflow文件)，
+                         # 不再需要靠大容差去赌GitHub的延迟，20分钟足够了
 
 
 # ---------- 判断现在是不是该发送的时段 ----------
@@ -74,6 +75,41 @@ def get_current_session():
         if diff_minutes <= TOLERANCE_MINUTES:
             return name, now
     return None, now
+
+
+# ---------- 防止15分钟检查一次导致同一时段重复发送 ----------
+def _sent_log_path():
+    return os.path.join(HISTORY_DIR, "_sent_log.json")
+
+
+def already_sent_today(session_name, today_str):
+    path = _sent_log_path()
+    if not os.path.exists(path):
+        return False
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            log = json.load(f)
+    except Exception:
+        return False
+    return log.get("date") == today_str and session_name in log.get("sessions", [])
+
+
+def mark_sent(session_name, today_str):
+    os.makedirs(HISTORY_DIR, exist_ok=True)
+    path = _sent_log_path()
+    log = {"date": today_str, "sessions": []}
+    if os.path.exists(path):
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                existing = json.load(f)
+            if existing.get("date") == today_str:
+                log = existing
+        except Exception:
+            pass
+    if session_name not in log["sessions"]:
+        log["sessions"].append(session_name)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(log, f, ensure_ascii=False)
 
 
 # ---------- 读取ticker列表 ----------
@@ -325,6 +361,15 @@ def main():
         print(f"当前多伦多时间 {now.strftime('%Y-%m-%d %H:%M %Z')} 不在预定发送时段(10:30/16:30)内，跳过本次运行。")
         return
 
+    is_forced = os.environ.get("FORCE_SEND", "false").lower() == "true"
+    today_str = now.date().isoformat()
+    # 因为现在每15分钟就会检查一次，同一个时段(比如10:30附近)可能连续好几次
+    # 检查都命中"在窗口内"，这里确保同一天同一个时段只真正发送一次。
+    # 手动测试(强制发送)不受这个限制，方便随时测试。
+    if not is_forced and already_sent_today(session_name, today_str):
+        print(f"「{session_name}」今天({today_str})已经发送过了，跳过本次重复触发。")
+        return
+
     is_afternoon_session = (session_name == "午报")
 
     tickers = load_tickers()
@@ -407,6 +452,9 @@ def main():
     html = build_html_report(report_date, session_name, sections)
     tickers_str = ", ".join(tickers)
     send_email(f"期权{session_name} {report_date} — {tickers_str}", html)
+
+    if not is_forced:
+        mark_sent(session_name, today_str)
 
 
 if __name__ == "__main__":
