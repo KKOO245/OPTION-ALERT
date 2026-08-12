@@ -52,9 +52,9 @@ TARGET_SESSIONS = [
     ("早报", 10, 30),
     ("午报", 16, 30),
 ]
-TOLERANCE_MINUTES = 50  # 配合新的"整点、间隔1小时"触发频率：每次尝试之间正好
-                         # 相隔60分钟，容差设到50分钟，确保目标时间前后最近的
-                         # 1-2次整点尝试都能命中，同时避免容差过大导致误判。
+TOLERANCE_MINUTES = 75  # 实测发现GitHub免费额度的定时任务，早上时段的延迟
+                         # 可能超过60分钟，所以把容差进一步放宽，配合每小时
+                         # 连续触发，确保目标时间前后有更充足的缓冲。
 
 
 # ---------- 判断现在是不是该发送的时段 ----------
@@ -270,10 +270,11 @@ def build_analysis_text(ticker_symbol, df_all, oi_surge):
     if call_oi + put_oi == 0:
         return f"{ticker_symbol}: 近一个月内到期期权没有获取到有效的持仓数据。"
 
-    ratio = put_oi / call_oi if call_oi > 0 else float("nan")
+    ratio = put_oi / call_oi if call_oi > 0 else float("inf")
     lines = [
         f"{ticker_symbol} 近一个月内到期期权：看涨总未平仓 {int(call_oi):,}，"
-        f"看跌总未平仓 {int(put_oi):,}，Put/Call 未平仓比 = {ratio:.2f}。"
+        f"看跌总未平仓 {int(put_oi):,}，Put/Call 未平仓比 = "
+        f"{'∞' if ratio == float('inf') else f'{ratio:.2f}'}。"
     ]
     if ratio > 1.2:
         lines.append("→ 未平仓量偏向看跌一方，市场对下行保护/投机需求较高。")
@@ -381,75 +382,94 @@ def main():
 
     report_date = now.strftime("%Y-%m-%d")
     sections = []
+    any_data_ok = False  # 只要有一个ticker成功拿到期权数据，就算这次运行"有价值"
 
     for ticker_symbol in tickers:
-        print(f"处理 {ticker_symbol} ...")
-        price, prev_close = fetch_underlying_price(ticker_symbol)
-        if price is not None:
-            if prev_close:
-                change_pct = (price - prev_close) / prev_close * 100
-                arrow = "▲" if change_pct >= 0 else "▼"
-                css_cls = "up" if change_pct >= 0 else "down"
-                price_line = (f"{ticker_symbol} 现价: ${price:,.2f}　"
-                               f"<span class='{css_cls}'>{arrow} {change_pct:+.2f}%</span>"
-                               f"　(较前收盘 ${prev_close:,.2f})")
+        try:
+            print(f"处理 {ticker_symbol} ...")
+            price, prev_close = fetch_underlying_price(ticker_symbol)
+            if price is not None:
+                if prev_close:
+                    change_pct = (price - prev_close) / prev_close * 100
+                    arrow = "▲" if change_pct >= 0 else "▼"
+                    css_cls = "up" if change_pct >= 0 else "down"
+                    price_line = (f"{ticker_symbol} 现价: ${price:,.2f}　"
+                                   f"<span class='{css_cls}'>{arrow} {change_pct:+.2f}%</span>"
+                                   f"　(较前收盘 ${prev_close:,.2f})")
+                else:
+                    price_line = f"{ticker_symbol} 现价: ${price:,.2f}"
             else:
-                price_line = f"{ticker_symbol} 现价: ${price:,.2f}"
-        else:
-            price_line = f"{ticker_symbol} 现价: 暂未获取到(可能是数据源临时问题)"
-        price_banner_html = f"<div class='price-banner'>{price_line}</div>"
+                price_line = f"{ticker_symbol} 现价: 暂未获取到(可能是数据源临时问题)"
+            price_banner_html = f"<div class='price-banner'>{price_line}</div>"
 
-        df_all = fetch_option_chain(ticker_symbol)
-        if df_all.empty:
-            sections.append(f"<h2>{ticker_symbol}</h2>{price_banner_html}<p>未能获取到期权数据。</p>")
-            continue
+            df_all = fetch_option_chain(ticker_symbol)
+            if df_all.empty:
+                sections.append(f"<h2>{ticker_symbol}</h2>{price_banner_html}<p>未能获取到期权数据。</p>")
+                continue
 
-        nearest_exp, second_window = get_expiration_windows(df_all)
-        if nearest_exp is None:
-            sections.append(f"<h2>{ticker_symbol}</h2>{price_banner_html}<p>未找到有效的到期日。</p>")
-            continue
+            nearest_exp, second_window = get_expiration_windows(df_all)
+            if nearest_exp is None:
+                sections.append(f"<h2>{ticker_symbol}</h2>{price_banner_html}<p>未找到有效的到期日。</p>")
+                continue
 
-        near_calls, near_puts = top5_for_expirations(df_all, [nearest_exp])
-        month_calls, month_puts = top5_for_expirations(df_all, second_window)
-        oi_surge = detect_oi_surge(ticker_symbol, df_all)
-        analysis_text = build_analysis_text(ticker_symbol, df_all, oi_surge)
+            any_data_ok = True
 
-        cols_map = {
-            "type": "类型", "strike": "行权价", "lastPrice": "最新价", "openInterest": "未平仓量"
-        }
-        cols_map_with_exp = {
-            "type": "类型", "expiration": "到期日", "strike": "行权价",
-            "lastPrice": "最新价", "openInterest": "未平仓量"
-        }
-        surge_cols_map = {
-            "type": "类型", "expiration": "到期日", "strike": "行权价",
-            "openInterest": "今日未平仓", "openInterest_prev": "上次未平仓", "oi_change": "变化量"
-        }
+            near_calls, near_puts = top5_for_expirations(df_all, [nearest_exp])
+            month_calls, month_puts = top5_for_expirations(df_all, second_window)
+            oi_surge = detect_oi_surge(ticker_symbol, df_all)
+            analysis_text = build_analysis_text(ticker_symbol, df_all, oi_surge)
 
-        section = f"<h2>{ticker_symbol}</h2>{price_banner_html}"
-        section += f"<h3>📌 {ticker_symbol} — 最近到期日 {nearest_exp} Top{TOP_N} 看涨(按未平仓量)</h3>"
-        section += df_to_html_table(near_calls, cols_map)
-        section += f"<h3>📌 {ticker_symbol} — 最近到期日 {nearest_exp} Top{TOP_N} 看跌(按未平仓量)</h3>"
-        section += df_to_html_table(near_puts, cols_map)
+            cols_map = {
+                "type": "类型", "strike": "行权价", "lastPrice": "最新价", "openInterest": "未平仓量"
+            }
+            cols_map_with_exp = {
+                "type": "类型", "expiration": "到期日", "strike": "行权价",
+                "lastPrice": "最新价", "openInterest": "未平仓量"
+            }
+            surge_cols_map = {
+                "type": "类型", "expiration": "到期日", "strike": "行权价",
+                "openInterest": "今日未平仓", "openInterest_prev": "上次未平仓", "oi_change": "变化量"
+            }
 
-        if second_window:
-            window_label = f"{second_window[0]} 至 {second_window[-1]}" if len(second_window) > 1 else second_window[0]
-        else:
-            window_label = "(无更多到期日数据)"
-        section += f"<h3>📅 {ticker_symbol} — {window_label} 合并 Top{TOP_N} 看涨(按未平仓量)</h3>"
-        section += df_to_html_table(month_calls, cols_map_with_exp)
-        section += f"<h3>📅 {ticker_symbol} — {window_label} 合并 Top{TOP_N} 看跌(按未平仓量)</h3>"
-        section += df_to_html_table(month_puts, cols_map_with_exp)
+            section = f"<h2>{ticker_symbol}</h2>{price_banner_html}"
+            section += f"<h3>📌 {ticker_symbol} — 最近到期日 {nearest_exp} Top{TOP_N} 看涨(按未平仓量)</h3>"
+            section += df_to_html_table(near_calls, cols_map)
+            section += f"<h3>📌 {ticker_symbol} — 最近到期日 {nearest_exp} Top{TOP_N} 看跌(按未平仓量)</h3>"
+            section += df_to_html_table(near_puts, cols_map)
 
-        section += f"<h3>🔺 {ticker_symbol} — 一个月内到期期权 未平仓量增幅Top{TOP_N}(今天 vs 上次)</h3>"
-        section += df_to_html_table(oi_surge, surge_cols_map)
+            if second_window:
+                window_label = f"{second_window[0]} 至 {second_window[-1]}" if len(second_window) > 1 else second_window[0]
+            else:
+                window_label = "(无更多到期日数据)"
+            section += f"<h3>📅 {ticker_symbol} — {window_label} 合并 Top{TOP_N} 看涨(按未平仓量)</h3>"
+            section += df_to_html_table(month_calls, cols_map_with_exp)
+            section += f"<h3>📅 {ticker_symbol} — {window_label} 合并 Top{TOP_N} 看跌(按未平仓量)</h3>"
+            section += df_to_html_table(month_puts, cols_map_with_exp)
 
-        section += f"<div class='analysis'>{analysis_text}</div>"
-        sections.append(section)
+            section += f"<h3>🔺 {ticker_symbol} — 一个月内到期期权 未平仓量增幅Top{TOP_N}(今天 vs 上次)</h3>"
+            section += df_to_html_table(oi_surge, surge_cols_map)
 
-        # 只在"午报"时段保存快照，避免同一天两次运行互相冲掉对比基准
-        if is_afternoon_session:
-            save_snapshot(ticker_symbol, df_all)
+            section += f"<div class='analysis'>{analysis_text}</div>"
+            sections.append(section)
+
+            # 只在"午报"时段保存快照，避免同一天两次运行互相冲掉对比基准
+            if is_afternoon_session:
+                save_snapshot(ticker_symbol, df_all)
+
+        except Exception as e:
+            # 单个ticker处理出错(比如数据格式异常)，不能让它连累其他ticker都发不出去，
+            # 记录一段错误提示，继续处理下一个ticker。
+            print(f"[错误] 处理 {ticker_symbol} 时出现异常，已跳过该ticker: {e}")
+            sections.append(f"<h2>{ticker_symbol}</h2><p style='color:#c00'>"
+                             f"本次处理该ticker时出现异常，已跳过：{e}</p>")
+
+    if not any_data_ok:
+        # 所有ticker都没能拿到有效的期权数据(大概率是数据源临时故障)，
+        # 与其发一封全是"无数据"的空邮件、还白白占用今天这个时段的唯一发送机会，
+        # 不如直接跳过、不标记为已发送，留给下一次整点尝试重试。
+        print(f"「{session_name}」本次所有ticker都未能获取到有效数据，跳过发送，"
+              f"留给下一次整点尝试重试(不标记为已发送)。")
+        return
 
     html = build_html_report(report_date, session_name, sections)
     tickers_str = ", ".join(tickers)
