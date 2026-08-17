@@ -41,11 +41,9 @@ jobs:
       - name: 安装依赖
         run: pip install -r requirements.txt
 
-      - name: 运行期权报告脚本(非目标时段/今天已发送过会自动跳过，不发邮件)
+      - name: 运行期权报告脚本(非目标时段/今天已发送过会自动跳过，不发送)
         env:
-          EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
-          EMAIL_APP_PASSWORD: ${{ secrets.EMAIL_APP_PASSWORD }}
-          RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           FORCE_SEND: ${{ github.event.inputs.force_send }}
         run: python src/options_report.py
 

@@ -13,13 +13,13 @@ SOXX(及其他自定义ticker)期权日报生成脚本 — v2
 3. 在"一个月以内到期"的所有合约里，对比今天和前一个交易日的未平仓量，
    列出增加最多的5个合约(疑似有资金新建仓位)
 
-4. 每天多伦多时间上午10:30和下午4:30各发一封邮件。GitHub Actions对"间隔短于
-   1小时"的定时任务经常会静默丢弃大部分触发(不报错，就是不执行)，所以工作流
-   改成了"整点触发、间隔1小时"这种GitHub认为可靠的频率，在每个目标时间前后
-   安排几次独立的整点尝试作为备份。脚本自己判断"现在的多伦多本地时间是否
-   接近10:30或16:30"，命中就发，没命中就跳过；同一天同一个时段只会真正
-   发送一次(靠 data/history/_sent_log.json 记录，防止多次整点尝试都命中同一个
-   时段时重复发送)。
+4. 每天多伦多时间上午10:30和下午4:30各发一次Discord消息。GitHub Actions对
+   "间隔短于1小时"的定时任务经常会静默丢弃大部分触发(不报错，就是不执行)，
+   所以工作流改成了"整点触发、间隔1小时"这种GitHub认为可靠的频率，在每个
+   目标时间前后安排几次独立的整点尝试作为备份。脚本自己判断"现在的多伦多
+   本地时间是否接近10:30或16:30"，命中就发，没命中就跳过；同一天同一个
+   时段只会真正发送一次(靠 data/history/_sent_log.json 记录，防止多次整点
+   尝试都命中同一个时段时重复发送)。
 
 本脚本设计给完全不懂Python的人使用：正常情况下你不需要改这个文件，
 只需要改 config/tickers.txt 来增删关注的股票。
@@ -29,9 +29,7 @@ import os
 import json
 import datetime
 from zoneinfo import ZoneInfo
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
+import requests
 
 import pandas as pd
 import yfinance as yf
@@ -63,7 +61,7 @@ def get_current_session():
 
     # 手动测试用：workflow_dispatch里勾选"强制发送"时，跳过时间检查
     if os.environ.get("FORCE_SEND", "false").lower() == "true":
-        # 挑离现在最近的一个时段名称，只是用来给邮件标题用，不影响内容
+        # 挑离现在最近的一个时段名称，只是用来给消息标题用，不影响内容
         closest = min(
             TARGET_SESSIONS,
             key=lambda s: abs((now.replace(hour=s[1], minute=s[2], second=0, microsecond=0) - now).total_seconds())
@@ -300,61 +298,102 @@ def build_analysis_text(ticker_symbol, df_all, oi_surge):
     return "\n".join(lines)
 
 
-# ---------- 把DataFrame转成HTML表格 ----------
-def df_to_html_table(df, cols_map):
+# ---------- 把DataFrame转成Discord能显示的等宽文本表格 ----------
+def format_table_text(df, cols_map):
+    """用等宽字体(```代码块)拼一个简单表格，Discord能正常对齐显示"""
     if df is None or len(df) == 0:
-        return "<p style='color:#888'>（无数据）</p>"
+        return "```\n(无数据)\n```"
+
     df2 = df[list(cols_map.keys())].rename(columns=cols_map)
-    return df2.to_html(index=False, border=0, justify="center",
-                        classes="option-table", float_format=lambda x: f"{x:,.2f}")
+    headers = list(df2.columns)
+
+    def fmt_cell(val):
+        if isinstance(val, float):
+            return f"{val:,.2f}"
+        if isinstance(val, int):
+            return f"{val:,}"
+        # numpy数值类型(比如int64/float64)也走这里统一处理
+        if hasattr(val, "item"):
+            v = val.item()
+            if isinstance(v, float):
+                return f"{v:,.2f}"
+            return f"{v:,}"
+        return str(val)
+
+    rows = [[fmt_cell(v) for v in row] for row in df2.itertuples(index=False)]
+    widths = [len(h) for h in headers]
+    for row in rows:
+        for i, cell in enumerate(row):
+            widths[i] = max(widths[i], len(cell))
+
+    def pad_row(cells):
+        return " | ".join(cell.ljust(widths[i]) for i, cell in enumerate(cells))
+
+    lines = [pad_row(headers), "-+-".join("-" * w for w in widths)]
+    lines += [pad_row(row) for row in rows]
+    return "```\n" + "\n".join(lines) + "\n```"
 
 
-# ---------- 组装整封邮件的HTML ----------
-def build_html_report(report_date, session_name, per_ticker_sections):
-    style = """
-    <style>
-      body { font-family: -apple-system, Arial, sans-serif; color:#222; }
-      h2 { color:#1a3e6f; border-bottom:2px solid #1a3e6f; padding-bottom:4px; }
-      h3 { color:#333; margin-bottom:4px; }
-      table.option-table { border-collapse: collapse; width:100%; margin-bottom:16px; font-size:13px;}
-      table.option-table th { background:#1a3e6f; color:white; padding:6px 8px; }
-      table.option-table td { padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;}
-      .analysis { background:#f4f7fb; padding:10px 14px; border-left:4px solid #1a3e6f;
-                  white-space:pre-line; font-size:14px; margin-bottom:24px;}
-    .price-banner { background:#1a3e6f; color:white; padding:10px 14px; border-radius:6px;
-                    font-size:16px; margin-bottom:10px; }
-    .price-banner .up { color:#8fffb0; }
-    .price-banner .down { color:#ffb0b0; }
-    </style>
-    """
-    html = f"<html><head>{style}</head><body>"
-    html += f"<h2>期权市场{session_name} — {report_date}</h2>"
-    html += "".join(per_ticker_sections)
-    html += "<p style='font-size:11px;color:#999'>数据来源: Yahoo Finance (yfinance)，" \
-            "数据可能有延迟，仅供参考，不构成投资建议。</p>"
-    html += "</body></html>"
-    return html
+# ---------- 拼装单个ticker的Discord消息内容(纯文本/Markdown) ----------
+def build_ticker_message(ticker_symbol, price_line, nearest_exp, near_calls, near_puts,
+                          window_label, month_calls, month_puts, oi_surge, analysis_text):
+    cols_map = {
+        "type": "类型", "strike": "行权价", "lastPrice": "最新价", "openInterest": "未平仓量"
+    }
+    cols_map_with_exp = {
+        "type": "类型", "expiration": "到期日", "strike": "行权价",
+        "lastPrice": "最新价", "openInterest": "未平仓量"
+    }
+    surge_cols_map = {
+        "type": "类型", "expiration": "到期日", "strike": "行权价",
+        "openInterest": "今日未平仓", "openInterest_prev": "上次未平仓", "oi_change": "变化量"
+    }
+
+    parts = [f"## {ticker_symbol}", price_line, ""]
+    parts.append(f"📌 **最近到期日 {nearest_exp} Top{TOP_N} 看涨(按未平仓量)**")
+    parts.append(format_table_text(near_calls, cols_map))
+    parts.append(f"📌 **最近到期日 {nearest_exp} Top{TOP_N} 看跌(按未平仓量)**")
+    parts.append(format_table_text(near_puts, cols_map))
+
+    parts.append(f"📅 **{window_label} 合并 Top{TOP_N} 看涨(按未平仓量)**")
+    parts.append(format_table_text(month_calls, cols_map_with_exp))
+    parts.append(f"📅 **{window_label} 合并 Top{TOP_N} 看跌(按未平仓量)**")
+    parts.append(format_table_text(month_puts, cols_map_with_exp))
+
+    parts.append(f"🔺 **一个月内到期期权 未平仓量增幅Top{TOP_N}(今天 vs 上次)**")
+    parts.append(format_table_text(oi_surge, surge_cols_map))
+
+    parts.append(analysis_text)
+    return "\n".join(parts)
 
 
-# ---------- 发送邮件 ----------
-def send_email(subject, html_body):
-    sender = os.environ["EMAIL_ADDRESS"]
-    password = os.environ["EMAIL_APP_PASSWORD"]
-    recipient = os.environ["RECIPIENT_EMAIL"]
-    smtp_host = os.environ.get("SMTP_HOST", "smtp.gmail.com")
-    smtp_port = int(os.environ.get("SMTP_PORT", "587"))
+# ---------- 把过长的消息切成多条(Discord单条消息上限约2000字符) ----------
+def chunk_message(text, max_len=1900):
+    if len(text) <= max_len:
+        return [text]
+    chunks = []
+    current = ""
+    for line in text.split("\n"):
+        candidate = (current + "\n" + line) if current else line
+        if len(candidate) > max_len:
+            if current:
+                chunks.append(current)
+            current = line
+        else:
+            current = candidate
+    if current:
+        chunks.append(current)
+    return chunks
 
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = subject
-    msg["From"] = sender
-    msg["To"] = recipient
-    msg.attach(MIMEText(html_body, "html", "utf-8"))
 
-    with smtplib.SMTP(smtp_host, smtp_port) as server:
-        server.starttls()
-        server.login(sender, password)
-        server.sendmail(sender, recipient, msg.as_string())
-    print(f"邮件已发送至 {recipient}")
+# ---------- 发送到Discord(通过Webhook) ----------
+def send_discord_message(content):
+    webhook_url = os.environ["DISCORD_WEBHOOK_URL"]
+    for chunk in chunk_message(content):
+        resp = requests.post(webhook_url, json={"content": chunk}, timeout=30)
+        if resp.status_code not in (200, 204):
+            raise RuntimeError(f"Discord webhook发送失败: HTTP {resp.status_code} — {resp.text[:300]}")
+    print("已发送到Discord")
 
 
 # ---------- 主流程 ----------
@@ -381,8 +420,8 @@ def main():
         return
 
     report_date = now.strftime("%Y-%m-%d")
-    sections = []
     any_data_ok = False  # 只要有一个ticker成功拿到期权数据，就算这次运行"有价值"
+    ticker_messages = []  # 收集每个ticker的消息内容，最后统一判断是否要发送
 
     for ticker_symbol in tickers:
         try:
@@ -392,24 +431,21 @@ def main():
                 if prev_close:
                     change_pct = (price - prev_close) / prev_close * 100
                     arrow = "▲" if change_pct >= 0 else "▼"
-                    css_cls = "up" if change_pct >= 0 else "down"
-                    price_line = (f"{ticker_symbol} 现价: ${price:,.2f}　"
-                                   f"<span class='{css_cls}'>{arrow} {change_pct:+.2f}%</span>"
-                                   f"　(较前收盘 ${prev_close:,.2f})")
+                    price_line = (f"**现价: ${price:,.2f}**　{arrow} {change_pct:+.2f}%　"
+                                   f"(较前收盘 ${prev_close:,.2f})")
                 else:
-                    price_line = f"{ticker_symbol} 现价: ${price:,.2f}"
+                    price_line = f"**现价: ${price:,.2f}**"
             else:
-                price_line = f"{ticker_symbol} 现价: 暂未获取到(可能是数据源临时问题)"
-            price_banner_html = f"<div class='price-banner'>{price_line}</div>"
+                price_line = "现价: 暂未获取到(可能是数据源临时问题)"
 
             df_all = fetch_option_chain(ticker_symbol)
             if df_all.empty:
-                sections.append(f"<h2>{ticker_symbol}</h2>{price_banner_html}<p>未能获取到期权数据。</p>")
+                ticker_messages.append(f"## {ticker_symbol}\n{price_line}\n未能获取到期权数据。")
                 continue
 
             nearest_exp, second_window = get_expiration_windows(df_all)
             if nearest_exp is None:
-                sections.append(f"<h2>{ticker_symbol}</h2>{price_banner_html}<p>未找到有效的到期日。</p>")
+                ticker_messages.append(f"## {ticker_symbol}\n{price_line}\n未找到有效的到期日。")
                 continue
 
             any_data_ok = True
@@ -419,38 +455,16 @@ def main():
             oi_surge = detect_oi_surge(ticker_symbol, df_all)
             analysis_text = build_analysis_text(ticker_symbol, df_all, oi_surge)
 
-            cols_map = {
-                "type": "类型", "strike": "行权价", "lastPrice": "最新价", "openInterest": "未平仓量"
-            }
-            cols_map_with_exp = {
-                "type": "类型", "expiration": "到期日", "strike": "行权价",
-                "lastPrice": "最新价", "openInterest": "未平仓量"
-            }
-            surge_cols_map = {
-                "type": "类型", "expiration": "到期日", "strike": "行权价",
-                "openInterest": "今日未平仓", "openInterest_prev": "上次未平仓", "oi_change": "变化量"
-            }
-
-            section = f"<h2>{ticker_symbol}</h2>{price_banner_html}"
-            section += f"<h3>📌 {ticker_symbol} — 最近到期日 {nearest_exp} Top{TOP_N} 看涨(按未平仓量)</h3>"
-            section += df_to_html_table(near_calls, cols_map)
-            section += f"<h3>📌 {ticker_symbol} — 最近到期日 {nearest_exp} Top{TOP_N} 看跌(按未平仓量)</h3>"
-            section += df_to_html_table(near_puts, cols_map)
-
             if second_window:
                 window_label = f"{second_window[0]} 至 {second_window[-1]}" if len(second_window) > 1 else second_window[0]
             else:
                 window_label = "(无更多到期日数据)"
-            section += f"<h3>📅 {ticker_symbol} — {window_label} 合并 Top{TOP_N} 看涨(按未平仓量)</h3>"
-            section += df_to_html_table(month_calls, cols_map_with_exp)
-            section += f"<h3>📅 {ticker_symbol} — {window_label} 合并 Top{TOP_N} 看跌(按未平仓量)</h3>"
-            section += df_to_html_table(month_puts, cols_map_with_exp)
 
-            section += f"<h3>🔺 {ticker_symbol} — 一个月内到期期权 未平仓量增幅Top{TOP_N}(今天 vs 上次)</h3>"
-            section += df_to_html_table(oi_surge, surge_cols_map)
-
-            section += f"<div class='analysis'>{analysis_text}</div>"
-            sections.append(section)
+            msg = build_ticker_message(
+                ticker_symbol, price_line, nearest_exp, near_calls, near_puts,
+                window_label, month_calls, month_puts, oi_surge, analysis_text
+            )
+            ticker_messages.append(msg)
 
             # 只在"午报"时段保存快照，避免同一天两次运行互相冲掉对比基准
             if is_afternoon_session:
@@ -460,20 +474,21 @@ def main():
             # 单个ticker处理出错(比如数据格式异常)，不能让它连累其他ticker都发不出去，
             # 记录一段错误提示，继续处理下一个ticker。
             print(f"[错误] 处理 {ticker_symbol} 时出现异常，已跳过该ticker: {e}")
-            sections.append(f"<h2>{ticker_symbol}</h2><p style='color:#c00'>"
-                             f"本次处理该ticker时出现异常，已跳过：{e}</p>")
+            ticker_messages.append(f"## {ticker_symbol}\n⚠️ 本次处理该ticker时出现异常，已跳过：{e}")
 
     if not any_data_ok:
         # 所有ticker都没能拿到有效的期权数据(大概率是数据源临时故障)，
-        # 与其发一封全是"无数据"的空邮件、还白白占用今天这个时段的唯一发送机会，
+        # 与其发一条全是"无数据"的空消息、还白白占用今天这个时段的唯一发送机会，
         # 不如直接跳过、不标记为已发送，留给下一次整点尝试重试。
         print(f"「{session_name}」本次所有ticker都未能获取到有效数据，跳过发送，"
               f"留给下一次整点尝试重试(不标记为已发送)。")
         return
 
-    html = build_html_report(report_date, session_name, sections)
-    tickers_str = ", ".join(tickers)
-    send_email(f"期权{session_name} {report_date} — {tickers_str}", html)
+    intro = f"# 📊 期权{session_name} — {report_date}"
+    send_discord_message(intro)
+    for msg in ticker_messages:
+        send_discord_message(msg)
+    send_discord_message("-# 数据来源: Yahoo Finance (yfinance)，数据可能有延迟，仅供参考，不构成投资建议。")
 
     if not is_forced:
         mark_sent(session_name, today_str)
