@@ -179,11 +179,7 @@ def _table(rows, col_map, title=None):
 def unusual_table(metrics):
     rows = metrics.get("top_unusual") or []
     col_map = {
-<<<<<<< HEAD
         "type": "类型", "strike": "行权价", "expiration": "到期", "volume": "今量", "volume_prev": "昨量",
-=======
-        "type": "类型", "strike": "行权价", "volume": "今量", "volume_prev": "昨量",
->>>>>>> 346f793077584e11c3cf228e5a56cb066c7660b3
         "volume_ratio": "放量×", "oi_prev": "OI前", "open_interest": "OI现",
         "oi_change_pct": "OI增%", "premium": "成交额($)",
     }
