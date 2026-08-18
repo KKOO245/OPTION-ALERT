@@ -69,6 +69,16 @@ MACRO_NAMES = {
     "fed chair": "美联储主席讲话",
     "beige book": "美联储褐皮书",
     "gdp growth": "GDP 增速",
+    "import prices": "进口价格",
+    "export prices": "出口价格",
+    "industrial production": "工业生产",
+    "pending home sales": "成屋待完成销售",
+    "adp employment": "ADP 就业",
+    "api crude oil": "API 原油库存",
+    "redbook": "红皮书零售",
+    "capacity utilization": "产能利用率",
+    "housing starts": "新屋开工",
+    "building permits": "建筑许可",
 }
 
 WEEKDAYS = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]
@@ -76,9 +86,12 @@ WEEKDAYS = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"
 
 def _translate_macro(name):
     low = (name or "").lower()
-    for key, zh in MACRO_NAMES.items():
-        if key in low:
-            return zh
+    # 长的关键词优先匹配（如 core cpi 先于 cpi）
+    for key, zh in sorted(MACRO_NAMES.items(), key=lambda kv: -len(kv[0])):
+        pos = low.find(key)
+        if pos >= 0:
+            tail = (name or "")[pos + len(key):].strip()
+            return zh + (" " + tail if tail else "")
     return name or "宏观数据"
 
 
@@ -90,7 +103,7 @@ def _week_range(now):
 
 
 def fetch_macro_calendar(week_start, week_end):
-    """抓本周美国高重要性宏观事件，返回按时间排序的列表"""
+    """抓本周美国高/中重要性宏观事件（含预测值、实际值、前值），按时间排序"""
     from_dt = datetime.datetime.combine(week_start, datetime.time.min, tzinfo=ET)
     to_dt = datetime.datetime.combine(week_end, datetime.time.max, tzinfo=ET)
     body = {
@@ -108,7 +121,7 @@ def fetch_macro_calendar(week_start, week_end):
 
     events = []
     for e in result:
-        if e.get("country") != "US" or e.get("importance") != 1:
+        if e.get("country") != "US" or (e.get("importance") or 0) < 0:
             continue
         raw_date = e.get("date")
         if not raw_date:
@@ -122,6 +135,10 @@ def fetch_macro_calendar(week_start, week_end):
             "date": dt.date(),
             "time": dt.strftime("%H:%M"),
             "name": _translate_macro(e.get("title") or ""),
+            "importance": e.get("importance"),
+            "actual": e.get("actual"),
+            "forecast": e.get("forecast"),
+            "previous": e.get("previous"),
         })
     events.sort(key=lambda x: (x["date"], x["time"]))
     return events
@@ -180,7 +197,7 @@ def build_calendar_sections(now):
     try:
         macro = fetch_macro_calendar(week_start, week_end)
         if not macro:
-            macro_lines.append("- 本周暂无明显高重要性数据公布")
+            macro_lines.append("- 本周暂无高/中重要性数据公布")
         for e in macro:
             note = ""
             if e["date"] == now.date():
@@ -188,7 +205,20 @@ def build_calendar_sections(now):
                     note = "　✅ 今日已公布"
                 else:
                     note = "　⏰ 今日"
-            macro_lines.append(f"- {_fmt_event_date(e['date'])} {e['time']}　{e['name']}{note}")
+            imp_tag = "【高】" if e.get("importance") == 1 else "【中】"
+            vals = []
+            if e.get("forecast") is not None:
+                vals.append(f"预测 {e['forecast']}")
+            if e.get("actual") is not None:
+                vals.append(f"实际 {e['actual']}")
+            else:
+                vals.append("实际 待公布")
+            if e.get("previous") is not None:
+                vals.append(f"前值 {e['previous']}")
+            vals_txt = " ｜ ".join(vals)
+            macro_lines.append(
+                f"- {_fmt_event_date(e['date'])} {e['time']}　{imp_tag}{e['name']}　{vals_txt}{note}"
+            )
     except Exception as e:
         print(f"[警告] 宏观日历获取失败: {e}")
         macro_lines.append("- 宏观日历源暂时不可用（稍后自动恢复）")
