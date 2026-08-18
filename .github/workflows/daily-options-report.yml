@@ -44,11 +44,6 @@ jobs:
       - name: 运行期权报告脚本(非目标时段/今天已发送过会自动跳过，不发送)
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-      - name: 运行期权报告脚本(非目标时段/今天已发送过会自动跳过，不发送)
-        env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          FORCE_SEND: ${{ github.event.inputs.force_send }}
-        run: python src/options_report.py
           FORCE_SEND: ${{ github.event.inputs.force_send }}
         run: python src/options_report.py
 
