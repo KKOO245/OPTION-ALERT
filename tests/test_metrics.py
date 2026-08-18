@@ -88,6 +88,32 @@ def test_unusual_activity_filters():
     assert len(rows) > 0
 
 
+def test_unusual_prev_lookup():
+    cs = _contracts()
+    df = m._frame(cs)
+    prev = {"Tcall100": (500, 80)}  # 之前 OI 500、量 80
+    rows = m.unusual_activity(df, min_volume=100, vol_oi_min=0.1, prev_lookup=prev)
+    row = next(r for r in rows if r["contract_symbol"] == "Tcall100")
+    assert row["oi_prev"] == 500
+    assert row["volume_prev"] == 80
+    assert row["oi_change"] == 500          # 今日 OI 1000 - 500
+    assert row["oi_change_pct"] == 100.0    # +100%
+    assert row["volume_ratio"] == 2.5       # 200 / 80
+
+
+def test_top_oi_rows():
+    cs = _contracts()
+    df = m._frame(cs)
+    calls, puts = m.top_oi_rows(df, ["2026-08-28"])
+    assert calls and puts
+    assert all(r["type"] == "Call" for r in calls)
+    assert all(r["type"] == "Put" for r in puts)
+    # 所有 call OI 都是 1000，按行权价稳定排序；最高行权价在最后，这里只验证数量与字段
+    assert len(calls) == 5 and len(puts) == 5
+    assert calls[0]["open_interest"] == 1000
+    assert "strike" in calls[0] and "iv" in calls[0]
+
+
 def test_oi_surge():
     cs = _contracts()
     prev = pd.DataFrame({
@@ -113,7 +139,7 @@ def test_iv_rank_requires_history():
 
 if __name__ == "__main__":
     for fn in (test_ratios, test_max_pain_shifts_to_heavy_put_strike, test_atm_metrics,
-               test_skew_25, test_unusual_activity_filters, test_oi_surge,
-               test_iv_rank_requires_history):
+               test_skew_25, test_unusual_activity_filters, test_unusual_prev_lookup,
+               test_top_oi_rows, test_oi_surge, test_iv_rank_requires_history):
         fn()
         print(f"PASS {fn.__name__}")

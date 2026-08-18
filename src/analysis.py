@@ -110,11 +110,23 @@ def rules_text(metrics, iv_rank_val, session, morning_iv=None):
     if unusual:
         u = unusual[0]
         kind = "看涨" if u["type"] == "call" else "看跌"
+        vol_ratio_txt = ""
+        if u.get("volume_ratio"):
+            vol_ratio_txt = f"，昨量 {u.get('volume_prev') or 0:,}、放量 {u['volume_ratio']:.1f}×"
+        elif u.get("volume_prev") == 0:
+            vol_ratio_txt = "（新合约，无昨量对比）"
+        oi_txt = ""
+        if u.get("oi_prev") is not None:
+            if u.get("oi_prev", 0) == 0:
+                oi_txt = "，OI 为全新开仓"
+            elif u.get("oi_change_pct") is not None:
+                oi_txt = (f"，OI {u['oi_prev']:,}→{u['open_interest']:,}"
+                          f"（{u['oi_change']:+,}，{u['oi_change_pct']:+.1f}%）")
         lines.append(
             f"→ 最大异动：{kind} {_fmt(u['strike'], 0)} 行权价 {u['expiration']} 到期，"
-            f"成交 {u['volume']:,} 张 / OI {u['open_interest']:,} 张"
+            f"今量 {u['volume']:,} 张{vol_ratio_txt}"
             + (f"（量/OI {u['vol_oi_ratio']:.1f}）" if u.get("vol_oi_ratio") else "")
-            + "，值得跟踪。"
+            + f"{oi_txt}，值得跟踪。"
         )
     elif m.get("has_surge_data"):
         lines.append("→ 本次没有观察到明显异动成交。")
@@ -167,11 +179,26 @@ def _table(rows, col_map, title=None):
 def unusual_table(metrics):
     rows = metrics.get("top_unusual") or []
     col_map = {
-        "type": "类型", "strike": "行权价", "expiration": "到期", "dte": "DTE",
-        "volume": "成交量", "open_interest": "OI", "vol_oi_ratio": "量/OI",
-        "premium": "成交额($)", "iv": "IV",
+        "type": "类型", "strike": "行权价", "volume": "今量", "volume_prev": "昨量",
+        "volume_ratio": "放量×", "oi_prev": "OI前", "open_interest": "OI现",
+        "oi_change_pct": "OI增%", "premium": "成交额($)",
     }
-    return _table(rows, col_map, "🔺 异动成交 Top")
+    return _table(rows, col_map, "🔺 异动成交 Top（含前后对比）")
+
+
+def _oi_top_table(calls, puts, title_prefix, include_exp=False):
+    col_map = {
+        "type": "类型", "strike": "行权价", "last": "最新价",
+        "iv": "IV", "open_interest": "未平仓量",
+    }
+    if include_exp:
+        col_map = {
+            "type": "类型", "expiration": "到期日", "strike": "行权价",
+            "last": "最新价", "iv": "IV", "open_interest": "未平仓量",
+        }
+    t1 = _table(calls, col_map, f"{title_prefix} Top5 看涨（按未平仓量）")
+    t2 = _table(puts, col_map, f"{title_prefix} Top5 看跌（按未平仓量）")
+    return t1 + "\n" + t2
 
 
 def surge_table(metrics):
@@ -189,6 +216,20 @@ def build_ticker_section(ticker, price, prev_close, metrics, iv_rank_val,
     parts.append(price_line(ticker, price, prev_close))
     parts.append("")
     parts.append("```\n" + metrics_block(metrics, iv_rank_val) + "\n```")
+    parts.append("")
+    parts.append(_oi_top_table(
+        metrics.get("nearest_top_calls") or [],
+        metrics.get("nearest_top_puts") or [],
+        f"📌 最近到期日 {metrics.get('near_exp')}",
+        include_exp=False,
+    ))
+    parts.append("")
+    parts.append(_oi_top_table(
+        metrics.get("window_top_calls") or [],
+        metrics.get("window_top_puts") or [],
+        f"📅 未来4个期权日（{metrics.get('window_label')}）合并",
+        include_exp=True,
+    ))
     parts.append("")
     parts.append(unusual_table(metrics))
     if show_surge:

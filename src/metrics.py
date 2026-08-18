@@ -146,11 +146,25 @@ def greeks_exposure(df, max_dte=None):
     return net_delta, net_gamma
 
 
-def unusual_activity(df, min_volume=500, vol_oi_min=1.0, top_n=5):
+def _prev_lookup(prev):
+    """把上次快照转成 contract_symbol -> (oi_prev, volume_prev) 的查询表"""
+    if prev is None or prev.empty:
+        return {}
+    out = {}
+    for r in prev.itertuples(index=False):
+        oi = getattr(r, "openInterest", None) or 0
+        vol = getattr(r, "volume", None) or 0
+        out[r.contractSymbol] = (oi, vol)
+    return out
+
+
+def unusual_activity(df, min_volume=500, vol_oi_min=1.0, top_n=5, prev_lookup=None):
     """
     异动评分：vol/OI 比（新建仓强度）x 名义成交额（volume×mid）。
     只认有实质成交额的合约，避免一堆 1 美元的深度虚值单刷榜。
+    同时附上"异动前后对比"：昨量/今量、OI 前值/现值，方便判断幅度。
     """
+    prev_lookup = prev_lookup or {}
     cand = df[(df["volume"] >= min_volume)]
     rows = []
     for c in cand.itertuples(index=False):
@@ -166,6 +180,12 @@ def unusual_activity(df, min_volume=500, vol_oi_min=1.0, top_n=5):
             continue
         strength = min(ratio, 20.0) if ratio else 5.0
         score = strength * math.log1p(premium)
+        oi_prev, vol_prev = prev_lookup.get(c.contract_symbol, (None, None))
+        vol_prev = vol_prev or 0
+        oi_prev = oi_prev if oi_prev is not None else 0
+        vol_ratio = round(vol / vol_prev, 1) if vol_prev else None
+        oi_change = oi - oi_prev
+        oi_change_pct = round(oi_change / oi_prev * 100, 1) if oi_prev else None
         rows.append({
             "contract_symbol": c.contract_symbol,
             "expiration": c.expiration,
@@ -174,6 +194,11 @@ def unusual_activity(df, min_volume=500, vol_oi_min=1.0, top_n=5):
             "strike": float(c.strike),
             "volume": int(vol),
             "open_interest": int(oi),
+            "volume_prev": int(vol_prev),
+            "volume_ratio": vol_ratio,
+            "oi_prev": int(oi_prev),
+            "oi_change": int(oi_change),
+            "oi_change_pct": oi_change_pct,
             "vol_oi_ratio": round(ratio, 2) if ratio else None,
             "premium": round(premium, 0),
             "iv": (round(float(c.iv), 4)
@@ -183,6 +208,25 @@ def unusual_activity(df, min_volume=500, vol_oi_min=1.0, top_n=5):
         })
     rows.sort(key=lambda r: -r["score"])
     return rows[:top_n]
+
+
+def top_oi_rows(df, exp_dates, top_n=5):
+    """指定到期日集合里，按未平仓量排序的看涨/看跌 Top N"""
+    sub = df[df["expiration"].isin(exp_dates)]
+    calls = sub[sub["type"] == "call"].sort_values("open_interest", ascending=False).head(top_n)
+    puts = sub[sub["type"] == "put"].sort_values("open_interest", ascending=False).head(top_n)
+
+    def to_rows(frame):
+        return [{
+            "type": "Call" if r.type == "call" else "Put",
+            "expiration": r.expiration,
+            "strike": float(r.strike),
+            "last": float(r.last) if r.last is not None else None,
+            "iv": round(float(r.iv), 4) if r.iv is not None and not math.isnan(r.iv) else None,
+            "open_interest": int(r.open_interest),
+        } for r in frame.itertuples(index=False)]
+
+    return to_rows(calls), to_rows(puts)
 
 
 def oi_surge(df, prev, window_days=35, top_n=5):
@@ -241,6 +285,7 @@ def compute_metrics(contracts, spot, prev=None,
     exps = sorted(df["expiration"].unique())
     near_exp = exps[0] if exps else None
     far_exp = _pick_far_expiry(exps, near_exp) if near_exp else None
+    window_exps = exps[1:5]  # 未来 4 个期权日（紧邻最近到期日之后）
 
     near = df[df["expiration"] == near_exp] if near_exp else df.iloc[0:0]
     pcr_vol_near, pcr_oi_near = _ratios(near)
@@ -257,7 +302,10 @@ def compute_metrics(contracts, spot, prev=None,
     conc = oi_concentration(df, spot)
     net_delta, net_gamma = greeks_exposure(df)
     net_delta_near, net_gamma_near = greeks_exposure(df, max_dte=10)
-    unusual = unusual_activity(df, min_volume=min_volume, vol_oi_min=vol_oi_min, top_n=top_n)
+    unusual = unusual_activity(df, min_volume=min_volume, vol_oi_min=vol_oi_min,
+                               top_n=top_n, prev_lookup=_prev_lookup(prev))
+    nearest_calls, nearest_puts = top_oi_rows(df, [near_exp]) if near_exp else ([], [])
+    window_calls, window_puts = top_oi_rows(df, window_exps)
     surge_df = oi_surge(df, prev, window_days=anomaly_window, top_n=top_n)
     surge = surge_rows(surge_df)
 
@@ -284,4 +332,10 @@ def compute_metrics(contracts, spot, prev=None,
         "top_surge": surge,
         "has_surge_data": surge_df is not None,
         "n_contracts": int(len(df)),
+        "nearest_top_calls": nearest_calls,
+        "nearest_top_puts": nearest_puts,
+        "window_top_calls": window_calls,
+        "window_top_puts": window_puts,
+        "window_label": (f"{window_exps[0]} 至 {window_exps[-1]}"
+                         if len(window_exps) > 1 else (window_exps[0] if window_exps else None)),
     }

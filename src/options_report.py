@@ -2,7 +2,7 @@
 """
 期权日报主入口（v3）
 -------------------
-调度：多伦多时间 9:45（早报）/ 16:30（晚报），周一至周五。
+调度：多伦多时间 10:15（早报）/ 16:30（晚报），周一至周五。
 GitHub Actions 每小时触发一次，脚本自行判断是否命中目标时段；
 命中才抓数据、算指标、生成报告并推送 Discord；否则几十秒内跳过。
 
@@ -40,7 +40,7 @@ VOL_OI_MIN = 1.0          # 异动候选的最低量/OI 比
 
 TORONTO_TZ = ZoneInfo("America/Toronto")
 TARGET_SESSIONS = [
-    ("早报", 9, 45),
+    ("早报", 10, 15),
     ("晚报", 16, 30),
 ]
 TOLERANCE_MINUTES = 75
@@ -198,7 +198,7 @@ def build_llm_payload(date_str, session, market_line, summaries, calendar_sectio
 def main():
     session_name, now = get_current_session()
     if session_name is None:
-        print(f"当前多伦多时间 {now.strftime('%Y-%m-%d %H:%M %Z')} 不在预定时段(9:45/16:30)内，跳过本次运行。")
+        print(f"当前多伦多时间 {now.strftime('%Y-%m-%d %H:%M %Z')} 不在预定时段(10:15/16:30)内，跳过本次运行。")
         return
 
     is_forced = os.environ.get("FORCE_SEND", "false").lower() == "true"
