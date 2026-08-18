@@ -7,7 +7,7 @@ on:
     # 实测发现：即使是整点触发，早上那几次尝试也可能被大幅延迟(观察到延迟
     # 超过60分钟的情况)，所以这里改成"从UTC 11点到23点，每小时连续触发"，
     # 不再分早晚两段留空档，给10:30和16:30两个目标时间各自留出更多次
-    # 独立的备份尝试机会。脚本内部按多伦多 9:45/16:30 判断是否真正发送。
+    # 独立的备份尝试机会。脚本内部按多伦多 10:15/16:30 判断是否真正发送。
     - cron: "0 11-23 * * 1-5"
   workflow_dispatch:      # 允许你在GitHub网页上手动点击"Run workflow"立即测试
     inputs:
@@ -32,16 +32,40 @@ jobs:
       - name: 拉取仓库代码
         uses: actions/checkout@v4
 
+      # 关键省钱步骤：非目标时段(10:15/16:30±75分钟)直接结束，
+      # 不装依赖、不跑脚本，每次空跑只花约半分钟而不是1-2分钟
+      - name: 快速时间检查（非目标时段直接结束）
+        id: timecheck
+        env:
+          FORCE_SEND: ${{ github.event.inputs.force_send }}
+        run: |
+          python3 - <<'PY'
+          import datetime, os
+          from zoneinfo import ZoneInfo
+          now = datetime.datetime.now(ZoneInfo("America/Toronto"))
+          force = os.environ.get("FORCE_SEND", "false").lower() == "true"
+          run = force
+          if not run:
+              cur = now.hour * 60 + now.minute
+              run = any(abs(cur - (h * 60 + m)) <= 75 for h, m in ((10, 15), (16, 30)))
+          print(f"多伦多时间 {now:%Y-%m-%d %H:%M}，需要运行={run}")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
+              f.write(f"run_needed={'true' if run else 'false'}\n")
+          PY
+
       - name: 设置Python环境
+        if: steps.timecheck.outputs.run_needed == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: "pip"   # 缓存依赖包，加快"跳过型"运行的速度，省Actions分钟数
 
       - name: 安装依赖
+        if: steps.timecheck.outputs.run_needed == 'true'
         run: pip install -r requirements.txt
 
       - name: 运行期权报告脚本(非目标时段/今天已发送过会自动跳过，不发送)
+        if: steps.timecheck.outputs.run_needed == 'true'
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -51,6 +75,7 @@ jobs:
         run: python src/options_report.py
 
       - name: 保存数据快照/发送记录(没有实际变化时这一步不会产生新提交)
+        if: steps.timecheck.outputs.run_needed == 'true'
         run: |
           git config user.name "options-report-bot"
           git config user.email "options-report-bot@users.noreply.github.com"
