@@ -7,7 +7,7 @@ on:
     # 实测发现：即使是整点触发，早上那几次尝试也可能被大幅延迟(观察到延迟
     # 超过60分钟的情况)，所以这里改成"从UTC 11点到23点，每小时连续触发"，
     # 不再分早晚两段留空档，给10:30和16:30两个目标时间各自留出更多次
-    # 独立的备份尝试机会。
+    # 独立的备份尝试机会。脚本内部按多伦多 9:45/16:30 判断是否真正发送。
     - cron: "0 11-23 * * 1-5"
   workflow_dispatch:      # 允许你在GitHub网页上手动点击"Run workflow"立即测试
     inputs:
@@ -44,6 +44,9 @@ jobs:
       - name: 运行期权报告脚本(非目标时段/今天已发送过会自动跳过，不发送)
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+          LLM_ENABLED: ${{ vars.LLM_ENABLED }}
           FORCE_SEND: ${{ github.event.inputs.force_send }}
         run: python src/options_report.py
 
@@ -51,6 +54,6 @@ jobs:
         run: |
           git config user.name "options-report-bot"
           git config user.email "options-report-bot@users.noreply.github.com"
-          git add data/history
+          git add data/history data/analytics
           git diff --cached --quiet || git commit -m "更新期权数据快照 $(date -u +'%Y-%m-%d %H:%M')"
           git push
