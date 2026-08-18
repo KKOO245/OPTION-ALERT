@@ -9,6 +9,7 @@ GitHub Actions 每小时触发一次，脚本自行判断是否命中目标时�
 数据：CBOE 官方延迟期权链（主源）+ yfinance（兜底），
 指标：P/C、Max Pain、ATM IV、IV Rank、偏度、期限结构、预期波动、
       OI 集中带、Greeks 敞口、异动评分、OI 增仓。
+日历：周二/周四早报附带本周宏观日历 + 当周重要公司财报。
 分析：规则版（永远可用）+ 可选 AI 深度分析（OPENAI_API_KEY，失败自动退回规则版）。
 
 正常情况下你不需要改这个文件，只需要改 config/tickers.txt。
@@ -23,7 +24,9 @@ import data_fetcher as fetcher
 import metrics as metrics_mod
 import storage
 from analysis import appendix_line, build_report, build_ticker_section
+from calendars import build_calendar_sections
 from discord_sender import send_discord_message
+from fear_greed import fetch_fear_greed, format_fear_greed
 from llm_analyst import generate_deep_analysis
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -116,8 +119,8 @@ def load_tickers():
 
 
 # ---------- 市场背景（SPY + VIX） ----------
-def market_context():
-    spy, _ = None, None
+def market_context(include_fear_greed=False):
+    spy = None
     vix = None
     try:
         spy, _ = fetcher.fetch_spot("SPY")
@@ -132,6 +135,11 @@ def market_context():
         parts.append(f"SPY ${spy:,.2f}")
     if vix is not None:
         parts.append(f"VIX {vix:.2f}")
+    if include_fear_greed:
+        fg = fetch_fear_greed()
+        fg_text = format_fear_greed(fg)
+        if fg_text:
+            parts.append(fg_text)
     return "市场背景： " + " ｜ ".join(parts) if parts else None
 
 
@@ -174,13 +182,16 @@ def _compact(ticker, m, price, prev_close, rank, source):
     }
 
 
-def build_llm_payload(date_str, session, market_line, summaries):
-    return json.dumps({
+def build_llm_payload(date_str, session, market_line, summaries, calendar_sections=None):
+    payload = {
         "date": date_str,
         "session": session,
         "market_context": market_line,
         "tickers": summaries,
-    }, ensure_ascii=False, default=str)
+    }
+    if calendar_sections:
+        payload["calendar"] = calendar_sections
+    return json.dumps(payload, ensure_ascii=False, default=str)
 
 
 # ---------- 主流程 ----------
@@ -248,8 +259,13 @@ def main():
         print(f"「{session_name}」本次所有 ticker 都未能获取到有效数据，跳过发送，留给下一次重试。")
         return
 
-    market_line = market_context()
-    payload = build_llm_payload(report_date, session_name, market_line, summaries)
+    market_line = market_context(include_fear_greed=(session_name == "早报"))
+    calendar_sections = None
+    if session_name == "早报" and now.weekday() in (1, 3):  # 周二/周四
+        calendar_sections = build_calendar_sections(now)
+
+    payload = build_llm_payload(report_date, session_name, market_line, summaries,
+                                calendar_sections)
     deep_analysis = None
     if os.environ.get("LLM_ENABLED", "true").lower() == "true":
         deep_analysis = generate_deep_analysis(payload)
@@ -257,6 +273,7 @@ def main():
     report = build_report(
         report_date, session_name, ticker_sections,
         deep_analysis, market_line, appendix, DISCLAIMER,
+        calendar_sections=calendar_sections,
     )
 
     dry_run = os.environ.get("REPORT_DRY_RUN", "false").lower() == "true"

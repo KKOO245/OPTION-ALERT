@@ -7,6 +7,7 @@ P/C 比率、Max Pain、ATM IV、IV Rank、期限结构、25Δ 偏度、
 预期波动、OI 集中带、Greeks 敞口、异动评分、OI 增仓。
 """
 
+import datetime
 import math
 
 import pandas as pd
@@ -32,8 +33,6 @@ def _ratios(subset):
 
 
 def _days(exp_str):
-    import datetime
-
     exp = datetime.datetime.strptime(exp_str, "%Y-%m-%d").date()
     return (exp - datetime.date.today()).days
 
@@ -224,7 +223,7 @@ def surge_rows(surge_df):
 
 
 def iv_rank(atm_iv, history):
-    """当前 ATM IV 在近 250 个交易日序列中的百分位；历史不足 20 个观察值时返回 None"""
+    """当前 ATM IV 在历史序列中的百分位；历史不足 20 个观察值时返回 None"""
     if atm_iv is None or len(history) < 20:
         return None
     below = sum(1 for x in history if x <= atm_iv)
@@ -263,7 +262,6 @@ def compute_metrics(contracts, spot, prev=None,
     surge = surge_rows(surge_df)
 
     return {
-        "ticker": df.iloc[0].get("ticker") if "ticker" in df.columns else None,
         "near_exp": near_exp,
         "far_exp": far_exp,
         "pcr_vol_near": pcr_vol_near,

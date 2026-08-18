@@ -223,10 +223,13 @@ def market_context_line(spy_price, vix_price):
 
 
 def build_report(date_str, session, ticker_sections, deep_analysis,
-                 market_line, appendix_lines, disclaimer):
+                 market_line, appendix_lines, disclaimer, calendar_sections=None):
     parts = [f"# 📊 期权{session} — {date_str}"]
     if market_line:
         parts.append(market_line)
+    if calendar_sections:
+        parts.append("")
+        parts += calendar_sections
     if deep_analysis:
         parts.append("")
         parts.append("## 🧠 AI 深度分析")
