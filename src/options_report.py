@@ -119,6 +119,8 @@ def load_tickers():
             if not line or line.startswith("#"):
                 continue
             tickers.append(line.upper())
+    if len(tickers) > 20:
+        print(f"[警告] ticker 数量 {len(tickers)} 超过 20 个上限：仓库体积与抓取频率会显著上升，请精简 config/tickers.txt")
     return tickers
 
 

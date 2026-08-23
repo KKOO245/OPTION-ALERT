@@ -33,6 +33,7 @@ MODULES = [
     "test_gate",
     "test_annotations",
     "test_report_format",
+    "test_send",
     "test_validation",
     "test_e2e_pipeline",
 ]

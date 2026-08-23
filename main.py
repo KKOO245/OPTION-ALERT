@@ -23,6 +23,8 @@ import argparse
 import csv
 import json
 import sys
+import time
+import urllib.error
 import urllib.request
 from datetime import date, datetime
 from pathlib import Path
@@ -590,27 +592,47 @@ def cmd_regime_map(args) -> int:
     return 0
 
 
-def _discord_send(webhook: str, text: str) -> None:
-    """发送到 Discord webhook，单条超 1900 字自动按行切分。"""
+def _chunk_text(text: str, limit: int = 1900) -> list:
+    """按行切分；单行超限时硬切，保证每条 ≤ limit。"""
     chunks = []
     current = []
     size = 0
     for line in text.split("\n"):
-        if size + len(line) + 1 > 1900 and current:
+        if len(line) > limit:
+            if current:
+                chunks.append("\n".join(current))
+                current, size = [], 0
+            for i in range(0, len(line), limit):
+                chunks.append(line[i:i + limit])
+            continue
+        if size + len(line) + 1 > limit and current:
             chunks.append("\n".join(current))
             current, size = [], 0
         current.append(line)
         size += len(line) + 1
     if current:
         chunks.append("\n".join(current))
-    for chunk in chunks:
+    return chunks
+
+
+def _discord_send(webhook: str, text: str) -> None:
+    """发送到 Discord webhook：切分 + 429 重试一次。"""
+    for chunk in _chunk_text(text):
         payload = json.dumps({"content": chunk}).encode("utf-8")
         req = urllib.request.Request(
             webhook, data=payload, headers={"Content-Type": "application/json"}
         )
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            if resp.status >= 300:
-                raise RuntimeError(f"Discord webhook HTTP {resp.status}")
+        for attempt in (1, 2):
+            try:
+                with urllib.request.urlopen(req, timeout=30) as resp:
+                    if resp.status >= 300:
+                        raise RuntimeError(f"Discord webhook HTTP {resp.status}")
+                break
+            except urllib.error.HTTPError as e:
+                if e.code == 429 and attempt == 1:
+                    time.sleep(1.5)
+                    continue
+                raise
 
 
 def cmd_send_report(args) -> int:

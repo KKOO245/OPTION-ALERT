@@ -36,6 +36,7 @@ jobs:
           fi
 
       - name: 上传 Releases 归档
+        id: release
         if: env.HAS_DATA == 'true'
         uses: softprops/action-gh-release@v2
         with:
@@ -44,6 +45,24 @@ jobs:
           files: archive/data-${{ env.PREV_MONTH }}.zip
           fail_on_unmatched_files: true
 
-      # 注意：当前阶段只归档、不删除仓库里的快照。
-      # 等仓库接近 1GB 建议线（按当前体量要几年）再启用"清理已归档旧目录"，
-      # 且清理前必须确认 Release 附件已存在、本地/云盘已拉取。
+      - name: 清理已归档的旧每日快照（保留最近 3 个月；release 上传成功后才执行）
+        if: steps.release.outputs.url != '' && env.HAS_DATA == 'true'
+        run: |
+          CUTOFF=$(date -u -d "3 months ago" +%Y-%m)
+          echo "保留 >= ${CUTOFF}，删除更早的 analytics/daily 目录"
+          for d in analytics/daily/*/; do
+            [ -d "$d" ] || continue
+            name=$(basename "$d")
+            if [[ "$name" < "$CUTOFF" ]]; then
+              echo "删除已归档目录: $d"
+              rm -rf "$d"
+            fi
+          done
+          git config user.name "options-report-bot"
+          git config user.email "options-report-bot@users.noreply.github.com"
+          git add analytics/daily
+          git diff --cached --quiet || git commit -m "清理已归档快照 $(date -u +'%Y-%m-%d')"
+          git push
+
+      # 安全边界：只清理 analytics/daily；thesis/episodes/state 永不裁剪。
+      # 本地镜像会同步删除（git pull），因此每月提醒"下载 Releases 归档"不可跳过。

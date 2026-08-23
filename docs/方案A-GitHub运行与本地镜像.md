@@ -45,6 +45,10 @@ git pull
 
 每天多伦多时间 17:30-18:30 检查 `data/history/_sent_log.json`，若当天早报/晚报缺发送记录，会通过 Discord webhook 发告警。
 
-## 月度归档（当前只归档、不删除）
+## 月度归档（v1.1：归档 + 清理，保留最近 3 个月）
 
-`monthly-archive.yml` 每月 1 日凌晨运行：把上个月 `analytics/daily/` 打包成 `data-YYYY-MM.zip` 上传到 Releases（单文件 <2GB、总量不限、不计仓库配额）。多伦多时间对应上个月最后一个晚上，因此每月第一个工作日的"下载归档"提醒时，归档已经存在。**当前阶段不删除仓库里的旧快照**——按每天几 MB 的量，仓库几年内都不会接近 1GB 建议线；等真要清理时再启用删除逻辑，且必须确认 Release 附件存在、本地/云盘已拉取。
+`monthly-archive.yml` 每月 1 日凌晨运行：把上个月 `analytics/daily/` 打包成 `data-YYYY-MM.zip` 上传到 Releases（单文件 <2GB、总量不限、不计仓库配额）；**上传成功后才**清理 `analytics/daily/` 中早于截止月（约保留最近 4 个自然月，含当月）的旧目录。`thesis/ episodes/ state/` 永不裁剪；本地镜像会随 `git pull` 同步删除旧目录，因此每月"下载 Releases 归档"的提醒不可跳过。
+
+**清理不影响分析**：验证层（Base Rate/Lift/CI/Episode）使用 `thesis/` 与 `episodes/`，趋势层（IV Rank/动量/期限结构）使用 `data/analytics/*.csv`——这两类数据**永不清理**，全量累计。被清理的只有"超过 3 个月的每日原始快照 JSON"，它们已按月归档到 Releases，回测任何历史月份时下载解压即可。即：**先归档、后清理，统计分析与全量历史回测不受影响。**
+
+**监控上限**：ticker 数量上限 20（`config/tickers.txt` 超限会打印警告）。按 20 个标的、每天 2 份快照估算，仓库 git 历史主要增长来自 `data/history` 全链覆盖提交；若接近 1GB 建议线，再启用"data/history 只保留最近 N 天 + 更早进 Releases"。

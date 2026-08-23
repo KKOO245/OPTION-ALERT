@@ -111,7 +111,7 @@ jobs:
           while read -r T; do
             python main.py render-morning --ticker "$T" --date "$DATE" --out "data/reports/${DATE}_morning_${T}.md" || true
             python main.py render-evening --ticker "$T" --date "$DATE" --out "data/reports/${DATE}_evening_${T}.md" || true
-          done < <(grep -v '^\s*#' config/tickers.txt)
+          done < <(grep -vE '^\s*(#|$)' config/tickers.txt)
 
       - name: 发送新格式晨/晚报到 Discord（P0.3）
         if: always() && steps.timecheck.outputs.run_needed == 'true' && env.USE_NEW_RENDERER == 'true'
@@ -151,7 +151,8 @@ jobs:
             while read -r T; do
               python main.py send-report --session "$S" --ticker "$T" --date "$DATE" \
                 --webhook-url "$DISCORD_WEBHOOK_URL" || echo "[发送失败] $S $T"
-            done < <(grep -v '^\s*#' config/tickers.txt)
+              sleep 1  # Discord webhook 限速 30 条/分钟，防 429
+            done < <(grep -vE '^\s*(#|$)' config/tickers.txt)
           done
 
       - name: 保存数据快照/事件/发送记录(没有实际变化时这一步不会产生新提交)
