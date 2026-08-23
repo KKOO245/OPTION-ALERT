@@ -139,6 +139,7 @@ jobs:
             echo "非发送窗口，跳过"
             exit 0
           fi
+          echo "本次发送会话: [$SESSIONS]"
           DATE=$(python3 - <<'PY'
           import datetime
           from zoneinfo import ZoneInfo
@@ -152,6 +153,7 @@ jobs:
               sleep 1  # Discord webhook 限速 30 条/分钟，防 429
             done < <(grep -vE '^\s*(#|$)' config/tickers.txt)
           done
+          echo "发送步骤完成"
 
       - name: 保存数据快照/事件/发送记录(没有实际变化时这一步不会产生新提交)
         # always(): 即使事件引擎某一步失败，也先把当天已抓取的数据提交，避免丢失

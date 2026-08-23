@@ -617,6 +617,16 @@ def _chunk_text(text: str, limit: int = 1900) -> list:
 
 def _discord_send(webhook: str, text: str) -> None:
     """发送到 Discord webhook：切分 + 429 重试一次。"""
+    webhook = (webhook or "").strip()
+    if not webhook:
+        raise RuntimeError("webhook URL 为空")
+    if not text or not text.strip():
+        raise RuntimeError("消息内容为空，拒绝发送")
+    try:
+        webhook_id = webhook.rstrip("/").rsplit("/", 2)[-2]
+    except IndexError:
+        webhook_id = "?"
+    print(f"webhook id: {webhook_id}")
     for chunk in _chunk_text(text):
         payload = json.dumps({"content": chunk}).encode("utf-8")
         req = urllib.request.Request(
