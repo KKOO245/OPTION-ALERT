@@ -151,6 +151,7 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--date")
     sp.add_argument("--webhook-url", default="")
     sp.add_argument("--dry-run", action="store_true", help="只打印不发送")
+    sp.add_argument("--verify", action="store_true", help="只验证 webhook 有效性并打印目标频道")
 
     sp = sub.add_parser("audit", help="哈希链完整性 + 每日触发审计")
     return p
@@ -652,6 +653,24 @@ def cmd_send_report(args) -> int:
     thresholds = yaml_mini.load(Path(args.config_root) / "thresholds.yaml")
     ticker = args.ticker.upper()
     date_str = args.date or (snaps.load_latest() or {}).get("created_at", "")[:10]
+
+    if args.verify:
+        webhook = (args.webhook_url or "").strip()
+        if not webhook:
+            print("webhook URL 为空（secret 未设置？）")
+            return 1
+        try:
+            req = urllib.request.Request(webhook)
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                info = json.loads(resp.read().decode("utf-8"))
+            print(
+                f"webhook 有效: id={info.get('id')} name={info.get('name')!r} "
+                f"channel_id={info.get('channel_id')}"
+            )
+            return 0
+        except Exception as e:
+            print(f"webhook 验证失败: {type(e).__name__}: {e}")
+            return 1
 
     def _load_or_latest(session: str):
         try:

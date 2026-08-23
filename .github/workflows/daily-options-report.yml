@@ -146,10 +146,13 @@ jobs:
           print(datetime.datetime.now(ZoneInfo("America/Toronto")).date().isoformat())
           PY
           )
+          echo "== 验证 webhook =="
+          python main.py send-report --session evening --ticker SOXX --date "$DATE" \
+            --webhook-url "$DISCORD_WEBHOOK_URL" --verify || exit 1
           for S in $SESSIONS; do
             while read -r T; do
               python main.py send-report --session "$S" --ticker "$T" --date "$DATE" \
-                --webhook-url "$DISCORD_WEBHOOK_URL" || echo "[发送失败] $S $T"
+                --webhook-url "$DISCORD_WEBHOOK_URL" || { echo "[发送失败] $S $T"; exit 1; }
               sleep 1  # Discord webhook 限速 30 条/分钟，防 429
             done < <(grep -vE '^\s*(#|$)' config/tickers.txt)
           done
