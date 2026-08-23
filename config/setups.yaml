@@ -1,0 +1,176 @@
+# OPTION-ALERT 第一代 Setup（冻结 v1）
+# 规则：
+#   1. Core = 最小充分条件集（1-3 条；第 4 条禁止；1 条足够就不用 2 条）。
+#   2. 一 Setup 一 Primary Target；RV/MFE/路径只进 secondary attribution。
+#   3. 任何条件/Target/horizon 修改 = 新版本；触发规则版本随事件存储。
+#   4. 字段路径用点号，如 regime.trend / location.price_location。
+schema_version: setups_v1
+rule_freeze_date: "2026-08-22"
+
+setups:
+  - setup_id: A
+    name: Trend + Structural Amplification
+    version: v1
+    trigger_rule_version: A_v1
+    confirmation_rule_version: A_conf_v1
+    target_version: targets_v1
+    complexity_budget:
+      min: 1
+      max: 3
+    core:
+      - field: regime.trend
+        op: in
+        value:
+          - DOWN
+      - field: location.price_location
+        op: in
+        value:
+          - below_flip
+          - near_put_concentration
+      - field: regime.gamma
+        op: eq
+        value: NEGATIVE
+    confirmation:
+      - name: iv_surge
+        field: momentum.iv_momentum
+        op: gt
+        value: 0
+      - name: skew_surge
+        field: momentum.skew_momentum
+        op: gt
+        value: 0
+      - name: volume_confirmation
+        field: momentum.volume_ratio
+        op: gt
+        value: 1.0
+      - name: put_buy_confirmation
+        field: confirmation.put_buy_flow
+        op: is_true
+    primary_target:
+      metric: 3D_close_return
+      direction: "<="
+      threshold: -0.02
+      horizon: 3D
+      evaluation_rule: close_to_close
+    secondary_attribution:
+      - mfe
+      - mdd
+      - rv
+      - path
+    initial_position: Core 候选
+    mechanism_note: 趋势下行 + 价格处于结构关键位下方 + 负Gamma区域；若继续破位，做市商对冲可能放大波动（未验证研究层，不参与方向决策）。
+
+  - setup_id: B1
+    name: IV Momentum (rapid rise)
+    version: v1
+    trigger_rule_version: B1_v1
+    confirmation_rule_version: B1_conf_v1
+    target_version: targets_v1
+    complexity_budget:
+      min: 1
+      max: 3
+    core:
+      - field: momentum.iv_momentum
+        op: gt
+        value: 0.5
+    confirmation:
+      - name: term_structure_inversion
+        field: momentum.term_structure_momentum
+        op: lt
+        value: 0
+      - name: skew_rising
+        field: momentum.skew_momentum
+        op: gt
+        value: 0
+      - name: volume_confirmation
+        field: momentum.volume_ratio
+        op: gt
+        value: 1.0
+    primary_target:
+      metric: 5D_rv_expansion
+      direction: ">="
+      threshold: 1.25
+      horizon: 5D
+      evaluation_rule: rv_ratio
+    secondary_attribution:
+      - mfe
+      - mdd
+      - rv
+      - path
+    initial_position: 分别验证
+    mechanism_note: IV 快速上升 = 市场在为近期不确定性买单；验证未来5日已实现波动是否相对扩张（与 B2 符号相反，拆开测）。
+
+  - setup_id: B2
+    name: IV Level (high)
+    version: v1
+    trigger_rule_version: B2_v1
+    confirmation_rule_version: B2_conf_v1
+    target_version: targets_v1
+    complexity_budget:
+      min: 1
+      max: 3
+    core:
+      - field: momentum.iv_level
+        op: eq
+        value: HIGH
+    confirmation:
+      - name: iv_momentum_flat_or_down
+        field: momentum.iv_momentum
+        op: le
+        value: 0
+      - name: skew_not_rising
+        field: momentum.skew_momentum
+        op: le
+        value: 0
+    primary_target:
+      metric: 5D_rv_contraction
+      direction: "<="
+      threshold: 0.80
+      horizon: 5D
+      evaluation_rule: rv_ratio
+    secondary_attribution:
+      - mfe
+      - mdd
+      - rv
+      - path
+    initial_position: 分别验证
+    mechanism_note: IV 处于高位 = 恐慌定价已经较贵；验证未来5日已实现波动是否收缩（均值回复方向，与 B1 符号相反）。
+
+  - setup_id: C
+    name: Price-Options Divergence
+    version: v1
+    trigger_rule_version: C_v1
+    confirmation_rule_version: C_conf_v1
+    target_version: targets_v1
+    complexity_budget:
+      min: 1
+      max: 3
+    core:
+      - field: price_extreme
+        op: in
+        value:
+          - NEW_HIGH
+          - NEW_LOW
+      - field: protection_divergence
+        op: is_true
+    confirmation:
+      - name: volume_confirmation
+        field: momentum.volume_ratio
+        op: gt
+        value: 1.0
+      - name: put_buy_confirmation
+        field: confirmation.put_buy_flow
+        op: is_true
+    primary_target:
+      metric: 3D_mdd
+      direction: ">="
+      threshold: 0.03
+      horizon: 3D
+      evaluation_rule: mdd_path
+    secondary_attribution:
+      - mfe
+      - mdd
+      - rv
+      - path
+    initial_position: Experimental
+    mechanism_note: 价格创新高/低、但期权保护需求方向相反（如新高时Put需求上升）；验证未来3日尾部回撤风险。

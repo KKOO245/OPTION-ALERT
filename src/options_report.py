@@ -18,6 +18,7 @@ GitHub Actions 每小时触发一次，脚本自行判断是否命中目标时�
 import datetime
 import json
 import os
+import sys
 from zoneinfo import ZoneInfo
 
 import data_fetcher as fetcher
@@ -28,8 +29,11 @@ from calendars import build_calendar_sections
 from discord_sender import send_discord_message
 from fear_greed import fetch_fear_greed, format_fear_greed
 from llm_analyst import generate_deep_analysis
+from reminders import evening_reminder_lines
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
 TICKERS_FILE = os.path.join(BASE_DIR, "config", "tickers.txt")
 
 FETCH_WINDOW_DAYS = 40    # 抓取期权链的窗口（覆盖到月度到期日）
@@ -179,6 +183,14 @@ def _compact(ticker, m, price, prev_close, rank, source):
         "oi_concentration": m.get("oi_concentration"),
         "top_unusual": m.get("top_unusual"),
         "top_surge": m.get("top_surge"),
+        "structure": {k: (m.get("structure") or {}).get(k) for k in (
+            "net_gex", "gamma_flip", "call_wall", "put_wall",
+            "top_gamma", "net_vanna", "net_charm",
+        )},
+        "structure_near_flip": (m.get("structure_near") or {}).get("gamma_flip"),
+        "structure_monthly_flip": (m.get("structure_monthly") or {}).get("gamma_flip"),
+        "new_gex": m.get("new_gex"),
+        "new_delta": m.get("new_delta"),
     }
 
 
@@ -233,6 +245,23 @@ def main():
                 min_volume=MIN_VOLUME, vol_oi_min=VOL_OI_MIN, top_n=TOP_N,
             )
             m["price"] = price
+            m["prev_close"] = prev_close
+            try:
+                # 方案 A：把当天真实快照写入引擎（供 detect/事件库使用）
+                from engine.snapshot_builder import build_snapshot, load_analytics_rows
+                from engine.snapshot import SnapshotStore
+
+                hist_rows = load_analytics_rows(
+                    os.path.join(storage.ANALYTICS_DIR, f"{ticker}.csv")
+                )
+                snap = build_snapshot(
+                    ticker, session_name, m, spot,
+                    now.isoformat(timespec="seconds"),
+                    analytics_rows=hist_rows, source=source,
+                )
+                SnapshotStore(BASE_DIR).store(snap)
+            except Exception as e:
+                print(f"[警告] {ticker} 快照入库失败（不影响报告发送）: {e}")
             history = storage.load_iv_history(ticker)
             rank = metrics_mod.iv_rank(m.get("atm_iv_near"), history)
             morning_iv = None
@@ -275,6 +304,10 @@ def main():
         deep_analysis, market_line, appendix, DISCLAIMER,
         calendar_sections=calendar_sections,
     )
+    if session_name == "晚报":
+        reminder_lines = evening_reminder_lines(now)
+        if reminder_lines:
+            report = report + "\n\n---\n\n" + "\n\n".join(reminder_lines)
 
     dry_run = os.environ.get("REPORT_DRY_RUN", "false").lower() == "true"
     webhook_url = os.environ.get("DISCORD_WEBHOOK_URL", "")

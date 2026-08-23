@@ -1,0 +1,41 @@
+# OPTION-ALERT 监控宇宙（冻结 v1）
+# 原则：Setup 参数跨标的全局统一，标的只作为事件源、不作为调参维度；
+#       跨标的合并统计仅作稳健性参考，必须标注"非独立样本"。
+schema_version: universe_v1
+rule_freeze_date: "2026-08-22"
+timezone: America/Toronto
+
+tickers:
+  - symbol: SOXX
+    asset_type: ETF
+    name: 半导体板块ETF
+  - symbol: SMH
+    asset_type: ETF
+    name: 半导体板块ETF（VanEck）
+  - symbol: NVDA
+    asset_type: STOCK
+    name: 英伟达
+  - symbol: AMD
+    asset_type: STOCK
+    name: 超威半导体
+  - symbol: AVGO
+    asset_type: STOCK
+    name: 博通
+  - symbol: MU
+    asset_type: STOCK
+    name: 美光
+  - symbol: QCOM
+    asset_type: STOCK
+    name: 高通
+  - symbol: INTC
+    asset_type: STOCK
+    name: 英特尔
+
+benchmarks:
+  base: SPY
+  sector: XLK
+  peer: SMH
+
+data_sources:
+  primary: cboe
+  fallback: yfinance

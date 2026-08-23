@@ -1,0 +1,28 @@
+# OPTION-ALERT Regime 定义（冻结 v1）
+# Regime 由指标层在快照时点机械计算并写入 snapshot.regime；
+# 引擎只消费、不解释；regime 版本随事件存储。
+schema_version: regimes_v1
+rule_freeze_date: "2026-08-22"
+regime_version: regimes_v1
+
+regimes:
+  gamma:
+    NEGATIVE: 净Gamma为负（模型层估算，归"未验证研究层"）
+    POSITIVE: 净Gamma为正（模型层估算，归"未验证研究层"）
+    MIXED:    正负并存、无单一主导
+    UNKNOWN:  数据不足或无法判定
+  trend:
+    UP:    趋势向上
+    DOWN:  趋势向下
+    RANGE: 区间震荡
+    UNKNOWN: 数据不足或无法判定
+  iv_level:
+    HIGH:    IV处于自身历史高位（依赖IV Rank历史积累，需数据充分性标签）
+    NORMAL:  IV处于自身历史中位
+    LOW:     IV处于自身历史低位
+    UNKNOWN: 数据不足或无法判定
+
+transition_rules:
+  gamma_switch: 净Gamma符号切换当日记录 transition=SWITCH，并重计 regime.age=0
+  trend_break:  价格收盘突破关键位且动量确认时记录 transition=BREAKOUT/BREAKDOWN
+  age_rule:     regime.age 从触发日算起连续保持同一状态的自然日/交易日计数

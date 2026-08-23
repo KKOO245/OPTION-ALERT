@@ -1,0 +1,49 @@
+name: 月度数据归档
+
+on:
+  schedule:
+    # 每月 1 日 01:30 UTC = 多伦多前一日 20:30/21:30 左右。
+    # 这样每月第一个工作日晚报提醒"下载归档"时，归档已经上传完毕。
+    - cron: "30 1 1 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 拉取仓库代码
+        uses: actions/checkout@v4
+
+      - name: 计算上个月份
+        run: |
+          PREV=$(date -u -d "last month" +%Y-%m)
+          echo "PREV_MONTH=$PREV" >> "$GITHUB_ENV"
+          echo "归档月份: $PREV"
+
+      - name: 打包上个月每日快照
+        run: |
+          mkdir -p archive
+          if ls -d "analytics/daily/${PREV_MONTH}-"* >/dev/null 2>&1; then
+            zip -qr "archive/data-${PREV_MONTH}.zip" "analytics/daily/${PREV_MONTH}-"*
+            echo "HAS_DATA=true" >> "$GITHUB_ENV"
+            echo "已打包 data-${PREV_MONTH}.zip"
+          else
+            echo "HAS_DATA=false" >> "$GITHUB_ENV"
+            echo "该月没有快照目录，跳过"
+          fi
+
+      - name: 上传 Releases 归档
+        if: env.HAS_DATA == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: data-${{ env.PREV_MONTH }}
+          name: 数据归档 ${{ env.PREV_MONTH }}
+          files: archive/data-${{ env.PREV_MONTH }}.zip
+          fail_on_unmatched_files: true
+
+      # 注意：当前阶段只归档、不删除仓库里的快照。
+      # 等仓库接近 1GB 建议线（按当前体量要几年）再启用"清理已归档旧目录"，
+      # 且清理前必须确认 Release 附件已存在、本地/云盘已拉取。

@@ -126,7 +126,9 @@ def rules_text(metrics, iv_rank_val, session, morning_iv=None):
             f"→ 最大异动：{kind} {_fmt(u['strike'], 0)} 行权价 {u['expiration']} 到期，"
             f"今量 {u['volume']:,} 张{vol_ratio_txt}"
             + (f"（量/OI {u['vol_oi_ratio']:.1f}）" if u.get("vol_oi_ratio") else "")
-            + f"{oi_txt}，值得跟踪。"
+            + f"{oi_txt}"
+            + (f"，{u['flow']}" if u.get("flow") in ("开仓", "平仓", "换手", "新") else "")
+            + "，值得跟踪。"
         )
     elif m.get("has_surge_data"):
         lines.append("→ 本次没有观察到明显异动成交。")
@@ -181,7 +183,7 @@ def unusual_table(metrics):
     col_map = {
         "type": "类型", "strike": "行权价", "expiration": "到期", "volume": "今量", "volume_prev": "昨量",
         "volume_ratio": "放量×", "oi_prev": "OI前", "open_interest": "OI现",
-        "oi_change_pct": "OI增%", "premium": "成交额($)",
+        "oi_change_pct": "OI增%", "premium": "成交额($)", "flow": "流向",
     }
     return _table(rows, col_map, "🔺 异动成交 Top（含前后对比）")
 
@@ -201,6 +203,146 @@ def _oi_top_table(calls, puts, title_prefix, include_exp=False):
     return t1 + "\n" + t2
 
 
+def structure_block(metrics, spot):
+    """🔧 市场结构数字块（做市商定位）"""
+    structure = metrics.get("structure")
+    if not structure or spot is None:
+        return None
+    s = structure
+    near = metrics.get("structure_near") or {}
+    monthly = metrics.get("structure_monthly") or {}
+    ng = s.get("net_gex")
+    ng_txt = f"{ng:+,.0f}" if ng is not None else "N/A"
+    dg = -ng if ng is not None else None
+    dg_txt = f"{dg:+,.0f}" if dg is not None else "N/A"
+    nflip = _fmt(near.get("gamma_flip"), 0) if near.get("gamma_flip") is not None else "N/A"
+    mflip = _fmt(monthly.get("gamma_flip"), 0) if monthly.get("gamma_flip") is not None else "N/A"
+    vanna_txt = f"{s['net_vanna']:+,.0f}" if s.get("net_vanna") is not None else "N/A"
+    charm_txt = f"{s['net_charm']:+,.0f}" if s.get("net_charm") is not None else "N/A"
+    tg = " / ".join(
+        f"{t['strike']:.0f}({'正' if t['gex'] > 0 else '负'})"
+        for t in (s.get("top_gamma") or [])
+    ) or "N/A"
+    cvt = _fmt(s.get("call_vol_top"), 0)
+    pvt = _fmt(s.get("put_vol_top"), 0)
+    ng2 = metrics.get("new_gex")
+    nd2 = metrics.get("new_delta")
+    ng2_txt = f"{ng2:+,.0f}" if ng2 is not None else "N/A"
+    nd2_txt = f"{nd2:+,.0f}" if nd2 is not None else "N/A"
+    line1 = " | ".join([
+        f"Call Wall {_fmt(s.get('call_wall'), 0)}",
+        f"Put Wall {_fmt(s.get('put_wall'), 0)}",
+        f"近周Flip {nflip}",
+        f"月度Flip {mflip}",
+        f"GEX失衡 {ng_txt}",
+        f"反推Dealer {dg_txt}",
+    ])
+    line2 = " | ".join([
+        f"Top Gamma {tg}",
+        f"今日GEX {ng2_txt}",
+        f"今日Δ {nd2_txt}",
+        f"Net Vanna {vanna_txt}",
+        f"Net Charm {charm_txt}",
+        f"量集中C/P {cvt}/{pvt}",
+    ])
+    return "```\n" + line1 + "\n" + line2 + "\n```"
+
+
+def structure_text(metrics, spot):
+    """🧭 市场结构解读：压力/支撑/Gamma区域/做市商对冲/短线倾向"""
+    structure = metrics.get("structure")
+    if not structure or spot is None:
+        return None
+    s = structure
+    near = metrics.get("structure_near") or {}
+    monthly = metrics.get("structure_monthly") or {}
+    lines = ["🧭 市场结构解读"]
+    mp = metrics.get("max_pain_near")
+    cw, pw, flip = s.get("call_wall"), s.get("put_wall"), s.get("gamma_flip")
+    nflip = near.get("gamma_flip")
+    mflip = monthly.get("gamma_flip")
+    ng, nd = s.get("net_gex"), metrics.get("net_delta_oi")
+
+    ups = [x for x in (cw, mp if mp and mp > spot else None,
+                       nflip if nflip and nflip > spot else None,
+                       mflip if mflip and mflip > spot else None) if x]
+    downs = [x for x in (pw, mp if mp and mp < spot else None,
+                         nflip if nflip and nflip < spot else None,
+                         mflip if mflip and mflip < spot else None) if x]
+    if ups:
+        lines.append(f"• 上方压力位：{_fmt(min(ups), 0)}（Call Wall {_fmt(cw, 0)}"
+                     + (f" / MaxPain {_fmt(mp, 0)}" if mp and mp > spot else "")
+                     + (f" / 近周Flip {_fmt(nflip, 0)}" if nflip and nflip > spot else "")
+                     + (f" / 月度Flip {_fmt(mflip, 0)}" if mflip and mflip > spot else "") + "）。")
+    if downs:
+        lines.append(f"• 下方支撑位：{_fmt(max(downs), 0)}（Put Wall {_fmt(pw, 0)}"
+                     + (f" / MaxPain {_fmt(mp, 0)}" if mp and mp < spot else "")
+                     + (f" / 近周Flip {_fmt(nflip, 0)}" if nflip and nflip < spot else "")
+                     + (f" / 月度Flip {_fmt(mflip, 0)}" if mflip and mflip < spot else "") + "）。")
+    if mp:
+        if mp > spot:
+            lines.append(f"• Max Pain {_fmt(mp, 0)} 位于现价上方，有向该处回拉的磁吸倾向。")
+        elif mp < spot:
+            lines.append(f"• Max Pain {_fmt(mp, 0)} 位于现价下方，有向该处回落的磁吸倾向。")
+        else:
+            lines.append("• Max Pain 与现价基本重合，磁吸作用中性。")
+
+    if nflip:
+        lines.append(
+            f"• Gamma 区域：近周主导切换位在 {_fmt(nflip, 0)}"
+            + (f"（月度 {_fmt(mflip, 0)}）" if mflip else "")
+            + "——其下 Put Gamma 主导、其上 Call Gamma 主导。"
+        )
+    elif ng is not None:
+        lines.append(
+            f"• Gamma 区域：近周无主导切换位（单边），全链 GEX 失衡 {ng:+,.0f}"
+            "（Put 侧主导 / Call 侧主导）。"
+        )
+    ng2 = metrics.get("new_gex")
+    nd2 = metrics.get("new_delta")
+    if ng2 is not None and nd2 is not None:
+        side = "看涨(Call)侧" if ng2 > 0 else ("看跌(Put)侧" if ng2 < 0 else "两侧均衡")
+        lines.append(
+            f"• 今日新增仓位：新增 GEX {ng2:+,.0f}、新增 Δ {nd2:+,.0f} 股——"
+            f"近两日资金在 {side} 加码。"
+        )
+    lines.append(
+        "• 做市商定位（按 OI 全为散户多头假设反推）：Put/Call Gamma 失衡说明做市商站在对手方——"
+        "价格回落到 Put 重仓区下方时，做市商买盘对冲增加（承接）；"
+        "反弹接近 Call 重仓区时卖盘对冲增加（压制）。OI 无法区分开平仓方向，此结论依赖假设。"
+    )
+    if nd is not None:
+        lines.append(
+            f"• 净 Delta 敞口（多头口径）{nd:+,.0f} 股：客户持仓整体"
+            f"{'偏空（put 权重高）' if nd < 0 else '偏多（call 权重高）'}；"
+            "做市商为反方，其对冲行为随价格与 IV 变化，方向需结合当日开平仓验证。"
+        )
+
+    bull = 0
+    if nd is not None:
+        bull += 1 if nd > 0 else -1
+    if ng2 is not None:
+        bull += 1 if ng2 > 0 else (-1 if ng2 < 0 else 0)
+    pcr = metrics.get("pcr_oi_all")
+    if pcr is not None:
+        bull += 1 if pcr < 0.9 else (-1 if pcr > 1.1 else 0)
+    skew = metrics.get("iv_skew_25")
+    if skew is not None:
+        bull += 1 if skew < -1 else (-1 if skew > 2 else 0)
+    verdict = ("结构性偏多" if bull >= 2 else "结构性偏空" if bull <= -2
+               else "中性偏多" if bull >= 1 else "中性偏空" if bull <= -1
+               else "中性（区间震荡）")
+    lines.append(f"• 短线倾向：{verdict}（Delta/PCR/偏度/今日GEX综合分 {bull:+d}）。")
+    invalids = [f"Put Wall {_fmt(pw, 0)}" if pw else None,
+                f"Flip {_fmt(flip, 0)}" if flip else None]
+    invalids = [x for x in invalids if x]
+    lines.append(
+        f"• 失效条件：跌破 {' / '.join(invalids) if invalids else '下方支撑'} 则多头结构转弱；"
+        f"站上 Call Wall {_fmt(cw, 0)} 才打开上方空间。"
+    )
+    return "\n".join(lines)
+
+
 def surge_table(metrics):
     rows = metrics.get("top_surge") or []
     col_map = {
@@ -216,6 +358,13 @@ def build_ticker_section(ticker, price, prev_close, metrics, iv_rank_val,
     parts.append(price_line(ticker, price, prev_close))
     parts.append("")
     parts.append("```\n" + metrics_block(metrics, iv_rank_val) + "\n```")
+    sb = structure_block(metrics, price)
+    if sb:
+        parts.append(sb)
+    st = structure_text(metrics, price)
+    if st:
+        parts.append(st)
+        parts.append("")
     parts.append("")
     parts.append(_oi_top_table(
         metrics.get("nearest_top_calls") or [],

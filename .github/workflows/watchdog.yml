@@ -1,0 +1,65 @@
+name: 报告漏发看门狗
+
+on:
+  schedule:
+    # 每小时触发，脚本内按多伦多时间判断 17:30-18:30 窗口（自动适应冬夏令时）
+    - cron: "0 20-23 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 拉取仓库代码
+        uses: actions/checkout@v4
+
+      - name: 检查今天两份报告是否已发送
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          python3 - <<'PY'
+          import datetime, json, os, urllib.request
+          from zoneinfo import ZoneInfo
+
+          now = datetime.datetime.now(ZoneInfo("America/Toronto"))
+          cur = now.hour * 60 + now.minute
+          # 只在 17:30-18:30 检查一次，避免整点重复告警
+          if not (17 * 60 + 30 <= cur <= 18 * 60 + 30):
+              print("非检查窗口，跳过")
+              raise SystemExit(0)
+
+          today = now.date().isoformat()
+          path = "data/history/_sent_log.json"
+          sessions = []
+          if os.path.exists(path):
+              try:
+                  log = json.load(open(path, encoding="utf-8"))
+                  if log.get("date") == today:
+                      sessions = log.get("sessions", [])
+              except Exception as e:
+                  print(f"读取发送记录失败: {e}")
+
+          missing = [s for s in ("早报", "晚报") if s not in sessions]
+          if not missing:
+              print(f"{today} 两份报告都已发送")
+              raise SystemExit(0)
+
+          msg = (f"⚠️ 报告漏发告警：{today} 多伦多时间已过 17:30，"
+                 f"但以下报告没有发送记录：{'、'.join(missing)}。"
+                 "请检查 GitHub Actions 运行日志。")
+          print(msg)
+          webhook = os.environ.get("DISCORD_WEBHOOK_URL", "")
+          if not webhook:
+              print("未配置 DISCORD_WEBHOOK_URL，无法发送告警")
+              raise SystemExit(1)
+          payload = json.dumps({"content": msg}).encode("utf-8")
+          req = urllib.request.Request(
+              webhook, data=payload,
+              headers={"Content-Type": "application/json"},
+          )
+          with urllib.request.urlopen(req, timeout=30) as resp:
+              print(f"告警已发送: HTTP {resp.status}")
+          PY

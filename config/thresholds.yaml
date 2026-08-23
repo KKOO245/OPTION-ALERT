@@ -1,0 +1,41 @@
+# OPTION-ALERT 全局阈值（冻结 v1）
+# 所有窗口/规则/权重/门槛在数据积累前预提交；事后不可放宽。
+schema_version: thresholds_v1
+rule_freeze_date: "2026-08-22"
+
+oos_lift_min_pp: 5
+ablation_incremental_min_pp: 5
+
+ci:
+  method: wilson
+  level: 0.95
+
+sample_gates:
+  experimental_n: 10
+  candidate_n: 10
+  core_n: 20
+  validated_n: 50
+  established_n: 60
+  regime_min_count_for_oos: 2
+
+episode:
+  clustering_rule: episode_v1
+  max_gap_trading_days: 1
+  representative_event: first
+  outcome_anchor: episode_start
+
+invalidated_ratio_alert: 0.30
+
+data_sufficiency:
+  rank_obs:
+    preliminary: 20
+    developing: 60
+    established: 250
+  setup_episodes:
+    preliminary: 10
+    developing: 30
+    established: 60
+  calibration_min_evaluated: 30
+  conditional_distribution_min_episodes: 20
+  move_surprise_min_occurrences: 10
+  dynamic_trend_min_trading_days: 5

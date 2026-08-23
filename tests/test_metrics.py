@@ -3,6 +3,7 @@ import sys
 import os
 
 import pandas as pd
+from vollib.black_scholes.greeks import analytical as vollib_greeks
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
@@ -137,9 +138,56 @@ def test_iv_rank_requires_history():
     assert abs(m.iv_rank(0.3, hist) - 100.0) < 1e-9
 
 
+def _bs_delta(flag, S, K, t, sigma):
+    return vollib_greeks.delta(flag, S, K, t, m.RISK_FREE_RATE, sigma)
+
+
+def test_vanna_charm_vs_numeric():
+    S, K, t, sigma = 100.0, 102.0, 0.2, 0.30
+    v, c = m.vanna_charm(S, [K], t, [sigma])
+    # Vanna = dDelta/dsigma（中心差分）
+    h = 0.001
+    v_num = (_bs_delta("c", S, K, t, sigma + h) - _bs_delta("c", S, K, t, sigma - h)) / (2 * h)
+    assert abs(v[0] - v_num) < 1e-3
+    # Charm = dDelta/dt（中心差分，t 以年为单位）
+    h2 = 0.002
+    c_num = (_bs_delta("c", S, K, t + h2, sigma) - _bs_delta("c", S, K, t - h2, sigma)) / (2 * h2)
+    assert abs(c[0] - c_num) < 1e-2
+
+
+def test_gamma_structure():
+    cs = _contracts()
+    df = m._frame(cs)
+    st = m.gamma_structure(df, 100.0)
+    assert st is not None
+    assert st["call_wall"] is not None and st["put_wall"] is not None
+    assert st["net_gex"] is not None
+    assert len(st["top_gamma"]) <= 3
+    assert st["net_vanna"] is not None and st["net_charm"] is not None
+    # 看跌 OI 明显多于看涨（5000 vs 1000 的堆积），净 GEX 应为负（put 权重更大）
+    assert st["net_gex"] < 0
+
+
+def test_flow_and_new_exposure():
+    cs = _contracts()
+    df = m._frame(cs)
+    # 只有 Tcall100 有历史 OI 500（今日 1000 → 开仓）；其余无历史
+    prev_lookup = {"Tcall100": (500, 80), "Tput95b": (5000, 10)}
+    rows = m.unusual_activity(df, min_volume=100, vol_oi_min=0.1, prev_lookup=prev_lookup)
+    t100 = next(r for r in rows if r["contract_symbol"] == "Tcall100")
+    assert t100["flow"] == "开仓"
+    # Tput95b 有历史但 volume=0 → 流向为 —
+    # 无历史的放量合约 → 新
+    new_gex, new_delta = m._new_position_exposure(df, prev_lookup, 100.0)
+    assert new_delta > 0   # Tcall100 新增 500 张 call → 正 delta
+    assert new_gex > 0     # 新增 call gamma（正口径）
+
+
 if __name__ == "__main__":
     for fn in (test_ratios, test_max_pain_shifts_to_heavy_put_strike, test_atm_metrics,
                test_skew_25, test_unusual_activity_filters, test_unusual_prev_lookup,
-               test_top_oi_rows, test_oi_surge, test_iv_rank_requires_history):
+               test_top_oi_rows, test_oi_surge, test_iv_rank_requires_history,
+               test_vanna_charm_vs_numeric, test_gamma_structure,
+               test_flow_and_new_exposure):
         fn()
         print(f"PASS {fn.__name__}")
