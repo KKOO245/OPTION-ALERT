@@ -1,85 +1,194 @@
 # -*- coding: utf-8 -*-
-"""晨报渲染（P0.1 简化版：消费快照 + 事件日志，只展示真实数据）。"""
+"""晨报渲染（P0.3 规格 v1）：对比区 + 每标的展开块 + 注解 + Setup/Gate 状态。"""
 
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
+
+from engine.annotations import event_card, options_annotation
+from engine.gate import gate_pipeline
+from report.format import fmt, ticker_heading
 
 
-def _val(x: Any, suffix: str = "") -> str:
-    if x is None:
-        return "N/A"
-    return f"{x}{suffix}"
+def _distance(spot: float, level: Optional[float]) -> Optional[float]:
+    if spot is None or level is None:
+        return None
+    return (spot / level - 1.0) * 100.0
 
 
-def _confirmation_mark(met) -> str:
-    if met is True:
-        return "Y"
-    if met is False:
-        return "N"
-    return "?"
-
-
-def render_morning(snapshot: Dict[str, Any], read_model: Dict[str, Any], setups=None) -> str:
-    events = read_model.get("events", [])
-    lines: List[str] = []
-    lines.append(f"# 晨报 {snapshot['created_at'][:10]}（{snapshot['ticker']}）")
-    lines.append("")
-    lines.append(
-        f"> 数据纪律：本报告所有数字来自快照（{snapshot.get('source','?')} @ "
-        f"{snapshot['created_at']}）；缺失字段一律标注 INSUFFICIENT_DATA，绝不编造。"
-    )
-    lines.append("")
-
-    ctx = snapshot.get("context") or {}
-    lines.append("## 市场背景")
-    lines.append(
-        f"- SPY: {_val(ctx.get('spy_return'), '%')} | QQQ: {_val(ctx.get('qqq_return'), '%')} "
-        f"| 板块相对强度: {_val(ctx.get('sector_relative'))} | VIX: {_val(ctx.get('vix'))}"
-    )
-    lines.append("")
-
-    lines.append(f"## {snapshot['ticker']}")
-    regime = snapshot.get("regime") or {}
-    location = snapshot.get("location") or {}
-    lines.append("三行结论：")
-    lines.append(f"- 价格状态: {_val(regime.get('trend'))} / spot={snapshot['spot']} / "
-                 f"location={_val(location.get('price_location'))}")
-    decision_events = [e for e in events if e.get("ticker") == snapshot["ticker"]]
-    if decision_events:
-        dec = decision_events[0]
-        lines.append(f"- 决策: {dec['decision']}（P0.1 Gate 未实现，仅机械记录）")
-        walls = []
-        if location.get("put_wall"):
-            walls.append(f"Put Wall={location['put_wall']}")
-        if location.get("call_wall"):
-            walls.append(f"Call Wall={location['call_wall']}")
-        if location.get("flip_levels"):
-            walls.append(f"Flip={location['flip_levels']}")
-        lines.append(f"- 关键价位: {', '.join(walls) if walls else 'N/A（快照缺关键价位字段）'}")
+def _options_block(snapshot: Dict[str, Any]) -> List[str]:
+    m = snapshot.get("momentum") or {}
+    rank = m.get("iv_rank")
+    if rank is None:
+        rank_txt = "— (历史不足)"
     else:
-        lines.append("- 决策: 今日无 Setup 触发（WATCH）")
-        lines.append("- 关键价位: N/A")
-    lines.append("")
+        rank_txt = f"{rank * 100:.0f}%" if rank <= 1 else f"{rank:.0f}%"
+    expmove = m.get("expected_move_pct")
+    expmove_txt = f"±{fmt(expmove, 1)}%" if expmove is not None else "N/A"
+    skew = m.get("skew")
+    skew_txt = f"{fmt(skew, 1)}pp" if skew is not None else "N/A"
+    line = (
+        f"Options: P/C量 {fmt(m.get('pc_ratio'), 2)} | OI比 {fmt(m.get('pc_oi_ratio'), 2)} | "
+        f"ATM IV {fmt_pct_safe(m.get('atm_iv'))} | Skew {skew_txt} | "
+        f"Term {fmt(m.get('term_ratio'), 2)} | ExpMove {expmove_txt} | Rank {rank_txt}"
+    )
+    lines = [line]
+    for a in options_annotation(m.get("pc_ratio"), m.get("pc_oi_ratio")):
+        lines.append("   ⇒ " + a)
+    return lines
 
-    lines.append("### Setup 触发明细")
-    if not decision_events:
-        lines.append("- 无（今日机械检查所有 Setup，均未满足 Core 触发条件）")
-    for ev in decision_events:
-        lines.append(f"- Setup {ev['setup_id']}（{ev['setup_version']}, rule={ev['trigger_rule_version']}）")
-        pt = ev["primary_target"]
-        lines.append(f"  - Target: {pt['metric']} {pt['direction']} {pt['threshold']} @ {pt['horizon']} "
-                     f"({pt['evaluation_rule']})")
-        confs = ev.get("confirmation_status", [])
-        ok = sum(1 for c in confs if c.get("met") is True)
-        total = len(confs)
-        lines.append(f"  - Confirmation: {ok}/{total} "
-                     + " ".join(f"{c['name']}{_confirmation_mark(c.get('met'))}" for c in confs))
-        su = ev.get("data_sufficiency") or {}
-        missing = [k for k, v in su.items() if v == "INSUFFICIENT_DATA"]
-        lines.append(f"  - 数据充分性: {len(missing)} 项缺失"
-                     + (f"（{', '.join(missing[:5])}{'...' if len(missing) > 5 else ''}）" if missing else ""))
+
+def fmt_pct_safe(v: Any) -> str:
+    if v is None:
+        return "N/A"
+    return f"{v * 100:.1f}%"
+
+
+def _structure_block(snapshot: Dict[str, Any], gex: Optional[float] = None, gex_change: Optional[float] = None) -> List[str]:
+    loc = snapshot.get("location") or {}
+    spot = snapshot.get("spot")
+    lines = ["🔧 结构（未验证研究层：Mechanism Scenario A/B——OI 开仓方向不可观测）"]
+    gamma = (snapshot.get("regime") or {}).get("gamma", "UNKNOWN")
+    gex_txt = f"GEX(存量) {fmt(gex, 0)}" if gex is not None else "GEX(存量) N/A"
+    chg_txt = f"GEX Change vs 上次快照 {fmt(gex_change, 0)}" if gex_change is not None else "GEX Change N/A"
+    flip_txt = " / ".join(f"≈{f:.2f}" for f in (loc.get("flip_levels") or [])) or "N/A"
+    lines.append(f"Gamma: {gamma} | {gex_txt} | {chg_txt} | Flip: {flip_txt}")
+    lines.append("   ⇒ 全链负Gamma，波动易被放大（模型层）" if gamma == "NEGATIVE" else "")
+    flips = loc.get("flip_levels") or []
+    if len(flips) >= 2:
+        zone_txt = f"{flips[0]:.0f}–{flips[1]:.0f}"
+    elif len(flips) == 1:
+        zone_txt = f"≈{flips[0]:.0f}"
+    else:
+        zone_txt = "N/A"
+    lines.append(f"结构观察区: {zone_txt}（局部 Gamma 切换，低置信；Top-3 近似，需全链重定价验证）")
+    cw, pw = loc.get("call_wall"), loc.get("put_wall")
+    if cw or pw:
+        parts = []
+        if pw:
+            parts.append(f"距 Put Wall {fmt(pw, 0)}: {_dist_str(_distance(spot, pw))}")
+        if cw:
+            parts.append(f"距 Call Wall {fmt(cw, 0)}: {_dist_str(_distance(spot, cw))}")
+        lines.append(" | ".join(parts))
+    return [l for l in lines if l]
+
+
+def _dist_str(v: Optional[float]) -> str:
+    return "N/A" if v is None else f"{v:+.1f}%"
+
+
+def _structure_interpretation(snapshot: Dict[str, Any]) -> List[str]:
+    loc = snapshot.get("location") or {}
+    spot = snapshot.get("spot")
+    mp = (snapshot.get("context") or {}).get("max_pain")
+    cw, pw = loc.get("call_wall"), loc.get("put_wall")
+    lines = ["🧭 结构解读（全部依赖上方假设）"]
+    downs = [f"{fmt(pw, 0)}（Put Wall）"] if pw else []
+    ups = []
+    if mp:
+        ups.append(f"{fmt(mp, 0)}（MaxPain，仅结算参考）")
+    if cw:
+        ups.append(f"{fmt(cw, 0)}（Call Wall）")
+    if downs:
+        lines.append(f"• 支撑/压力参考：下方 {' / '.join(downs)}；上方 {' / '.join(ups) if ups else 'N/A'}。")
+    flips = loc.get("flip_levels") or []
+    if flips:
+        lines.append(f"• Gamma 区域：切换参考 {flips[0]:.0f}（Top-3 近似，需全链重定价验证）。")
+    lines.append(
+        "• 做市商（条件机制）：若 Scenario A + 负 Gamma 成立，跌破关键位下方可能对应顺周期卖出压力增加；"
+        "实际做市商对冲流量不可观测。Scenario B → 方向相反。不进入方向决策。"
+    )
+    lines.append("• 失效参考：跌破关键位结构参考失效（结构性参考，非预测）。")
+    return lines
+
+
+def _setup_block(setup_status: Optional[Dict[str, Any]]) -> List[str]:
+    if not setup_status:
+        return ["Setup: 今日无 Setup 触发（机械检查全部 Setup）"]
+    core = setup_status.get("core", {})
+    conf = setup_status.get("confirmation", {})
+    lines = [
+        f"Setup {setup_status.get('setup_id')} {setup_status.get('version', '')} — Core Conditions",
+        f"Price Regime {core.get('trend', '?')} | Location {core.get('location', '?')} | Gamma Regime {core.get('gamma', '?')}",
+        f"Confirmation: ✓ {conf.get('satisfied', 0)} ｜ ✗ {conf.get('rejected', 0)} ｜ ? {conf.get('unknown', 0)}"
+        + (f"（? {', '.join(conf.get('unknown_fields', []))}）" if conf.get("unknown_fields") else ""),
+    ]
+    q = setup_status.get("qualification")
+    if q:
+        lift = q.get("oos_lift_pp")
+        lift_txt = f"{fmt(lift, 1)}pp" if lift is not None else "N/A"
+        lines.append(f"验证状态: N={q.get('n_episodes', 'N/A')} ｜ OOS Lift {lift_txt} ｜ CI 下界 {fmt(q.get('ci_lower'), 2)}")
+    pt = setup_status.get("primary_target")
+    if pt:
+        lines.append(f"Target: {pt.get('metric')} {pt.get('direction')} {pt.get('threshold')} — PENDING（evaluation date 待窗口结束）")
+    st = setup_status.get("status")
+    if st:
+        lines.append(f"Status: {st}")
+    return lines
+
+
+def _activity_block(events: Optional[List[Dict[str, Any]]]) -> List[str]:
+    lines = ["🔺 Activity（事实层，方向 Unknown）"]
+    if events is None:
+        lines.append("- Activity 数据缺失（analytics 未提供），不猜测")
+        return lines
+    if not events:
+        lines.append("- 无中高变动事件（全部低等级）")
+        return lines
+    for ev in events:
+        exp = ev.get("expiration") or "?"
+        exp_txt = exp[5:] if isinstance(exp, str) and len(exp) >= 10 else str(exp)
+        side = "P" if ev.get("type") == "put" else "C"
+        lines.extend(
+            event_card(
+                f"{exp_txt} {ev.get('strike', '?')}{side}",
+                ev.get("volume"),
+                ev.get("oi_prev"),
+                ev.get("open_interest"),
+                has_prev_vol=ev.get("volume_prev") is not None,
+            )
+        )
+    return lines
+
+
+def render_morning(
+    snapshot: Dict[str, Any],
+    prev_snapshot: Optional[Dict[str, Any]] = None,
+    activity: Optional[List[Dict[str, Any]]] = None,
+    setup_status: Optional[Dict[str, Any]] = None,
+    gex: Optional[float] = None,
+    gex_change: Optional[float] = None,
+    reminders: Optional[List[str]] = None,
+    calendar: Optional[List[str]] = None,
+) -> str:
+    ticker = snapshot.get("ticker", "?")
+    date = snapshot.get("created_at", "")[:10]
+    lines = [f"# 期权晨报 {date}", ""]
+    if reminders:
+        lines += [r for r in reminders if r]
+        lines.append("")
+    if calendar:
+        lines += calendar
+        lines.append("")
+
+    if prev_snapshot:
+        p = prev_snapshot.get("spot")
+        c = snapshot.get("spot")
+        chg = (c / p - 1.0) * 100 if (p and c) else None
+        lines.append("📋 昨日晚报 → 今日晨报（只列关键项，低于阈值不单列）")
+        lines.append(
+            f"{ticker}  昨收 {fmt(p, 2)} → 今晨 {fmt(c, 2)}"
+            + (f"（{chg:+.1f}%）" if chg is not None else "")
+            + " | 较昨收变动（含盘初走势）"
+        )
+        lines.append("")
+
+    lines.append(ticker_heading(ticker))
+    lines += _options_block(snapshot)
+    lines += _structure_block(snapshot, gex=gex, gex_change=gex_change)
+    lines += _structure_interpretation(snapshot)
+    lines += _activity_block(activity)
+    lines += _setup_block(setup_status)
     lines.append("")
-    lines.append("---")
-    lines.append("*P0.1 事件引擎输出：完整原始记录见 thesis/events.jsonl（哈希链保护）。*")
+    lines.append(f"数据溯源：完整表见附录 / thesis / analytics/daily/{date}/{ticker}_morning.json")
     return "\n".join(lines)

@@ -23,11 +23,16 @@ import argparse
 import csv
 import json
 import sys
+import urllib.request
+from datetime import date, datetime
 from pathlib import Path
 
+from engine.edges import direction_components, mechanism_confidence, pricing_proxy, volatility_components
 from engine.episode import EpisodeClusterer
+from engine.gate import gate_pipeline, qualification
 from engine.outcome import OutcomeEngine
 from engine.price_series import closes_from_analytics
+from engine.regime_map import regime_map
 from engine.setup_detector import SetupDetector
 from engine.snapshot_builder import build_snapshot, load_analytics_rows
 from engine.snapshot import SnapshotStore
@@ -35,6 +40,7 @@ from engine.thesis_logger import EventStore
 from engine import yaml_mini
 from report.evening import render_evening
 from report.morning import render_morning
+from src.reminders import evening_reminder_lines
 from validation.base_rate import conditional_setup_rate, freeze_partition, unconditional_base_rate
 from validation.confidence import format_rate
 from validation.data_sufficiency import label_for_episodes
@@ -119,6 +125,30 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--date", help="YYYY-MM-DD；缺省用最新快照")
     sp.add_argument("--ticker", help="缺省用最新快照")
     sp.add_argument("--out")
+
+    sp = sub.add_parser("render-morning", help="按 P0.3 规格渲染晨报")
+    sp.add_argument("--date")
+    sp.add_argument("--ticker", required=True)
+    sp.add_argument("--out")
+
+    sp = sub.add_parser("render-evening", help="按 P0.3 规格渲染晚报")
+    sp.add_argument("--date")
+    sp.add_argument("--ticker", required=True)
+    sp.add_argument("--out")
+
+    sp = sub.add_parser("gate-summary", help="各 Setup 资格/决策摘要")
+
+    sp = sub.add_parser("regime-map", help="全链重定价（模型隐含 GEX 过零点）")
+    sp.add_argument("--contracts", required=True, help="合约 JSON 列表文件")
+    sp.add_argument("--spot", type=float, required=True)
+    sp.add_argument("--as-of", help="YYYY-MM-DD，用于 dte 计算")
+
+    sp = sub.add_parser("send-report", help="渲染新格式报告并发送 Discord")
+    sp.add_argument("--session", choices=["morning", "evening"], required=True)
+    sp.add_argument("--ticker", required=True)
+    sp.add_argument("--date")
+    sp.add_argument("--webhook-url", default="")
+    sp.add_argument("--dry-run", action="store_true", help="只打印不发送")
 
     sp = sub.add_parser("audit", help="哈希链完整性 + 每日触发审计")
     return p
@@ -374,6 +404,269 @@ def cmd_report(args) -> int:
     return 0
 
 
+def _activity_from_analytics(data_root: Path, ticker: str, session: str) -> list:
+    rows = _analytics_rows(data_root, ticker)
+    sess = "evening" if session == "evening" else "morning"  # load_analytics_rows 已归一化
+    row = next((r for r in reversed(rows) if r.get("session") == sess), None)
+    if row is None:
+        return None
+    surge = (row or {}).get("top_surge") or []
+    out = []
+    for s in surge:
+        out.append({
+            "expiration": s.get("expiration"),
+            "strike": s.get("strike"),
+            "type": s.get("type"),
+            "volume": s.get("volume"),
+            "volume_prev": s.get("volume_prev"),
+            "oi_prev": s.get("oi_prev"),
+            "open_interest": s.get("oi") or s.get("open_interest"),
+        })
+    return out
+
+
+def _prev_evening_snapshot(snaps: SnapshotStore, date_str: str, ticker: str):
+    for d in reversed([x for x in snaps.list_days() if x < date_str]):
+        try:
+            return snaps.load(d, ticker, "evening")
+        except FileNotFoundError:
+            continue
+    return None
+
+
+def _setup_status(snapshot: dict, store: EventStore, config_root: Path, thresholds: dict) -> dict:
+    detector = SetupDetector(str(config_root))
+    events, _ = detector.detect(snapshot)
+    model = store.read_model(verify=False)
+    eps = EpisodeClusterer(store).cluster(model["events"])
+    if not events:
+        return {"triggered": False, "display": "今日无 Setup 触发（机械检查全部 Setup）"}
+    ev = events[0]
+    sid = ev["setup_id"]
+    s_eps = [e for e in eps if e["setup_id"] == sid]
+    n = sum(1 for e in s_eps if e.get("representative_outcome") in ("CONFIRMED", "REJECTED"))
+    qual = qualification(n_episodes=n, n_regimes=0, oos_lift_pp=None, ci_lower=None,
+                         oos_available=False, thresholds=thresholds)
+    conf = ev.get("confirmation_status", [])
+    satisfied = sum(1 for c in conf if c.get("met") is True)
+    rejected_c = sum(1 for c in conf if c.get("met") is False)
+    unknown = sum(1 for c in conf if c.get("met") is None)
+    unknown_fields = [c.get("name") for c in conf if c.get("met") is None]
+    direction = direction_components(snapshot)
+    vol = volatility_components(snapshot)
+    pricing = pricing_proxy(snapshot.get("momentum", {}).get("atm_iv"))
+    mech = mechanism_confidence(snapshot)
+    gate = gate_pipeline(
+        setup_trigger_met=True,
+        qual=qual,
+        direction=direction,
+        volatility=vol,
+        pricing=pricing,
+        mechanism=mech,
+        confirmation={"satisfied": satisfied, "required": len(conf)},
+        data_ok=True,
+    )
+    regime = snapshot.get("regime") or {}
+    location = snapshot.get("location") or {}
+    pt = ev.get("primary_target") or {}
+    return {
+        "triggered": True,
+        "setup_id": sid,
+        "version": ev.get("setup_version", "v1"),
+        "core": {
+            "trend": f"{regime.get('trend', '?')}",
+            "location": location.get("price_location") or "?",
+            "gamma": f"{regime.get('gamma', '?')}（模型层）",
+        },
+        "confirmation": {
+            "satisfied": satisfied,
+            "rejected": rejected_c,
+            "unknown": unknown,
+            "unknown_fields": unknown_fields,
+        },
+        "qualification": {
+            "n_episodes": qual["n_episodes"],
+            "oos_lift_pp": qual.get("oos_lift_pp"),
+            "ci_lower": qual.get("ci_lower"),
+            "level": qual["level"],
+        },
+        "primary_target": pt,
+        "status": gate["display"],
+    }
+
+
+def _render_status_arg(setup_status: dict) -> dict:
+    if not setup_status.get("triggered"):
+        return None
+    return setup_status
+
+
+def cmd_render_morning(args) -> int:
+    data_root = _data_root(args)
+    snaps = SnapshotStore(data_root)
+    store = EventStore(data_root)
+    ticker = args.ticker.upper()
+    date_str = args.date or (snaps.load_latest() or {}).get("created_at", "")[:10]
+    snap = snaps.load(date_str, ticker, "morning")
+    prev = _prev_evening_snapshot(snaps, date_str, ticker)
+    thresholds = yaml_mini.load(Path(args.config_root) / "thresholds.yaml")
+    status = _setup_status(snap, store, Path(args.config_root), thresholds)
+    text = render_morning(
+        snap,
+        prev_snapshot=prev,
+        activity=_activity_from_analytics(data_root, ticker, "morning"),
+        setup_status=_render_status_arg(status),
+    )
+    _write_report(args.out, text)
+    return 0
+
+
+def cmd_render_evening(args) -> int:
+    data_root = _data_root(args)
+    snaps = SnapshotStore(data_root)
+    store = EventStore(data_root)
+    ticker = args.ticker.upper()
+    date_str = args.date or (snaps.load_latest() or {}).get("created_at", "")[:10]
+    snap = snaps.load(date_str, ticker, "evening")
+    morning = None
+    try:
+        morning = snaps.load(date_str, ticker, "morning")
+    except FileNotFoundError:
+        morning = None
+    thresholds = yaml_mini.load(Path(args.config_root) / "thresholds.yaml")
+    status = _setup_status(snap, store, Path(args.config_root), thresholds)
+    text = render_evening(
+        snap,
+        morning=morning,
+        activity=_activity_from_analytics(data_root, ticker, "evening"),
+        setup_status=_render_status_arg(status),
+        reminders=evening_reminder_lines(datetime.fromisoformat(f"{date_str}T17:00:00-04:00")) if date_str else [],
+    )
+    _write_report(args.out, text)
+    return 0
+
+
+def _write_report(out: str | None, text: str) -> None:
+    if out:
+        p = Path(out)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(text, encoding="utf-8")
+        print(f"报告已写入: {out}")
+    else:
+        print(text)
+
+
+def cmd_gate_summary(args) -> int:
+    data_root = _data_root(args)
+    snaps = SnapshotStore(data_root)
+    store = EventStore(data_root)
+    thresholds = yaml_mini.load(Path(args.config_root) / "thresholds.yaml")
+    print("== Gate 摘要（按最新快照） ==")
+    for day in reversed(snaps.list_days()):
+        for snap in snaps.load_day(day):
+            status = _setup_status(snap, store, Path(args.config_root), thresholds)
+            if status.get("triggered"):
+                q = status.get("qualification", {})
+                print(
+                    f"{snap['created_at'][:10]} {snap['ticker']} {snap['session']} | Setup {status['setup_id']} | "
+                    f"资格 {q.get('level')} (N={q.get('n_episodes')}) | {status['status']}"
+                )
+        break
+    return 0
+
+
+def cmd_regime_map(args) -> int:
+    contracts = json.loads(Path(args.contracts).read_text(encoding="utf-8"))
+    as_of = date.fromisoformat(args.as_of) if args.as_of else None
+    result = regime_map(contracts, args.spot, as_of=as_of)
+    if result is None:
+        print("无法计算（无有效合约或 spot 无效）")
+        return 1
+    print(
+        f"模型隐含 GEX 过零点: {result['flip_levels'] or '无（单边）'} | "
+        f"当前区: {result['spot_zone']} | 用合约 {result['n_contracts_used']} 个，跳过 {result['n_contracts_skipped']}"
+    )
+    print(f"模式: {result['vol_surface_mode']} | 假设: {'; '.join(result['assumptions'])}")
+    return 0
+
+
+def _discord_send(webhook: str, text: str) -> None:
+    """发送到 Discord webhook，单条超 1900 字自动按行切分。"""
+    chunks = []
+    current = []
+    size = 0
+    for line in text.split("\n"):
+        if size + len(line) + 1 > 1900 and current:
+            chunks.append("\n".join(current))
+            current, size = [], 0
+        current.append(line)
+        size += len(line) + 1
+    if current:
+        chunks.append("\n".join(current))
+    for chunk in chunks:
+        payload = json.dumps({"content": chunk}).encode("utf-8")
+        req = urllib.request.Request(
+            webhook, data=payload, headers={"Content-Type": "application/json"}
+        )
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            if resp.status >= 300:
+                raise RuntimeError(f"Discord webhook HTTP {resp.status}")
+
+
+def cmd_send_report(args) -> int:
+    data_root = _data_root(args)
+    snaps = SnapshotStore(data_root)
+    store = EventStore(data_root)
+    thresholds = yaml_mini.load(Path(args.config_root) / "thresholds.yaml")
+    ticker = args.ticker.upper()
+    date_str = args.date or (snaps.load_latest() or {}).get("created_at", "")[:10]
+
+    if args.session == "morning":
+        try:
+            snap = snaps.load(date_str, ticker, "morning")
+        except FileNotFoundError:
+            print(f"{date_str} 无 morning 快照，跳过（当日晨报未生成）")
+            return 0
+        prev = _prev_evening_snapshot(snaps, date_str, ticker)
+        status = _setup_status(snap, store, Path(args.config_root), thresholds)
+        text = render_morning(
+            snap,
+            prev_snapshot=prev,
+            activity=_activity_from_analytics(data_root, ticker, "morning"),
+            setup_status=_render_status_arg(status),
+        )
+    else:
+        try:
+            snap = snaps.load(date_str, ticker, "evening")
+        except FileNotFoundError:
+            print(f"{date_str} 无 evening 快照，跳过（当日晚报未生成）")
+            return 0
+        morning = None
+        try:
+            morning = snaps.load(date_str, ticker, "morning")
+        except FileNotFoundError:
+            morning = None
+        status = _setup_status(snap, store, Path(args.config_root), thresholds)
+        text = render_evening(
+            snap,
+            morning=morning,
+            activity=_activity_from_analytics(data_root, ticker, "evening"),
+            setup_status=_render_status_arg(status),
+            reminders=evening_reminder_lines(datetime.fromisoformat(f"{date_str}T17:00:00-04:00")) if date_str else [],
+        )
+
+    if args.dry_run:
+        print(text)
+        return 0
+    if not args.webhook_url:
+        print("未提供 --webhook-url，本次只打印不发送")
+        print(text)
+        return 1
+    _discord_send(args.webhook_url, text)
+    print(f"已发送 {args.session} {ticker} {date_str} 到 Discord")
+    return 0
+
+
 def cmd_audit(args) -> int:
     store = EventStore(_data_root(args))
     ok, errors = store.verify()
@@ -416,6 +709,11 @@ def main() -> int:
         "episodes": cmd_episodes,
         "validate": cmd_validate,
         "report": cmd_report,
+        "render-morning": cmd_render_morning,
+        "render-evening": cmd_render_evening,
+        "gate-summary": cmd_gate_summary,
+        "regime-map": cmd_regime_map,
+        "send-report": cmd_send_report,
         "audit": cmd_audit,
     }[args.command](args)
 

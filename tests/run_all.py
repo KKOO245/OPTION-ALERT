@@ -27,6 +27,12 @@ MODULES = [
     "test_snapshot_builder",
     "test_price_series",
     "test_reminders",
+    "test_regime_map",
+    "test_data_quality",
+    "test_edges",
+    "test_gate",
+    "test_annotations",
+    "test_report_format",
     "test_validation",
     "test_e2e_pipeline",
 ]

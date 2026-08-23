@@ -192,6 +192,14 @@ def validate_event(event: Dict[str, Any]) -> List[str]:
     for field in ("regime", "location", "momentum", "confirmation", "context", "data_quality", "data_sufficiency"):
         if not isinstance(event.get(field), dict):
             errs.append(f"{field} 必须是 dict")
+    if "evidence" in event:
+        ev = event["evidence"]
+        if not isinstance(ev, dict):
+            errs.append("evidence 必须是 dict（supporting/contradicting/unknown 各为 list）")
+        else:
+            for k in ("supporting", "contradicting", "unknown"):
+                if k in ev and not isinstance(ev[k], list):
+                    errs.append(f"evidence.{k} 必须是 list")
     for field in ("content_hash", "prev_hash", "event_hash"):
         val = event.get(field)
         if field == "prev_hash":

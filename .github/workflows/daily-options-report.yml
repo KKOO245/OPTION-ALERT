@@ -15,6 +15,13 @@ on:
         description: "强制发送(忽略时间检查，用于手动测试，不影响自动定时运行)"
         type: boolean
         default: true
+      use_new_renderer:
+        description: "使用 P0.3 新格式报告（false 则退回旧格式）"
+        type: boolean
+        default: true
+
+env:
+  USE_NEW_RENDERER: ${{ github.event.inputs.use_new_renderer == 'false' && 'false' || 'true' }}
 
 permissions:
   contents: write   # 需要写权限，用来把每天的数据快照存回仓库(供下次对比异动)
@@ -74,6 +81,8 @@ jobs:
           OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
           LLM_ENABLED: ${{ vars.LLM_ENABLED }}
           FORCE_SEND: ${{ github.event.inputs.force_send }}
+          # 新格式启用时旧脚本只抓数据/存快照/标记已发送，不发旧格式
+          REPORT_DRY_RUN: ${{ env.USE_NEW_RENDERER }}
         run: python src/options_report.py
 
       - name: 事件引擎（检测/聚类/结果回填）
@@ -89,12 +98,60 @@ jobs:
           echo "detect=$rc_detect episodes=$rc_episodes evaluate=$rc_evaluate"
           exit $((rc_detect + rc_episodes + rc_evaluate))
 
+      - name: 渲染新格式晨/晚报（P0.3，写入 data/reports 供人工复核）
+        if: always() && steps.timecheck.outputs.run_needed == 'true'
+        run: |
+          DATE=$(python3 - <<'PY'
+          import datetime
+          from zoneinfo import ZoneInfo
+          print(datetime.datetime.now(ZoneInfo("America/Toronto")).date().isoformat())
+          PY
+          )
+          mkdir -p data/reports
+          while read -r T; do
+            python main.py render-morning --ticker "$T" --date "$DATE" --out "data/reports/${DATE}_morning_${T}.md" || true
+            python main.py render-evening --ticker "$T" --date "$DATE" --out "data/reports/${DATE}_evening_${T}.md" || true
+          done < <(grep -v '^\s*#' config/tickers.txt)
+
+      - name: 发送新格式晨/晚报到 Discord（P0.3）
+        if: always() && steps.timecheck.outputs.run_needed == 'true' && env.USE_NEW_RENDERER == 'true'
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          SESSION=$(python3 - <<'PY'
+          import datetime
+          from zoneinfo import ZoneInfo
+          now = datetime.datetime.now(ZoneInfo("America/Toronto"))
+          cur = now.hour * 60 + now.minute
+          if 10 * 60 + 15 <= cur <= 12 * 60 + 30:
+              print("morning")
+          elif 16 * 60 + 30 <= cur <= 18 * 60 + 45:
+              print("evening")
+          else:
+              print("skip")
+          PY
+          )
+          if [ "$SESSION" = "skip" ]; then
+            echo "非发送窗口，跳过"
+            exit 0
+          fi
+          DATE=$(python3 - <<'PY'
+          import datetime
+          from zoneinfo import ZoneInfo
+          print(datetime.datetime.now(ZoneInfo("America/Toronto")).date().isoformat())
+          PY
+          )
+          while read -r T; do
+            python main.py send-report --session "$SESSION" --ticker "$T" --date "$DATE" \
+              --webhook-url "$DISCORD_WEBHOOK_URL" || echo "[发送失败] $T"
+          done < <(grep -v '^\s*#' config/tickers.txt)
+
       - name: 保存数据快照/事件/发送记录(没有实际变化时这一步不会产生新提交)
         # always(): 即使事件引擎某一步失败，也先把当天已抓取的数据提交，避免丢失
         if: always() && steps.timecheck.outputs.run_needed == 'true'
         run: |
           git config user.name "options-report-bot"
           git config user.email "options-report-bot@users.noreply.github.com"
-          git add data/history data/analytics analytics state thesis episodes
+          git add data/history data/analytics data/reports analytics state thesis episodes
           git diff --cached --quiet || git commit -m "更新期权数据快照 $(date -u +'%Y-%m-%d %H:%M')"
           git push

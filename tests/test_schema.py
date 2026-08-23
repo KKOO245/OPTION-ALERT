@@ -91,3 +91,10 @@ def test_revision_validation():
     bad = dict(good, result="MAYBE")
     assert validate_revision(bad)
     assert validate_revision(dict(good, result="INVALIDATED", reason=None))
+
+
+def test_optional_evidence_ledger():
+    ev = valid_event(evidence={"supporting": ["neg gamma"], "contradicting": [], "unknown": ["dealer_position"]})
+    assert validate_event(ev) == []
+    bad = valid_event(evidence={"supporting": "not-a-list"})
+    assert any("evidence" in e for e in validate_event(bad))

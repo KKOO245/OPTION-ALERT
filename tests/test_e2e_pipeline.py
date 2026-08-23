@@ -83,9 +83,9 @@ def test_full_pipeline():
         assert conditional_setup_rate(a_eps)["rate"] == 1.0
 
         # 报告渲染
-        morning_text = render_morning(morning, model2)
-        evening_text = render_evening(evening, model2)
-        assert "SOXX" in morning_text and "Setup A" in morning_text
+        morning_text = render_morning(morning)
+        evening_text = render_evening(evening)
+        assert "## SOXX" in morning_text and "Options:" in morning_text
         assert "Thesis Scorecard" in evening_text
 
         # 完整性
