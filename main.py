@@ -621,12 +621,23 @@ def cmd_send_report(args) -> int:
     ticker = args.ticker.upper()
     date_str = args.date or (snaps.load_latest() or {}).get("created_at", "")[:10]
 
-    if args.session == "morning":
+    def _load_or_latest(session: str):
         try:
-            snap = snaps.load(date_str, ticker, "morning")
+            return snaps.load(date_str, ticker, session), date_str
         except FileNotFoundError:
-            print(f"{date_str} 无 morning 快照，跳过（当日晨报未生成）")
+            for d in reversed(snaps.list_days()):
+                try:
+                    return snaps.load(d, ticker, session), d
+                except FileNotFoundError:
+                    continue
+            return None, None
+
+    if args.session == "morning":
+        snap, used_date = _load_or_latest("morning")
+        if snap is None:
+            print(f"无 morning 快照，跳过（当日晨报未生成）")
             return 0
+        date_str = used_date
         prev = _prev_evening_snapshot(snaps, date_str, ticker)
         status = _setup_status(snap, store, Path(args.config_root), thresholds)
         text = render_morning(
@@ -636,11 +647,11 @@ def cmd_send_report(args) -> int:
             setup_status=_render_status_arg(status),
         )
     else:
-        try:
-            snap = snaps.load(date_str, ticker, "evening")
-        except FileNotFoundError:
-            print(f"{date_str} 无 evening 快照，跳过（当日晚报未生成）")
+        snap, used_date = _load_or_latest("evening")
+        if snap is None:
+            print(f"无 evening 快照，跳过（当日晚报未生成）")
             return 0
+        date_str = used_date
         morning = None
         try:
             morning = snaps.load(date_str, ticker, "morning")

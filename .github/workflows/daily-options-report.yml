@@ -118,22 +118,28 @@ jobs:
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
-          SESSION=$(python3 - <<'PY'
-          import datetime
-          from zoneinfo import ZoneInfo
-          now = datetime.datetime.now(ZoneInfo("America/Toronto"))
-          cur = now.hour * 60 + now.minute
-          if 10 * 60 + 15 <= cur <= 12 * 60 + 30:
-              print("morning")
-          elif 16 * 60 + 30 <= cur <= 18 * 60 + 45:
-              print("evening")
-          else:
-              print("skip")
-          PY
-          )
-          if [ "$SESSION" = "skip" ]; then
-            echo "非发送窗口，跳过"
-            exit 0
+          FORCE="${{ github.event.inputs.force_send }}"
+          if [ "$FORCE" = "true" ]; then
+            SESSIONS="morning evening"
+          else
+            SESSION=$(python3 - <<'PY'
+            import datetime
+            from zoneinfo import ZoneInfo
+            now = datetime.datetime.now(ZoneInfo("America/Toronto"))
+            cur = now.hour * 60 + now.minute
+            if 10 * 60 + 15 <= cur <= 12 * 60 + 30:
+                print("morning")
+            elif 16 * 60 + 30 <= cur <= 18 * 60 + 45:
+                print("evening")
+            else:
+                print("skip")
+            PY
+            )
+            if [ "$SESSION" = "skip" ]; then
+              echo "非发送窗口，跳过"
+              exit 0
+            fi
+            SESSIONS="$SESSION"
           fi
           DATE=$(python3 - <<'PY'
           import datetime
@@ -141,10 +147,12 @@ jobs:
           print(datetime.datetime.now(ZoneInfo("America/Toronto")).date().isoformat())
           PY
           )
-          while read -r T; do
-            python main.py send-report --session "$SESSION" --ticker "$T" --date "$DATE" \
-              --webhook-url "$DISCORD_WEBHOOK_URL" || echo "[发送失败] $T"
-          done < <(grep -v '^\s*#' config/tickers.txt)
+          for S in $SESSIONS; do
+            while read -r T; do
+              python main.py send-report --session "$S" --ticker "$T" --date "$DATE" \
+                --webhook-url "$DISCORD_WEBHOOK_URL" || echo "[发送失败] $S $T"
+            done < <(grep -v '^\s*#' config/tickers.txt)
+          done
 
       - name: 保存数据快照/事件/发送记录(没有实际变化时这一步不会产生新提交)
         # always(): 即使事件引擎某一步失败，也先把当天已抓取的数据提交，避免丢失
