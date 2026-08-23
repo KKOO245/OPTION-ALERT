@@ -117,29 +117,27 @@ jobs:
         if: always() && steps.timecheck.outputs.run_needed == 'true' && env.USE_NEW_RENDERER == 'true'
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          FORCE: ${{ github.event.inputs.force_send }}
         run: |
-          FORCE="${{ github.event.inputs.force_send }}"
-          if [ "$FORCE" = "true" ]; then
-            SESSIONS="morning evening"
-          else
-            SESSION=$(python3 - <<'PY'
-            import datetime
-            from zoneinfo import ZoneInfo
-            now = datetime.datetime.now(ZoneInfo("America/Toronto"))
-            cur = now.hour * 60 + now.minute
-            if 10 * 60 + 15 <= cur <= 12 * 60 + 30:
-                print("morning")
-            elif 16 * 60 + 30 <= cur <= 18 * 60 + 45:
-                print("evening")
-            else:
-                print("skip")
-            PY
-            )
-            if [ "$SESSION" = "skip" ]; then
-              echo "非发送窗口，跳过"
-              exit 0
-            fi
-            SESSIONS="$SESSION"
+          SESSIONS=$(python3 - <<'PY'
+          import datetime, os
+          from zoneinfo import ZoneInfo
+          now = datetime.datetime.now(ZoneInfo("America/Toronto"))
+          if os.environ.get("FORCE", "") == "true":
+              print("morning evening")
+          else:
+              cur = now.hour * 60 + now.minute
+              if 10 * 60 + 15 <= cur <= 12 * 60 + 30:
+                  print("morning")
+              elif 16 * 60 + 30 <= cur <= 18 * 60 + 45:
+                  print("evening")
+              else:
+                  print("skip")
+          PY
+          )
+          if [ "$SESSIONS" = "skip" ]; then
+            echo "非发送窗口，跳过"
+            exit 0
           fi
           DATE=$(python3 - <<'PY'
           import datetime
