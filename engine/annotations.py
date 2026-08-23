@@ -111,6 +111,8 @@ def event_annotation(
         direction_word = "净减"
     if magnitude == "LOW":
         ratio = m["r1"]
+        if ratio is None:
+            return f"{direction_word}{m['r3']}张（量数据缺失），以日内换手为主"
         return f"{direction_word}仓仅占量{ratio:.1f}%，以日内换手为主"
     if complete == "HIGH":
         volume_word = "放量且"

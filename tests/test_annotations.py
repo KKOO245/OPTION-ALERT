@@ -54,3 +54,9 @@ def test_delta_computed_without_volume():
     assert m["delta_oi"] == 7348
     assert m["r1"] is None
     assert m["magnitude"] == "HIGH"  # r2=2180%、r3=7348
+
+
+def test_low_magnitude_without_volume_no_crash():
+    a = event_annotation(None, 5000, 5016, "LOW", "LOW")  # r1=None → 低等级
+    assert "量数据缺失" in a
+    assert assert_no_direction_words(a)
