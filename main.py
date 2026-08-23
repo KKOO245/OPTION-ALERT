@@ -48,6 +48,8 @@ from validation.confidence import format_rate
 from validation.data_sufficiency import label_for_episodes
 from validation.lift import lift_pp
 
+DISCORD_USER_AGENT = "Mozilla/5.0 (option-alert-report/3.0)"
+
 
 def _ensure_utf8() -> None:
     try:
@@ -631,7 +633,9 @@ def _discord_send(webhook: str, text: str) -> None:
     for chunk in _chunk_text(text):
         payload = json.dumps({"content": chunk}).encode("utf-8")
         req = urllib.request.Request(
-            webhook, data=payload, headers={"Content-Type": "application/json"}
+            webhook,
+            data=payload,
+            headers={"Content-Type": "application/json", "User-Agent": DISCORD_USER_AGENT},
         )
         for attempt in (1, 2):
             try:
@@ -660,7 +664,7 @@ def cmd_send_report(args) -> int:
             print("webhook URL 为空（secret 未设置？）")
             return 1
         try:
-            req = urllib.request.Request(webhook)
+            req = urllib.request.Request(webhook, headers={"User-Agent": DISCORD_USER_AGENT})
             with urllib.request.urlopen(req, timeout=30) as resp:
                 info = json.loads(resp.read().decode("utf-8"))
             print(
