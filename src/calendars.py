@@ -104,20 +104,34 @@ def _week_range(now):
     return start, end
 
 
+def _norm_importance(v):
+    """TradingView importance：-1 低 / 0 中 / 1 高；兼容 int 与数字字符串。"""
+    try:
+        return int(v)
+    except (TypeError, ValueError):
+        return 0
+
+
+def _is_us(e):
+    """兼容接口可能返回的国别写法（US / USA / United States）。"""
+    return str(e.get("country") or "").strip().upper() in ("US", "USA", "UNITED STATES")
+
+
 def fetch_macro_calendar(week_start, week_end, high_only=False):
     """抓本周美国宏观事件（含预测值、实际值、前值），按时间排序。
 
     high_only=True 时只保留 TradingView importance == 1（【高】）。
+    接口示例要求 UTC 的 '.000Z' 格式，这里统一转换后发送。
     """
     import requests
 
-    from_dt = datetime.datetime.combine(week_start, datetime.time.min, tzinfo=ET)
-    to_dt = datetime.datetime.combine(week_end, datetime.time.max, tzinfo=ET)
+    from_dt = datetime.datetime.combine(week_start, datetime.time.min, tzinfo=ET).astimezone(datetime.timezone.utc)
+    to_dt = datetime.datetime.combine(week_end, datetime.time.max, tzinfo=ET).astimezone(datetime.timezone.utc)
     body = {
         "filter": [],
         "range": {
-            "from": from_dt.isoformat(),
-            "to": to_dt.isoformat(),
+            "from": from_dt.strftime("%Y-%m-%dT%H:%M:%S.000Z"),
+            "to": to_dt.strftime("%Y-%m-%dT%H:%M:%S.000Z"),
         },
         "columns": ["title", "country", "date", "importance",
                     "actual", "forecast", "previous"],
@@ -128,8 +142,8 @@ def fetch_macro_calendar(week_start, week_end, high_only=False):
 
     events = []
     for e in result:
-        imp = e.get("importance") or 0
-        if e.get("country") != "US" or imp < 0:
+        imp = _norm_importance(e.get("importance"))
+        if not _is_us(e) or imp < 0:
             continue
         if high_only and imp != 1:
             continue
@@ -151,6 +165,12 @@ def fetch_macro_calendar(week_start, week_end, high_only=False):
             "previous": e.get("previous"),
         })
     events.sort(key=lambda x: (x["date"], x["time"]))
+    if not events:
+        print(
+            f"[日历-raw] 未匹配到美国事件：接口返回 {len(result)} 条，"
+            f"country 样本 {sorted({str(e.get('country')) for e in result})[:8]}，"
+            f"importance 样本 {sorted({str(e.get('importance')) for e in result})[:8]}"
+        )
     return events
 
 
@@ -158,13 +178,18 @@ def build_macro_lines(now):
     """每天晨/晚报用：返回 [今天, 本周日] 的【高】重要性美国宏观事件格式化行。"""
     week_start, week_end = _week_range(now)
     try:
-        events = fetch_macro_calendar(week_start, week_end, high_only=True)
+        events = fetch_macro_calendar(week_start, week_end, high_only=False)
     except Exception as e:
         print(f"[警告] 宏观日历获取失败: {e}")
         return ["- 宏观日历源暂时不可用（稍后自动恢复）"]
+    high = [e for e in events if _norm_importance(e.get("importance")) == 1]
+    print(
+        f"[日历] 本周美国事件 {len(events)} 个，其中【高】{len(high)} 个 "
+        f"（范围 {week_start}~{week_end}，importance=-1低/0中/1高）"
+    )
     today = now.date()
     lines = []
-    for e in events:
+    for e in high:
         if e["date"] < today:
             continue
         note = ""
@@ -245,7 +270,7 @@ def build_calendar_sections(now):
                     note = "　✅ 今日已公布"
                 else:
                     note = "　⏰ 今日"
-            imp_tag = "【高】" if e.get("importance") == 1 else "【中】"
+            imp_tag = "【高】" if _norm_importance(e.get("importance")) == 1 else "【中】"
             vals = []
             if e.get("forecast") is not None:
                 vals.append(f"预测 {e['forecast']}")

@@ -12,6 +12,10 @@ def _fake_fetch(*a, **k):
          "importance": 1, "forecast": None, "actual": None, "previous": None},
         {"date": datetime.date(2026, 8, 21), "time": "20:00", "name": "上周旧事件",
          "importance": 1, "forecast": None, "actual": None, "previous": None},
+        {"date": datetime.date(2026, 8, 26), "time": "09:00", "name": "中等重要性事件",
+         "importance": 0, "forecast": None, "actual": None, "previous": None},
+        {"date": datetime.date(2026, 8, 27), "time": "08:30", "name": "字符串高重要性事件",
+         "importance": "1", "forecast": None, "actual": None, "previous": None},
     ]
 
 
@@ -25,6 +29,8 @@ def test_build_macro_lines_rest_of_week():
     assert any("CPI 通胀" in l and "预测 0.2%" in l and "实际 待公布" in l and "前值 0.3%" in l for l in lines)
     assert any("美联储利率决议" in l for l in lines)
     assert not any("上周旧事件" in l for l in lines)  # 早于今天的事件不显示
+    assert not any("中等重要性事件" in l for l in lines)  # importance=0 不显示
+    assert any("字符串高重要性事件" in l for l in lines)  # 字符串 "1" 也按【高】处理
     assert any("⏰ 今日" in l for l in lines)
 
 
@@ -36,3 +42,20 @@ def test_build_macro_lines_empty():
     finally:
         calendars.fetch_macro_calendar = original
     assert lines and "暂无" in lines[0]
+
+
+def test_us_country_variants():
+    assert calendars._is_us({"country": "US"})
+    assert calendars._is_us({"country": "USA"})
+    assert calendars._is_us({"country": "United States"})
+    assert calendars._is_us({"country": "DE"}) is False
+    assert calendars._is_us({}) is False
+
+
+def test_norm_importance_variants():
+    assert calendars._norm_importance(1) == 1
+    assert calendars._norm_importance("1") == 1
+    assert calendars._norm_importance("1.0") == 0  # 无法解析时按非高处理
+    assert calendars._norm_importance(0) == 0
+    assert calendars._norm_importance(-1) == -1
+    assert calendars._norm_importance(None) == 0

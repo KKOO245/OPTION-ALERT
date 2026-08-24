@@ -871,6 +871,19 @@ def cmd_send_report_all(args) -> int:
         return 0
     final_date = max(used_dates)
     lines = [f"# 📊 期权{session_zh} {final_date}", ""]
+    mixed = len(set(used_dates)) > 1
+    if date_str and (final_date != date_str or mixed):
+        if final_date != date_str:
+            lines.append(
+                f"⚠️ 数据时点说明：{date_str} 该时段快照未生成，本报告使用最近快照（{final_date}），"
+                "内容为补发/回退数据"
+            )
+        elif mixed:
+            lines.append(
+                f"⚠️ 数据时点说明：部分标的缺少 {date_str} 快照，本报告混用最近可用快照"
+                f"（最早 {min(used_dates)}，最新 {final_date}），请以各标的区块数据为准"
+            )
+        lines.append("")
     lines += market_block(market)
     lines += calendar_block(cal)
     if args.session == "evening" and final_date:
