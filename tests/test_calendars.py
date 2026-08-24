@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 import datetime
+import sys
+from types import ModuleType
 
 from src import calendars
 
@@ -59,3 +61,59 @@ def test_norm_importance_variants():
     assert calendars._norm_importance(0) == 0
     assert calendars._norm_importance(-1) == -1
     assert calendars._norm_importance(None) == 0
+    assert calendars._norm_importance("High") == 1
+    assert calendars._norm_importance("Medium") == 0
+    assert calendars._norm_importance("Low") == -1
+
+
+def test_fetch_macro_calendar_uses_get_with_params():
+    """接口必须是 GET + minImportance/from/to/currencies=USD（TradingView 日历页真实请求格式）。"""
+    captured = {}
+
+    class FakeResp:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {
+                "result": [
+                    {
+                        "title": "Core PCE Price Index",
+                        "country": "US",
+                        "date": "2026-08-26T12:30:00.000Z",
+                        "importance": 1,
+                        "actual": None,
+                        "forecast": "0.2%",
+                        "previous": "0.1%",
+                    }
+                ]
+            }
+
+    def fake_get(url, headers=None, params=None, timeout=None):
+        captured["url"] = url
+        captured["headers"] = headers
+        captured["params"] = params
+        return FakeResp()
+
+    fake_requests = ModuleType("requests")
+    fake_requests.get = fake_get
+    original = sys.modules.get("requests")
+    sys.modules["requests"] = fake_requests
+    try:
+        events = calendars.fetch_macro_calendar(
+            datetime.date(2026, 8, 24), datetime.date(2026, 8, 30), high_only=False
+        )
+    finally:
+        if original is None:
+            sys.modules.pop("requests", None)
+        else:
+            sys.modules["requests"] = original
+
+    assert captured["url"] == calendars.TV_URL
+    assert captured["params"]["minImportance"] == "0"
+    assert captured["params"]["currencies"] == "USD"
+    assert captured["params"]["from"].endswith(".000Z")
+    assert captured["params"]["to"].endswith(".000Z")
+    assert len(events) == 1
+    assert "PCE 物价" in events[0]["name"]
+    assert events[0]["importance"] == 1

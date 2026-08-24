@@ -105,7 +105,18 @@ def _week_range(now):
 
 
 def _norm_importance(v):
-    """TradingView importance：-1 低 / 0 中 / 1 高；兼容 int 与数字字符串。"""
+    """TradingView importance：-1 低 / 0 中 / 1 高。
+
+    兼容 int、数字字符串，以及接口可能返回的 'High'/'Medium'/'Low' 字符串。
+    """
+    if isinstance(v, str):
+        low = v.strip().lower()
+        if low in ("high",):
+            return 1
+        if low in ("medium",):
+            return 0
+        if low in ("low",):
+            return -1
     try:
         return int(v)
     except (TypeError, ValueError):
@@ -120,25 +131,49 @@ def _is_us(e):
 def fetch_macro_calendar(week_start, week_end, high_only=False):
     """抓本周美国宏观事件（含预测值、实际值、前值），按时间排序。
 
-    high_only=True 时只保留 TradingView importance == 1（【高】）。
-    接口示例要求 UTC 的 '.000Z' 格式，这里统一转换后发送。
+    TradingView 经济日历页面实际使用的接口是 GET：
+      https://economic-calendar.tradingview.com/events?minImportance=1&from=...&to=...&currencies=USD
+    （该请求格式由 urlscan 对 tradingview.com/widget/economic-calendar 的抓包确认）
+
+    minImportance：-1 低 / 0 中 / 1 高。
+    high_only=True 时只保留 importance == 1（【高】），此时接口按 minImportance=1 只取【高】；
+    high_only=False 时按 minImportance=0 取【中】+【高】，由调用方自行过滤。
     """
     import requests
 
     from_dt = datetime.datetime.combine(week_start, datetime.time.min, tzinfo=ET).astimezone(datetime.timezone.utc)
     to_dt = datetime.datetime.combine(week_end, datetime.time.max, tzinfo=ET).astimezone(datetime.timezone.utc)
-    body = {
-        "filter": [],
-        "range": {
-            "from": from_dt.strftime("%Y-%m-%dT%H:%M:%S.000Z"),
-            "to": to_dt.strftime("%Y-%m-%dT%H:%M:%S.000Z"),
-        },
-        "columns": ["title", "country", "date", "importance",
-                    "actual", "forecast", "previous"],
+    params = {
+        "minImportance": "1" if high_only else "0",
+        "from": from_dt.strftime("%Y-%m-%dT%H:%M:%S.000Z"),
+        "to": to_dt.strftime("%Y-%m-%dT%H:%M:%S.000Z"),
+        "currencies": "USD",
     }
-    r = requests.post(TV_URL, headers=TV_HEADERS, json=body, timeout=40)
+    r = requests.get(TV_URL, headers=TV_HEADERS, params=params, timeout=40)
     r.raise_for_status()
-    result = (r.json() or {}).get("result") or []
+    data = r.json()
+    if isinstance(data, dict):
+        result = data.get("result") or []
+    elif isinstance(data, list):
+        result = data
+    else:
+        result = []
+
+    if not result:
+        print(
+            f"[日历-raw] 接口返回空（GET minImportance={params['minImportance']}，"
+            f"范围 {week_start}~{week_end}，currencies=USD）"
+        )
+    else:
+        sample = result[:3]
+        print(f"[日历-raw] 返回 {len(result)} 条；字段 keys={sorted(sample[0].keys())}")
+        print(
+            "[日历-raw] 样本 importance/country/date: "
+            + "; ".join(
+                f"{e.get('importance')!r}/{e.get('country')!r}/{str(e.get('date'))[:22]}"
+                for e in sample
+            )
+        )
 
     events = []
     for e in result:
@@ -151,7 +186,13 @@ def fetch_macro_calendar(week_start, week_end, high_only=False):
         if not raw_date:
             continue
         try:
-            dt = datetime.datetime.fromisoformat(raw_date.replace("Z", "+00:00"))
+            if isinstance(raw_date, (int, float)):
+                # 兼容毫秒时间戳（如 1756051200000）
+                dt = datetime.datetime.fromtimestamp(
+                    raw_date / 1000.0, tz=datetime.timezone.utc
+                )
+            else:
+                dt = datetime.datetime.fromisoformat(str(raw_date).replace("Z", "+00:00"))
             dt = dt.astimezone(ET)
         except ValueError:
             continue

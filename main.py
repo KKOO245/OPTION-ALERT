@@ -870,6 +870,18 @@ def cmd_send_report_all(args) -> int:
         print(f"无 {args.session} 快照，本次跳过（正常情况，例如周末/标的未抓取）")
         return 0
     final_date = max(used_dates)
+    if date_str and final_date != date_str and not any(d == date_str for d in used_dates):
+        # 整个时段都没有目标日期快照（全部回退到旧日期）：
+        # 手动 FORCE 测试时不要把旧日期报告混进当天推送，直接跳过并说明原因。
+        import os
+
+        force = os.environ.get("FORCE", "").lower() == "true"
+        if force:
+            print(
+                f"[FORCE] {date_str} 无任何 {args.session} 快照（最近为 {final_date}），"
+                "为避免把旧日期报告混入本次推送，跳过发送"
+            )
+            return 0
     lines = [f"# 📊 期权{session_zh} {final_date}", ""]
     mixed = len(set(used_dates)) > 1
     if date_str and (final_date != date_str or mixed):
