@@ -831,33 +831,39 @@ def cmd_send_report_all(args) -> int:
     cal = _calendar_lines()
     body = []
     used_dates = []
+    render_failed = 0
     for t in tickers:
         snap, used_date = _load_snapshot_or_latest(snaps, date_str, t, args.session)
         if snap is None:
             print(f"无 {args.session} 快照，跳过 {t}")
             continue
         used_dates.append(used_date)
-        status = _setup_status(snap, store, Path(args.config_root), thresholds)
-        if args.session == "morning":
-            prev = _prev_evening_snapshot(snaps, used_date, t)
-            text = ticker_morning(
-                snap,
-                prev_snapshot=prev,
-                activity=_activity_from_analytics(data_root, t, "morning"),
-                setup_status=_render_status_arg(status),
-            )
-        else:
-            morning = None
-            try:
-                morning = snaps.load(used_date, t, "morning")
-            except FileNotFoundError:
+        try:
+            status = _setup_status(snap, store, Path(args.config_root), thresholds)
+            if args.session == "morning":
+                prev = _prev_evening_snapshot(snaps, used_date, t)
+                text = ticker_morning(
+                    snap,
+                    prev_snapshot=prev,
+                    activity=_activity_from_analytics(data_root, t, "morning"),
+                    setup_status=_render_status_arg(status),
+                )
+            else:
                 morning = None
-            text = ticker_evening(
-                snap,
-                morning=morning,
-                activity=_activity_from_analytics(data_root, t, "evening"),
-                setup_status=_render_status_arg(status),
-            )
+                try:
+                    morning = snaps.load(used_date, t, "morning")
+                except FileNotFoundError:
+                    morning = None
+                text = ticker_evening(
+                    snap,
+                    morning=morning,
+                    activity=_activity_from_analytics(data_root, t, "evening"),
+                    setup_status=_render_status_arg(status),
+                )
+        except Exception as e:
+            render_failed += 1
+            text = f"⚠️ {t} 区块渲染失败（已跳过）：{type(e).__name__}: {e}"
+            print(text)
         body.append(text)
 
     if not body:
@@ -881,7 +887,7 @@ def cmd_send_report_all(args) -> int:
         return 1
     _discord_send(args.webhook_url, full)
     print(f"已发送合并{session_zh}（{len(body)} 个标的）到 Discord")
-    return 0
+    return 1 if render_failed else 0
 
 
 def cmd_audit(args) -> int:

@@ -105,6 +105,8 @@ def event_annotation(
     delta = m["delta_oi"]
     if delta is None:
         return "数据不足，无法判定净变动"
+    if delta == 0:
+        return "净变动为0，以日内换手为主"
     if delta >= 0:
         direction_word = "净增"
     else:
@@ -119,9 +121,10 @@ def event_annotation(
     else:
         volume_word = ""
     rel = m["r2"]
+    rel_txt = f"（{rel:+.1f}% vs前日OI）" if rel is not None else "（前日OI缺失）"
     if magnitude == "MEDIUM":
-        return f"{volume_word}{direction_word}{m['r3']}张（{rel:+.1f}% vs前日OI），值得跟踪（方向未知）"
-    return f"大额{direction_word}{m['r3']}张（{rel:+.1f}%），连续性待观察（方向未知）"
+        return f"{volume_word}{direction_word}{m['r3']}张{rel_txt}，值得跟踪（方向未知）"
+    return f"大额{direction_word}{m['r3']}张{rel_txt}，连续性待观察（方向未知）"
 
 
 def event_card(

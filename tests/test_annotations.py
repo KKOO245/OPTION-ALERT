@@ -60,3 +60,19 @@ def test_low_magnitude_without_volume_no_crash():
     a = event_annotation(None, 5000, 5016, "LOW", "LOW")  # r1=None → 低等级
     assert "量数据缺失" in a
     assert assert_no_direction_words(a)
+
+
+def test_medium_high_without_prev_oi_no_crash():
+    # r2=None（前日OI缺失）时 MEDIUM/HIGH 注解不能崩
+    m_med = event_annotation(900, None, 3020, "MEDIUM", "HIGH")
+    assert "前日OI缺失" in m_med
+    assert assert_no_direction_words(m_med)
+    m_high = event_annotation(2000, None, 700, "HIGH", "HIGH")
+    assert "前日OI缺失" in m_high
+    assert assert_no_direction_words(m_high)
+
+
+def test_zero_net_change_annotation():
+    a = event_annotation(1000, 5000, 5000, "LOW", "HIGH")  # ΔOI=0
+    assert "净变动为0" in a
+    assert assert_no_direction_words(a)
