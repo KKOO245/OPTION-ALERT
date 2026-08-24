@@ -1,5 +1,10 @@
 # 期权晚报 2026-08-23
 
+市场背景： SPY $765.72 ｜ VIX 15.13 ｜ CNN 恐惧贪婪 55.2（greed）
+
+## 📅 本周重要美国宏观日历（仅【高】，美东时间）
+- 本周剩余时间暂无【高】重要性美国数据公布
+
 📋 Thesis Scorecard（今晨条件 vs 收盘实况，只打事实勾）
 SOXX: 晨报缺失（当日未生成），只报收盘事实
 Target 状态: PENDING（evaluation date …）——窗口结束前禁止'预测正确'类措辞
@@ -21,16 +26,7 @@ Gamma: NEGATIVE | GEX(存量) N/A | GEX Change N/A | Flip: N/A
 • 做市商（条件机制）：若 Scenario A + 负 Gamma 成立，跌破关键位下方可能对应顺周期卖出压力增加；实际做市商对冲流量不可观测。Scenario B → 方向相反。不进入方向决策。
 • 失效参考：跌破关键位结构参考失效（结构性参考，非预测）。
 🔺 Activity（事实层，方向 Unknown）
-09-18 575.0C — Vol N/A | OI 337→7685 (ΔOI +7348张) | ΔOI/Volume N/A | Magnitude: HIGH | 完整度: LOW
-   ⇒ 大额净增7348张（+2180.4%），连续性待观察（方向未知）
-08-28 565.0C — Vol N/A | OI 1059→2752 (ΔOI +1693张) | ΔOI/Volume N/A | Magnitude: HIGH | 完整度: LOW
-   ⇒ 大额净增1693张（+159.9%），连续性待观察（方向未知）
-09-18 540.0P — Vol N/A | OI 780→2085 (ΔOI +1305张) | ΔOI/Volume N/A | Magnitude: HIGH | 完整度: LOW
-   ⇒ 大额净增1305张（+167.3%），连续性待观察（方向未知）
-09-04 570.0C — Vol N/A | OI 200→1468 (ΔOI +1268张) | ΔOI/Volume N/A | Magnitude: HIGH | 完整度: LOW
-   ⇒ 大额净增1268张（+634.0%），连续性待观察（方向未知）
-09-18 450.0P — Vol N/A | OI 5741→6435 (ΔOI +694张) | ΔOI/Volume N/A | Magnitude: MEDIUM | 完整度: LOW
-   ⇒ 净增694张（+12.1% vs前日OI），值得跟踪（方向未知）
+- 无中高变动事件（全部低等级）
 Setup: 今日无 Setup 触发（机械检查全部 Setup）
 
 数据溯源：完整表见附录 / thesis / analytics/daily/2026-08-23/SOXX_evening.json
