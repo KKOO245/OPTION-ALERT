@@ -1,6 +1,12 @@
 # 期权晚报 2026-08-24
 
-市场背景： SPY $763.11 ｜ VIX 15.80 ｜ CNN 恐惧贪婪 55.3（greed）
+📊 市场环境
+
+SPY $763.47 ｜ QQQ $706.32
+VIX 15.85 ↑4.8%（5D +4.3%）
+CNN 恐惧贪婪 55.0（greed）
+
+⇒ VIX ↑ = SPX 期权隐含的近 30 日预期波动率上升；不判方向，不进入 Direction Edge。
 
 ## 📅 本周重要美国宏观日历（仅【高】，美东时间）
 - 周三 08-26 08:30　【高】Personal Spending MoM　预测 0.2 ｜ 实际 待公布 ｜ 前值 0.3
@@ -12,7 +18,7 @@
 - 周五 08-28 10:00　【高】Non Farm Payrolls Annual Revision Prel　实际 待公布 ｜ 前值 -911
 
 📋 Thesis Scorecard（今晨条件 vs 收盘实况，只打事实勾）
-XBI: 今晨 163.86 → 收盘 164.15（+0.2%）
+XBI: 今晨 163.86 → 收盘 164.19（+0.2%）
 Target 状态: PENDING（evaluation date …）——窗口结束前禁止'预测正确'类措辞
 
 

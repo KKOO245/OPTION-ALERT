@@ -1,6 +1,12 @@
 # 期权晚报 2026-08-24
 
-市场背景： SPY $763.11 ｜ VIX 15.80 ｜ CNN 恐惧贪婪 55.3（greed）
+📊 市场环境
+
+SPY $763.47 ｜ QQQ $706.32
+VIX 15.85 ↑4.8%（5D +4.3%）
+CNN 恐惧贪婪 55.0（greed）
+
+⇒ VIX ↑ = SPX 期权隐含的近 30 日预期波动率上升；不判方向，不进入 Direction Edge。
 
 ## 📅 本周重要美国宏观日历（仅【高】，美东时间）
 - 周三 08-26 08:30　【高】Personal Spending MoM　预测 0.2 ｜ 实际 待公布 ｜ 前值 0.3
@@ -12,7 +18,7 @@
 - 周五 08-28 10:00　【高】Non Farm Payrolls Annual Revision Prel　实际 待公布 ｜ 前值 -911
 
 📋 Thesis Scorecard（今晨条件 vs 收盘实况，只打事实勾）
-CCO: 今晨 2.35 → 收盘 2.35（+0.4%）
+CCO: 今晨 2.35 → 收盘 2.36（+0.6%）
 Target 状态: PENDING（evaluation date …）——窗口结束前禁止'预测正确'类措辞
 
 
@@ -24,7 +30,7 @@ Options: P/C量 N/A | OI比 0.28 | ATM IV 57.3% | Skew N/A | Term N/A | ExpMove 
 🔧 结构（未验证研究层：Mechanism Scenario A/B——OI 开仓方向不可观测）
 Gamma: POSITIVE | GEX(存量) N/A | GEX Change N/A | Flip: ≈2.24
 结构观察区: ≈2（局部 Gamma 切换，低置信；Top-3 近似，需全链重定价验证）
-距 Put Wall 2: +17.8% | 距 Call Wall 3: -21.5%
+距 Put Wall 2: +18.0% | 距 Call Wall 3: -21.3%
 🧭 结构解读（全部依赖上方假设）
 • 支撑/压力参考：下方 2（Put Wall）；上方 3（Call Wall）。
 • Gamma 区域：切换参考 2（Top-3 近似，需全链重定价验证）。

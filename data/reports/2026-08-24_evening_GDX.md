@@ -1,6 +1,12 @@
 # 期权晚报 2026-08-24
 
-市场背景： SPY $763.11 ｜ VIX 15.80 ｜ CNN 恐惧贪婪 55.3（greed）
+📊 市场环境
+
+SPY $763.76 ｜ QQQ $706.32
+VIX 15.85 ↑4.8%（5D +4.3%）
+CNN 恐惧贪婪 55.0（greed）
+
+⇒ VIX ↑ = SPX 期权隐含的近 30 日预期波动率上升；不判方向，不进入 Direction Edge。
 
 ## 📅 本周重要美国宏观日历（仅【高】，美东时间）
 - 周三 08-26 08:30　【高】Personal Spending MoM　预测 0.2 ｜ 实际 待公布 ｜ 前值 0.3
@@ -12,20 +18,20 @@
 - 周五 08-28 10:00　【高】Non Farm Payrolls Annual Revision Prel　实际 待公布 ｜ 前值 -911
 
 📋 Thesis Scorecard（今晨条件 vs 收盘实况，只打事实勾）
-GDX: 今晨 102.74 → 收盘 102.60（-0.1%）
+GDX: 今晨 102.74 → 收盘 103.47（+0.7%）
 Target 状态: PENDING（evaluation date …）——窗口结束前禁止'预测正确'类措辞
 
 
 ## GDX
 
-Options: P/C量 0.81 | OI比 0.59 | ATM IV 59.4% | Skew -2.5pp | Term 0.86 | ExpMove ±5.0% | Rank — (历史不足)
+Options: P/C量 0.81 | OI比 0.59 | ATM IV 57.9% | Skew -0.9pp | Term 0.89 | ExpMove ±4.9% | Rank — (历史不足)
    ⇒ Put/Call Volume: 0.81×（Call 成交高于 Put）→ 方向 Unknown
    ⇒ Put/Call OI: 0.59×（Put OI 低于 Call OI）→ 存量 Call-dominant
    ⇒ 两者结构一致
 🔧 结构（未验证研究层：Mechanism Scenario A/B——OI 开仓方向不可观测）
-Gamma: POSITIVE | GEX(存量) N/A | GEX Change N/A | Flip: ≈54.41 / ≈63.06 / ≈99.98
-结构观察区: 54–63（局部 Gamma 切换，低置信；Top-3 近似，需全链重定价验证）
-距 Put Wall 80: +28.2% | 距 Call Wall 104: -1.3%
+Gamma: POSITIVE | GEX(存量) N/A | GEX Change N/A | Flip: ≈54.43 / ≈57.72 / ≈65.23
+结构观察区: 54–58（局部 Gamma 切换，低置信；Top-3 近似，需全链重定价验证）
+距 Put Wall 80: +29.3% | 距 Call Wall 104: -0.5%
 🧭 结构解读（全部依赖上方假设）
 • 支撑/压力参考：下方 80（Put Wall）；上方 104（Call Wall）。
 • Gamma 区域：切换参考 54（Top-3 近似，需全链重定价验证）。

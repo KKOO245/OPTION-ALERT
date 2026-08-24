@@ -1,6 +1,12 @@
 # 期权晚报 2026-08-24
 
-市场背景： SPY $763.11 ｜ VIX 15.80 ｜ CNN 恐惧贪婪 55.3（greed）
+📊 市场环境
+
+SPY $763.76 ｜ QQQ $706.32
+VIX 15.85 ↑4.8%（5D +4.3%）
+CNN 恐惧贪婪 55.0（greed）
+
+⇒ VIX ↑ = SPX 期权隐含的近 30 日预期波动率上升；不判方向，不进入 Direction Edge。
 
 ## 📅 本周重要美国宏观日历（仅【高】，美东时间）
 - 周三 08-26 08:30　【高】Personal Spending MoM　预测 0.2 ｜ 实际 待公布 ｜ 前值 0.3
@@ -12,20 +18,20 @@
 - 周五 08-28 10:00　【高】Non Farm Payrolls Annual Revision Prel　实际 待公布 ｜ 前值 -911
 
 📋 Thesis Scorecard（今晨条件 vs 收盘实况，只打事实勾）
-MP: 今晨 57.52 → 收盘 57.47（-0.1%）
+MP: 今晨 57.52 → 收盘 57.22（-0.5%）
 Target 状态: PENDING（evaluation date …）——窗口结束前禁止'预测正确'类措辞
 
 
 ## MP
 
-Options: P/C量 0.57 | OI比 0.59 | ATM IV 77.2% | Skew -6.1pp | Term 0.93 | ExpMove ±6.6% | Rank — (历史不足)
-   ⇒ Put/Call Volume: 0.57×（Call 成交高于 Put）→ 方向 Unknown
+Options: P/C量 0.62 | OI比 0.59 | ATM IV 79.0% | Skew -4.4pp | Term 0.87 | ExpMove ±6.7% | Rank — (历史不足)
+   ⇒ Put/Call Volume: 0.62×（Call 成交高于 Put）→ 方向 Unknown
    ⇒ Put/Call OI: 0.59×（Put OI 低于 Call OI）→ 存量 Call-dominant
    ⇒ 两者结构一致
 🔧 结构（未验证研究层：Mechanism Scenario A/B——OI 开仓方向不可观测）
-Gamma: POSITIVE | GEX(存量) N/A | GEX Change N/A | Flip: ≈56.80 / ≈59.63 / ≈62.46
+Gamma: POSITIVE | GEX(存量) N/A | GEX Change N/A | Flip: ≈56.79 / ≈59.58 / ≈62.18
 结构观察区: 57–60（局部 Gamma 切换，低置信；Top-3 近似，需全链重定价验证）
-距 Put Wall 55: +4.5% | 距 Call Wall 60: -4.2%
+距 Put Wall 55: +4.0% | 距 Call Wall 60: -4.6%
 🧭 结构解读（全部依赖上方假设）
 • 支撑/压力参考：下方 55（Put Wall）；上方 60（Call Wall）。
 • Gamma 区域：切换参考 57（Top-3 近似，需全链重定价验证）。
