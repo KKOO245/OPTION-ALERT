@@ -10,6 +10,28 @@ from engine.gate import gate_pipeline
 from report.format import fmt, ticker_heading
 
 
+def _trading_gap(a_date: str, b_date: str) -> int:
+    """两个日期之间的工作日数（不含两端），与 Episode 聚类口径一致。"""
+    from datetime import date, timedelta
+
+    try:
+        a = date.fromisoformat(a_date[:10])
+        b = date.fromisoformat(b_date[:10])
+    except (TypeError, ValueError):
+        return 0
+    if b <= a:
+        return 0
+    n = 0
+    d = a
+    while True:
+        d += timedelta(days=1)
+        if d >= b:
+            break
+        if d.weekday() < 5:
+            n += 1
+    return n
+
+
 def _distance(spot: float, level: Optional[float]) -> Optional[float]:
     if spot is None or level is None:
         return None
@@ -127,8 +149,10 @@ def _setup_block(setup_status: Optional[Dict[str, Any]]) -> List[str]:
     return lines
 
 
-def _activity_block(events: Optional[List[Dict[str, Any]]]) -> List[str]:
+def _activity_block(events: Optional[List[Dict[str, Any]]], stale_note: Optional[str] = None) -> List[str]:
     lines = ["🔺 Activity（事实层，方向 Unknown）"]
+    if stale_note:
+        lines.append(f"- ⚠️ {stale_note}")
     if events is None:
         lines.append("- Activity 数据缺失（analytics 未提供），不猜测")
         return lines
@@ -160,17 +184,33 @@ def render_morning(
     gex_change: Optional[float] = None,
     reminders: Optional[List[str]] = None,
     calendar: Optional[List[str]] = None,
+    market: Optional[Dict[str, Any]] = None,
 ) -> str:
     ticker = snapshot.get("ticker", "?")
     date = snapshot.get("created_at", "")[:10]
     lines = [f"# 期权晨报 {date}", ""]
+    if market:
+        m = []
+        if market.get("spy") is not None:
+            m.append(f"SPY ${market['spy']:,.2f}")
+        if market.get("vix") is not None:
+            m.append(f"VIX {market['vix']:.2f}")
+        fg = market.get("fg_score")
+        fg_rating = market.get("fg_rating")
+        if fg is not None:
+            m.append(f"CNN 恐惧贪婪 {fg}{'（' + str(fg_rating) + '）' if fg_rating else ''}")
+        if m:
+            lines.append("市场背景： " + " ｜ ".join(m))
+            lines.append("")
+    if calendar:
+        lines.append("## 📅 本周重要美国宏观日历（仅【高】，美东时间）")
+        lines += calendar
+        lines.append("")
     if reminders:
         lines += [r for r in reminders if r]
         lines.append("")
-    if calendar:
-        lines += calendar
-        lines.append("")
 
+    stale_note = None
     if prev_snapshot:
         p = prev_snapshot.get("spot")
         c = snapshot.get("spot")
@@ -181,13 +221,24 @@ def render_morning(
             + (f"（{chg:+.1f}%）" if chg is not None else "")
             + " | 较昨收变动（含盘初走势）"
         )
+        gap = _trading_gap(prev_snapshot.get("created_at", "")[:10], date)
+        if gap >= 1:
+            prev_date = prev_snapshot.get("created_at", "")[:10]
+            stale_note = (
+                f"OI 增仓/异动基于 {prev_date} 快照对比（标的停更 {gap} 个交易日），"
+                "前几日数据可能失真，请谨慎解读"
+            )
+            lines.append(
+                f"⚠️ 标的停更 {gap} 个交易日：以下对比基于 {prev_date} 晚报，"
+                f"趋势与 OI 增仓指标需 {gap} 个交易日数据恢复"
+            )
         lines.append("")
 
     lines.append(ticker_heading(ticker))
     lines += _options_block(snapshot)
     lines += _structure_block(snapshot, gex=gex, gex_change=gex_change)
     lines += _structure_interpretation(snapshot)
-    lines += _activity_block(activity)
+    lines += _activity_block(activity, stale_note=stale_note)
     lines += _setup_block(setup_status)
     lines.append("")
     lines.append(f"数据溯源：完整表见附录 / thesis / analytics/daily/{date}/{ticker}_morning.json")

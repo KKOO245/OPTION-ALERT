@@ -398,9 +398,9 @@ def cmd_report(args) -> int:
         print("没有可用快照，请先运行 store-snapshot / build-snapshot / pipeline_snapshot")
         return 1
     if args.session == "morning":
-        text = render_morning(snap, model)
+        text = render_morning(snap, market=_market_context(), calendar=_calendar_lines())
     else:
-        text = render_evening(snap, model)
+        text = render_evening(snap, market=_market_context(), calendar=_calendar_lines())
     if args.out:
         Path(args.out).write_text(text, encoding="utf-8")
         print(f"报告已写入: {args.out}")
@@ -428,6 +428,46 @@ def _activity_from_analytics(data_root: Path, ticker: str, session: str) -> list
             "open_interest": s.get("oi") or s.get("open_interest"),
         })
     return out
+
+
+def _market_context() -> dict:
+    out = {"spy": None, "vix": None, "fg_score": None, "fg_rating": None}
+    try:
+        from src import data_fetcher as fetcher
+
+        spy, _ = fetcher.fetch_spot("SPY")
+        out["spy"] = spy
+    except Exception:
+        pass
+    try:
+        from src import data_fetcher as fetcher
+
+        vix, _ = fetcher.fetch_spot_yfinance("^VIX")
+        out["vix"] = vix
+    except Exception:
+        pass
+    try:
+        from src.fear_greed import fetch_fear_greed
+
+        fg = fetch_fear_greed()
+        if fg:
+            out["fg_score"] = fg.get("score")
+            out["fg_rating"] = fg.get("rating")
+    except Exception:
+        pass
+    return out
+
+
+def _calendar_lines():
+    try:
+        from datetime import datetime
+        from zoneinfo import ZoneInfo
+
+        from src.calendars import build_macro_lines
+
+        return build_macro_lines(datetime.now(ZoneInfo("America/New_York")))
+    except Exception:
+        return None
 
 
 def _prev_evening_snapshot(snaps: SnapshotStore, date_str: str, ticker: str):
@@ -521,6 +561,8 @@ def cmd_render_morning(args) -> int:
         prev_snapshot=prev,
         activity=_activity_from_analytics(data_root, ticker, "morning"),
         setup_status=_render_status_arg(status),
+        market=_market_context(),
+        calendar=_calendar_lines(),
     )
     _write_report(args.out, text)
     return 0
@@ -546,6 +588,8 @@ def cmd_render_evening(args) -> int:
         activity=_activity_from_analytics(data_root, ticker, "evening"),
         setup_status=_render_status_arg(status),
         reminders=evening_reminder_lines(datetime.fromisoformat(f"{date_str}T17:00:00-04:00")) if date_str else [],
+        market=_market_context(),
+        calendar=_calendar_lines(),
     )
     _write_report(args.out, text)
     return 0
@@ -700,6 +744,8 @@ def cmd_send_report(args) -> int:
             prev_snapshot=prev,
             activity=_activity_from_analytics(data_root, ticker, "morning"),
             setup_status=_render_status_arg(status),
+            market=_market_context(),
+            calendar=_calendar_lines(),
         )
     else:
         snap, used_date = _load_or_latest("evening")
@@ -719,6 +765,8 @@ def cmd_send_report(args) -> int:
             activity=_activity_from_analytics(data_root, ticker, "evening"),
             setup_status=_render_status_arg(status),
             reminders=evening_reminder_lines(datetime.fromisoformat(f"{date_str}T17:00:00-04:00")) if date_str else [],
+            market=_market_context(),
+            calendar=_calendar_lines(),
         )
 
     if args.dry_run:

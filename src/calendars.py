@@ -13,12 +13,14 @@ import datetime
 import os
 from zoneinfo import ZoneInfo
 
-import requests
-
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EARNINGS_FILE = os.path.join(BASE_DIR, "config", "earnings_watchlist.txt")
 
-ET = ZoneInfo("America/New_York")
+try:
+    ET = ZoneInfo("America/New_York")
+except Exception:
+    # 极少数环境缺少 tzdata（如部分精简 Python）；生产（GitHub runner）正常使用美东时间
+    ET = datetime.timezone.utc
 
 TV_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -102,8 +104,13 @@ def _week_range(now):
     return start, end
 
 
-def fetch_macro_calendar(week_start, week_end):
-    """抓本周美国高/中重要性宏观事件（含预测值、实际值、前值），按时间排序"""
+def fetch_macro_calendar(week_start, week_end, high_only=False):
+    """抓本周美国宏观事件（含预测值、实际值、前值），按时间排序。
+
+    high_only=True 时只保留 TradingView importance == 1（【高】）。
+    """
+    import requests
+
     from_dt = datetime.datetime.combine(week_start, datetime.time.min, tzinfo=ET)
     to_dt = datetime.datetime.combine(week_end, datetime.time.max, tzinfo=ET)
     body = {
@@ -121,7 +128,10 @@ def fetch_macro_calendar(week_start, week_end):
 
     events = []
     for e in result:
-        if e.get("country") != "US" or (e.get("importance") or 0) < 0:
+        imp = e.get("importance") or 0
+        if e.get("country") != "US" or imp < 0:
+            continue
+        if high_only and imp != 1:
             continue
         raw_date = e.get("date")
         if not raw_date:
@@ -142,6 +152,36 @@ def fetch_macro_calendar(week_start, week_end):
         })
     events.sort(key=lambda x: (x["date"], x["time"]))
     return events
+
+
+def build_macro_lines(now):
+    """每天晨/晚报用：返回 [今天, 本周日] 的【高】重要性美国宏观事件格式化行。"""
+    week_start, week_end = _week_range(now)
+    try:
+        events = fetch_macro_calendar(week_start, week_end, high_only=True)
+    except Exception as e:
+        print(f"[警告] 宏观日历获取失败: {e}")
+        return ["- 宏观日历源暂时不可用（稍后自动恢复）"]
+    today = now.date()
+    lines = []
+    for e in events:
+        if e["date"] < today:
+            continue
+        note = ""
+        if e["date"] == today:
+            note = "　✅ 今日已公布" if e["time"] <= now.strftime("%H:%M") else "　⏰ 今日"
+        vals = []
+        if e.get("forecast") is not None:
+            vals.append(f"预测 {e['forecast']}")
+        vals.append(f"实际 {e['actual']}" if e.get("actual") is not None else "实际 待公布")
+        if e.get("previous") is not None:
+            vals.append(f"前值 {e['previous']}")
+        lines.append(
+            f"- {_fmt_event_date(e['date'])} {e['time']}　【高】{e['name']}　{' ｜ '.join(vals)}{note}"
+        )
+    if not lines:
+        lines.append("- 本周剩余时间暂无【高】重要性美国数据公布")
+    return lines
 
 
 def load_earnings_watchlist():

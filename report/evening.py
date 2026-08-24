@@ -6,7 +6,15 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 
 from report.format import fmt
-from report.morning import _options_block, _setup_block, _structure_block, _structure_interpretation, _activity_block, ticker_heading
+from report.morning import (
+    _activity_block,
+    _options_block,
+    _setup_block,
+    _structure_block,
+    _structure_interpretation,
+    _trading_gap,
+    ticker_heading,
+)
 
 
 def _scorecard(morning: Optional[Dict[str, Any]], evening: Dict[str, Any], key_level_status: Optional[str]) -> List[str]:
@@ -15,6 +23,9 @@ def _scorecard(morning: Optional[Dict[str, Any]], evening: Dict[str, Any], key_l
     if morning is None:
         lines.append(f"{ticker}: 晨报缺失（当日未生成），只报收盘事实")
     else:
+        gap = _trading_gap(morning.get("created_at", "")[:10], evening.get("created_at", "")[:10])
+        if gap >= 1:
+            lines.append(f"{ticker}: ⚠️ 晨报为 {gap} 个交易日前（标的可能停更），仅作收盘事实对照")
         m_spot = morning.get("spot")
         e_spot = evening.get("spot")
         if m_spot and e_spot:
@@ -36,10 +47,29 @@ def render_evening(
     gex_change: Optional[float] = None,
     key_level_status: Optional[str] = None,
     reminders: Optional[List[str]] = None,
+    calendar: Optional[List[str]] = None,
+    market: Optional[Dict[str, Any]] = None,
 ) -> str:
     ticker = snapshot.get("ticker", "?")
     date = snapshot.get("created_at", "")[:10]
     lines = [f"# 期权晚报 {date}", ""]
+    if market:
+        m = []
+        if market.get("spy") is not None:
+            m.append(f"SPY ${market['spy']:,.2f}")
+        if market.get("vix") is not None:
+            m.append(f"VIX {market['vix']:.2f}")
+        fg = market.get("fg_score")
+        fg_rating = market.get("fg_rating")
+        if fg is not None:
+            m.append(f"CNN 恐惧贪婪 {fg}{'（' + str(fg_rating) + '）' if fg_rating else ''}")
+        if m:
+            lines.append("市场背景： " + " ｜ ".join(m))
+            lines.append("")
+    if calendar:
+        lines.append("## 📅 本周重要美国宏观日历（仅【高】，美东时间）")
+        lines += calendar
+        lines.append("")
     lines += _scorecard(morning, snapshot, key_level_status)
     if reminders:
         lines += [r for r in reminders if r]

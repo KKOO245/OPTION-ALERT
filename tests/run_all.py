@@ -27,6 +27,7 @@ MODULES = [
     "test_snapshot_builder",
     "test_price_series",
     "test_reminders",
+    "test_calendars",
     "test_regime_map",
     "test_data_quality",
     "test_edges",

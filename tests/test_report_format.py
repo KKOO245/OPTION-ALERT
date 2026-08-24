@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from report.format import code_block, table, ticker_heading
-from report.morning import render_morning
+from report.morning import _trading_gap, render_morning
 from report.evening import render_evening
 from tests._helpers import load_fixture
 
@@ -36,3 +36,36 @@ def test_render_evening_template():
     assert "Thesis Scorecard" in text
     assert "PENDING" in text
     assert "数据溯源" in text
+
+
+def test_render_morning_market_and_calendar():
+    snap = load_fixture("snapshot_morning_soxx.json")
+    market = {"spy": 765.72, "vix": 15.13, "fg_score": 45, "fg_rating": "中性"}
+    cal = ["- 周一 08-24 08:30　【高】CPI 通胀　预测 0.2% ｜ 实际 待公布 ｜ 前值 0.3%"]
+    text = render_morning(snap, market=market, calendar=cal)
+    assert "市场背景" in text
+    assert "SPY $765.72" in text and "VIX 15.13" in text and "CNN 恐惧贪婪 45（中性）" in text
+    assert "宏观日历" in text and "CPI 通胀" in text
+
+
+def test_render_morning_stale_prev_snapshot():
+    snap = load_fixture("snapshot_morning_soxx.json")
+    prev = load_fixture("snapshot_evening_soxx.json")
+    prev["created_at"] = "2026-08-11T16:30:00-04:00"  # 10 天前
+    text = render_morning(snap, prev_snapshot=prev)
+    assert "停更" in text and "个交易日" in text
+
+
+def test_render_morning_stale_one_trading_day():
+    snap = load_fixture("snapshot_morning_soxx.json")  # 2026-08-21
+    prev = load_fixture("snapshot_evening_soxx.json")
+    prev["created_at"] = "2026-08-19T16:30:00-04:00"  # 缺 8/20 → 停更 1 个交易日
+    text = render_morning(snap, prev_snapshot=prev)
+    assert "停更 1 个交易日" in text
+
+
+def test_trading_gap_boundaries():
+    assert _trading_gap("2026-08-24", "2026-08-27") == 2  # Mon→Thu：只计 Tue/Wed
+    assert _trading_gap("2026-08-21", "2026-08-24") == 0  # Fri→Mon：周末不计
+    assert _trading_gap("2026-08-19", "2026-08-21") == 1  # Wed→Fri：只计 Thu
+    assert _trading_gap("bad-date", "2026-08-21") == 0   # 非法日期防御
