@@ -1,6 +1,6 @@
 # 期权晨报 2026-08-24
 
-市场背景： SPY $762.69 ｜ VIX 15.96 ｜ CNN 恐惧贪婪 55.7（greed）
+市场背景： SPY $765.09 ｜ VIX 15.68 ｜ CNN 恐惧贪婪 56.4（greed）
 
 ## 📅 本周重要美国宏观日历（仅【高】，美东时间）
 - 本周剩余时间暂无【高】重要性美国数据公布
@@ -8,13 +8,13 @@
 
 ## CCO
 
-Options: P/C量 N/A | OI比 0.28 | ATM IV 57.3% | Skew N/A | Term N/A | ExpMove ±10.5% | Rank — (历史不足)
+Options: P/C量 N/A | OI比 0.28 | ATM IV 57.3% | Skew N/A | Term N/A | ExpMove ±10.6% | Rank — (历史不足)
    ⇒ Put/Call Volume: 数据不足 → 方向 Unknown
    ⇒ Put/Call OI: 0.28×（Put OI 低于 Call OI）→ 存量 Call-dominant
 🔧 结构（未验证研究层：Mechanism Scenario A/B——OI 开仓方向不可观测）
 Gamma: POSITIVE | GEX(存量) N/A | GEX Change N/A | Flip: ≈2.24
 结构观察区: ≈2（局部 Gamma 切换，低置信；Top-3 近似，需全链重定价验证）
-距 Put Wall 2: +18.5% | 距 Call Wall 3: -21.0%
+距 Put Wall 2: +17.5% | 距 Call Wall 3: -21.7%
 🧭 结构解读（全部依赖上方假设）
 • 支撑/压力参考：下方 2（Put Wall）；上方 3（Call Wall）。
 • Gamma 区域：切换参考 2（Top-3 近似，需全链重定价验证）。
