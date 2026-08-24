@@ -41,7 +41,8 @@ from engine.snapshot import SnapshotStore
 from engine.thesis_logger import EventStore
 from engine import yaml_mini
 from report.evening import render_evening
-from report.morning import render_morning
+from report.evening import ticker_evening
+from report.morning import calendar_block, market_block, render_morning, ticker_morning
 from src.reminders import evening_reminder_lines
 from validation.base_rate import conditional_setup_rate, freeze_partition, unconditional_base_rate
 from validation.confidence import format_rate
@@ -154,6 +155,13 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--webhook-url", default="")
     sp.add_argument("--dry-run", action="store_true", help="只打印不发送")
     sp.add_argument("--verify", action="store_true", help="只验证 webhook 有效性并打印目标频道")
+
+    sp = sub.add_parser("send-report-all", help="合并所有 ticker 为一份报告发送（市场/日历只出现一次）")
+    sp.add_argument("--session", choices=["morning", "evening"], required=True)
+    sp.add_argument("--date")
+    sp.add_argument("--webhook-url", default="")
+    sp.add_argument("--dry-run", action="store_true")
+    sp.add_argument("--verify", action="store_true")
 
     sp = sub.add_parser("audit", help="哈希链完整性 + 每日触发审计")
     return p
@@ -470,6 +478,28 @@ def _calendar_lines():
         return None
 
 
+def _load_tickers() -> list:
+    path = Path(__file__).resolve().parent / "config" / "tickers.txt"
+    out = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line and not line.startswith("#"):
+            out.append(line.upper())
+    return out
+
+
+def _load_snapshot_or_latest(snaps: SnapshotStore, date_str: str, ticker: str, session: str):
+    try:
+        return snaps.load(date_str, ticker, session), date_str
+    except FileNotFoundError:
+        for d in reversed(snaps.list_days()):
+            try:
+                return snaps.load(d, ticker, session), d
+            except FileNotFoundError:
+                continue
+        return None, None
+
+
 def _prev_evening_snapshot(snaps: SnapshotStore, date_str: str, ticker: str):
     for d in reversed([x for x in snaps.list_days() if x < date_str]):
         try:
@@ -720,19 +750,8 @@ def cmd_send_report(args) -> int:
             print(f"webhook 验证失败: {type(e).__name__}: {e}")
             return 1
 
-    def _load_or_latest(session: str):
-        try:
-            return snaps.load(date_str, ticker, session), date_str
-        except FileNotFoundError:
-            for d in reversed(snaps.list_days()):
-                try:
-                    return snaps.load(d, ticker, session), d
-                except FileNotFoundError:
-                    continue
-            return None, None
-
     if args.session == "morning":
-        snap, used_date = _load_or_latest("morning")
+        snap, used_date = _load_snapshot_or_latest(snaps, date_str, ticker, "morning")
         if snap is None:
             print(f"无 morning 快照，跳过（当日晨报未生成）")
             return 0
@@ -748,7 +767,7 @@ def cmd_send_report(args) -> int:
             calendar=_calendar_lines(),
         )
     else:
-        snap, used_date = _load_or_latest("evening")
+        snap, used_date = _load_snapshot_or_latest(snaps, date_str, ticker, "evening")
         if snap is None:
             print(f"无 evening 快照，跳过（当日晚报未生成）")
             return 0
@@ -778,6 +797,90 @@ def cmd_send_report(args) -> int:
         return 1
     _discord_send(args.webhook_url, text)
     print(f"已发送 {args.session} {ticker} {date_str} 到 Discord")
+    return 0
+
+
+def cmd_send_report_all(args) -> int:
+    data_root = _data_root(args)
+    snaps = SnapshotStore(data_root)
+    store = EventStore(data_root)
+    thresholds = yaml_mini.load(Path(args.config_root) / "thresholds.yaml")
+    tickers = _load_tickers()
+    date_str = args.date or (snaps.load_latest() or {}).get("created_at", "")[:10]
+
+    if args.verify:
+        webhook = (args.webhook_url or "").strip()
+        if not webhook:
+            print("webhook URL 为空（secret 未设置？）")
+            return 1
+        try:
+            req = urllib.request.Request(webhook, headers={"User-Agent": DISCORD_USER_AGENT})
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                info = json.loads(resp.read().decode("utf-8"))
+            print(
+                f"webhook 有效: id={info.get('id')} name={info.get('name')!r} "
+                f"channel_id={info.get('channel_id')}"
+            )
+            return 0
+        except Exception as e:
+            print(f"webhook 验证失败: {type(e).__name__}: {e}")
+            return 1
+
+    session_zh = "晨报" if args.session == "morning" else "晚报"
+    market = _market_context()
+    cal = _calendar_lines()
+    body = []
+    used_dates = []
+    for t in tickers:
+        snap, used_date = _load_snapshot_or_latest(snaps, date_str, t, args.session)
+        if snap is None:
+            print(f"无 {args.session} 快照，跳过 {t}")
+            continue
+        used_dates.append(used_date)
+        status = _setup_status(snap, store, Path(args.config_root), thresholds)
+        if args.session == "morning":
+            prev = _prev_evening_snapshot(snaps, used_date, t)
+            text = ticker_morning(
+                snap,
+                prev_snapshot=prev,
+                activity=_activity_from_analytics(data_root, t, "morning"),
+                setup_status=_render_status_arg(status),
+            )
+        else:
+            morning = None
+            try:
+                morning = snaps.load(used_date, t, "morning")
+            except FileNotFoundError:
+                morning = None
+            text = ticker_evening(
+                snap,
+                morning=morning,
+                activity=_activity_from_analytics(data_root, t, "evening"),
+                setup_status=_render_status_arg(status),
+            )
+        body.append(text)
+
+    if not body:
+        print(f"无 {args.session} 快照，本次跳过（正常情况，例如周末/标的未抓取）")
+        return 0
+    final_date = max(used_dates)
+    lines = [f"# 📊 期权{session_zh} {final_date}", ""]
+    lines += market_block(market)
+    lines += calendar_block(cal)
+    if args.session == "evening" and final_date:
+        reminders = evening_reminder_lines(datetime.fromisoformat(f"{final_date}T17:00:00-04:00"))
+        if reminders:
+            lines += reminders + [""]
+    lines += body
+    full = "\n".join(lines)
+    if args.dry_run:
+        print(full)
+        return 0
+    if not args.webhook_url:
+        print("未提供 --webhook-url")
+        return 1
+    _discord_send(args.webhook_url, full)
+    print(f"已发送合并{session_zh}（{len(body)} 个标的）到 Discord")
     return 0
 
 
@@ -828,6 +931,7 @@ def main() -> int:
         "gate-summary": cmd_gate_summary,
         "regime-map": cmd_regime_map,
         "send-report": cmd_send_report,
+        "send-report-all": cmd_send_report_all,
         "audit": cmd_audit,
     }[args.command](args)
 

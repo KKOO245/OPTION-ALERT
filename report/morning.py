@@ -175,41 +175,40 @@ def _activity_block(events: Optional[List[Dict[str, Any]]], stale_note: Optional
     return lines
 
 
-def render_morning(
+def market_block(market: Optional[Dict[str, Any]]) -> List[str]:
+    """市场背景块（整份报告只出现一次）。"""
+    if not market:
+        return []
+    m = []
+    if market.get("spy") is not None:
+        m.append(f"SPY ${market['spy']:,.2f}")
+    if market.get("vix") is not None:
+        m.append(f"VIX {market['vix']:.2f}")
+    fg = market.get("fg_score")
+    fg_rating = market.get("fg_rating")
+    if fg is not None:
+        m.append(f"CNN 恐惧贪婪 {fg}{'（' + str(fg_rating) + '）' if fg_rating else ''}")
+    return ["市场背景： " + " ｜ ".join(m), ""] if m else []
+
+
+def calendar_block(calendar: Optional[List[str]]) -> List[str]:
+    """宏观日历块（整份报告只出现一次）。"""
+    if not calendar:
+        return []
+    return ["## 📅 本周重要美国宏观日历（仅【高】，美东时间）"] + list(calendar) + [""]
+
+
+def ticker_morning(
     snapshot: Dict[str, Any],
     prev_snapshot: Optional[Dict[str, Any]] = None,
     activity: Optional[List[Dict[str, Any]]] = None,
     setup_status: Optional[Dict[str, Any]] = None,
     gex: Optional[float] = None,
     gex_change: Optional[float] = None,
-    reminders: Optional[List[str]] = None,
-    calendar: Optional[List[str]] = None,
-    market: Optional[Dict[str, Any]] = None,
 ) -> str:
+    """单个标的的晨报区块（不含标题/市场/日历）。"""
     ticker = snapshot.get("ticker", "?")
-    date = snapshot.get("created_at", "")[:10]
-    lines = [f"# 期权晨报 {date}", ""]
-    if market:
-        m = []
-        if market.get("spy") is not None:
-            m.append(f"SPY ${market['spy']:,.2f}")
-        if market.get("vix") is not None:
-            m.append(f"VIX {market['vix']:.2f}")
-        fg = market.get("fg_score")
-        fg_rating = market.get("fg_rating")
-        if fg is not None:
-            m.append(f"CNN 恐惧贪婪 {fg}{'（' + str(fg_rating) + '）' if fg_rating else ''}")
-        if m:
-            lines.append("市场背景： " + " ｜ ".join(m))
-            lines.append("")
-    if calendar:
-        lines.append("## 📅 本周重要美国宏观日历（仅【高】，美东时间）")
-        lines += calendar
-        lines.append("")
-    if reminders:
-        lines += [r for r in reminders if r]
-        lines.append("")
-
+    lines: List[str] = []
     stale_note = None
     if prev_snapshot:
         p = prev_snapshot.get("spot")
@@ -221,7 +220,7 @@ def render_morning(
             + (f"（{chg:+.1f}%）" if chg is not None else "")
             + " | 较昨收变动（含盘初走势）"
         )
-        gap = _trading_gap(prev_snapshot.get("created_at", "")[:10], date)
+        gap = _trading_gap(prev_snapshot.get("created_at", "")[:10], snapshot.get("created_at", "")[:10])
         if gap >= 1:
             prev_date = prev_snapshot.get("created_at", "")[:10]
             stale_note = (
@@ -233,7 +232,6 @@ def render_morning(
                 f"趋势与 OI 增仓指标需 {gap} 个交易日数据恢复"
             )
         lines.append("")
-
     lines.append(ticker_heading(ticker))
     lines += _options_block(snapshot)
     lines += _structure_block(snapshot, gex=gex, gex_change=gex_change)
@@ -241,5 +239,29 @@ def render_morning(
     lines += _activity_block(activity, stale_note=stale_note)
     lines += _setup_block(setup_status)
     lines.append("")
-    lines.append(f"数据溯源：完整表见附录 / thesis / analytics/daily/{date}/{ticker}_morning.json")
+    lines.append(f"数据溯源：完整表见附录 / thesis / analytics/daily/{snapshot.get('created_at', '')[:10]}/{ticker}_morning.json")
+    return "\n".join(lines)
+
+
+def render_morning(
+    snapshot: Dict[str, Any],
+    prev_snapshot: Optional[Dict[str, Any]] = None,
+    activity: Optional[List[Dict[str, Any]]] = None,
+    setup_status: Optional[Dict[str, Any]] = None,
+    gex: Optional[float] = None,
+    gex_change: Optional[float] = None,
+    reminders: Optional[List[str]] = None,
+    calendar: Optional[List[str]] = None,
+    market: Optional[Dict[str, Any]] = None,
+) -> str:
+    date = snapshot.get("created_at", "")[:10]
+    lines = [f"# 期权晨报 {date}", ""]
+    if market:
+        lines += market_block(market)
+    if calendar:
+        lines += calendar_block(calendar)
+    if reminders:
+        lines += [r for r in reminders if r]
+        lines.append("")
+    lines.append(ticker_morning(snapshot, prev_snapshot, activity, setup_status, gex, gex_change))
     return "\n".join(lines)

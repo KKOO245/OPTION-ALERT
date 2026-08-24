@@ -147,15 +147,13 @@ jobs:
           PY
           )
           echo "== 验证 webhook =="
-          python main.py send-report --session evening --ticker SOXX --date "$DATE" \
+          python main.py send-report-all --session evening --date "$DATE" \
             --webhook-url "$DISCORD_WEBHOOK_URL" --verify || exit 1
           FAILED=0
           for S in $SESSIONS; do
-            while read -r T; do
-              python main.py send-report --session "$S" --ticker "$T" --date "$DATE" \
-                --webhook-url "$DISCORD_WEBHOOK_URL" || { echo "[发送失败] $S $T"; FAILED=1; }
-              sleep 1  # Discord webhook 限速 30 条/分钟，防 429
-            done < <(grep -vE '^\s*(#|$)' config/tickers.txt)
+            python main.py send-report-all --session "$S" --date "$DATE" \
+              --webhook-url "$DISCORD_WEBHOOK_URL" || { echo "[发送失败] $S"; FAILED=1; }
+            sleep 1  # Discord webhook 限速 30 条/分钟，防 429
           done
           [ "$FAILED" = "0" ] || exit 1
           echo "发送步骤完成"

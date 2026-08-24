@@ -13,6 +13,8 @@ from report.morning import (
     _structure_block,
     _structure_interpretation,
     _trading_gap,
+    calendar_block,
+    market_block,
     ticker_heading,
 )
 
@@ -38,6 +40,30 @@ def _scorecard(morning: Optional[Dict[str, Any]], evening: Dict[str, Any], key_l
     return lines
 
 
+def ticker_evening(
+    snapshot: Dict[str, Any],
+    morning: Optional[Dict[str, Any]] = None,
+    activity: Optional[List[Dict[str, Any]]] = None,
+    setup_status: Optional[Dict[str, Any]] = None,
+    gex: Optional[float] = None,
+    gex_change: Optional[float] = None,
+    key_level_status: Optional[str] = None,
+) -> str:
+    """单个标的的晚报区块（Scorecard + 明细，不含标题/市场/日历/提醒）。"""
+    ticker = snapshot.get("ticker", "?")
+    lines: List[str] = []
+    lines += _scorecard(morning, snapshot, key_level_status)
+    lines.append(ticker_heading(ticker))
+    lines += _options_block(snapshot)
+    lines += _structure_block(snapshot, gex=gex, gex_change=gex_change)
+    lines += _structure_interpretation(snapshot)
+    lines += _activity_block(activity)
+    lines += _setup_block(setup_status)
+    lines.append("")
+    lines.append(f"数据溯源：完整表见附录 / thesis / analytics/daily/{snapshot.get('created_at', '')[:10]}/{ticker}_evening.json")
+    return "\n".join(lines)
+
+
 def render_evening(
     snapshot: Dict[str, Any],
     morning: Optional[Dict[str, Any]] = None,
@@ -50,36 +76,14 @@ def render_evening(
     calendar: Optional[List[str]] = None,
     market: Optional[Dict[str, Any]] = None,
 ) -> str:
-    ticker = snapshot.get("ticker", "?")
     date = snapshot.get("created_at", "")[:10]
     lines = [f"# 期权晚报 {date}", ""]
     if market:
-        m = []
-        if market.get("spy") is not None:
-            m.append(f"SPY ${market['spy']:,.2f}")
-        if market.get("vix") is not None:
-            m.append(f"VIX {market['vix']:.2f}")
-        fg = market.get("fg_score")
-        fg_rating = market.get("fg_rating")
-        if fg is not None:
-            m.append(f"CNN 恐惧贪婪 {fg}{'（' + str(fg_rating) + '）' if fg_rating else ''}")
-        if m:
-            lines.append("市场背景： " + " ｜ ".join(m))
-            lines.append("")
+        lines += market_block(market)
     if calendar:
-        lines.append("## 📅 本周重要美国宏观日历（仅【高】，美东时间）")
-        lines += calendar
-        lines.append("")
-    lines += _scorecard(morning, snapshot, key_level_status)
+        lines += calendar_block(calendar)
     if reminders:
         lines += [r for r in reminders if r]
         lines.append("")
-    lines.append(ticker_heading(ticker))
-    lines += _options_block(snapshot)
-    lines += _structure_block(snapshot, gex=gex, gex_change=gex_change)
-    lines += _structure_interpretation(snapshot)
-    lines += _activity_block(activity)
-    lines += _setup_block(setup_status)
-    lines.append("")
-    lines.append(f"数据溯源：完整表见附录 / thesis / analytics/daily/{date}/{ticker}_evening.json")
+    lines.append(ticker_evening(snapshot, morning, activity, setup_status, gex, gex_change, key_level_status))
     return "\n".join(lines)

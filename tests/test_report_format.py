@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from report.format import code_block, table, ticker_heading
-from report.morning import _trading_gap, render_morning
-from report.evening import render_evening
+from report.evening import render_evening, ticker_evening
+from report.morning import _trading_gap, calendar_block, market_block, render_morning, ticker_morning
 from tests._helpers import load_fixture
 
 
@@ -69,3 +69,22 @@ def test_trading_gap_boundaries():
     assert _trading_gap("2026-08-21", "2026-08-24") == 0  # Fri→Mon：周末不计
     assert _trading_gap("2026-08-19", "2026-08-21") == 1  # Wed→Fri：只计 Thu
     assert _trading_gap("bad-date", "2026-08-21") == 0   # 非法日期防御
+
+
+def test_ticker_blocks_exclude_global_sections():
+    morning = load_fixture("snapshot_morning_soxx.json")
+    evening = load_fixture("snapshot_evening_soxx.json")
+    m_text = ticker_morning(morning)
+    e_text = ticker_evening(evening)
+    assert "## SOXX" in m_text and "期权晨报" not in m_text and "市场背景" not in m_text
+    assert "Thesis Scorecard" in e_text and "## SOXX" in e_text
+    assert "期权晚报" not in e_text and "市场背景" not in e_text
+
+
+def test_market_and_calendar_blocks():
+    mb = market_block({"spy": 765.72, "vix": 15.13, "fg_score": 45, "fg_rating": "中性"})
+    assert mb and "CNN 恐惧贪婪 45（中性）" in mb[0]
+    cb = calendar_block(["- 测试日历行"])
+    assert cb and "宏观日历" in cb[0] and "测试日历行" in cb[1]
+    assert market_block(None) == []
+    assert calendar_block(None) == []
