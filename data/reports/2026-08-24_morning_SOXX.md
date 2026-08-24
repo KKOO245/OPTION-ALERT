@@ -1,17 +1,17 @@
 # 期权晨报 2026-08-24
 
-市场背景： SPY $765.09 ｜ VIX 15.68 ｜ CNN 恐惧贪婪 56.4（greed）
+市场背景： SPY $764.19 ｜ VIX 15.67 ｜ CNN 恐惧贪婪 56.0（greed）
 
 ## 📅 本周重要美国宏观日历（仅【高】，美东时间）
 - 本周剩余时间暂无【高】重要性美国数据公布
 
 📋 昨日晚报 → 今日晨报（只列关键项，低于阈值不单列）
-SOXX  昨收 519.52 → 今晨 508.32（-2.2%） | 较昨收变动（含盘初走势）
+SOXX  昨收 519.52 → 今晨 505.94（-2.6%） | 较昨收变动（含盘初走势）
 
 
 ## SOXX
 
-Options: P/C量 2.07 | OI比 0.73 | ATM IV 49.0% | Skew 3.5pp | Term 0.86 | ExpMove ±4.3% | Rank — (历史不足)
+Options: P/C量 2.07 | OI比 0.73 | ATM IV 48.5% | Skew 3.5pp | Term 0.87 | ExpMove ±4.2% | Rank — (历史不足)
    ⇒ Put/Call Volume: 2.07×（Put 成交显著高于 Call）→ 方向 Unknown
    ⇒ Put/Call OI: 0.73×（Put OI 低于 Call OI）→ 存量 Call-dominant
    ⇒ 两者结构不一致
@@ -19,7 +19,7 @@ Options: P/C量 2.07 | OI比 0.73 | ATM IV 49.0% | Skew 3.5pp | Term 0.86 | ExpM
 Gamma: NEGATIVE | GEX(存量) N/A | GEX Change N/A | Flip: N/A
    ⇒ 全链负Gamma，波动易被放大（模型层）
 结构观察区: N/A（局部 Gamma 切换，低置信；Top-3 近似，需全链重定价验证）
-距 Put Wall 500: +1.7% | 距 Call Wall 670: -24.1%
+距 Put Wall 500: +1.2% | 距 Call Wall 670: -24.5%
 🧭 结构解读（全部依赖上方假设）
 • 支撑/压力参考：下方 500（Put Wall）；上方 670（Call Wall）。
 • 做市商（条件机制）：若 Scenario A + 负 Gamma 成立，跌破关键位下方可能对应顺周期卖出压力增加；实际做市商对冲流量不可观测。Scenario B → 方向相反。不进入方向决策。

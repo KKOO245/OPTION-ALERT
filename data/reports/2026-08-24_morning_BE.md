@@ -1,6 +1,6 @@
 # 期权晨报 2026-08-24
 
-市场背景： SPY $765.09 ｜ VIX 15.68 ｜ CNN 恐惧贪婪 56.4（greed）
+市场背景： SPY $764.19 ｜ VIX 15.67 ｜ CNN 恐惧贪婪 56.0（greed）
 
 ## 📅 本周重要美国宏观日历（仅【高】，美东时间）
 - 本周剩余时间暂无【高】重要性美国数据公布
@@ -8,13 +8,13 @@
 
 ## BE
 
-Options: P/C量 0.47 | OI比 1.39 | ATM IV 99.2% | Skew -5.2pp | Term 0.91 | ExpMove ±8.4% | Rank — (历史不足)
-   ⇒ Put/Call Volume: 0.47×（Call 成交高于 Put）→ 方向 Unknown
+Options: P/C量 0.46 | OI比 1.39 | ATM IV 96.4% | Skew -4.0pp | Term 0.93 | ExpMove ±8.2% | Rank — (历史不足)
+   ⇒ Put/Call Volume: 0.46×（Call 成交高于 Put）→ 方向 Unknown
    ⇒ Put/Call OI: 1.39×（Put OI 高于 Call OI）→ 存量 Put-dominant
    ⇒ 两者结构不一致
 🔧 结构（未验证研究层：Mechanism Scenario A/B——OI 开仓方向不可观测）
-Gamma: POSITIVE | GEX(存量) N/A | GEX Change N/A | Flip: ≈318.26 / ≈328.68
-结构观察区: 318–329（局部 Gamma 切换，低置信；Top-3 近似，需全链重定价验证）
+Gamma: POSITIVE | GEX(存量) N/A | GEX Change N/A | Flip: ≈318.00 / ≈327.50
+结构观察区: 318–328（局部 Gamma 切换，低置信；Top-3 近似，需全链重定价验证）
 距 Put Wall 180: +14.4% | 距 Call Wall 250: -17.6%
 🧭 结构解读（全部依赖上方假设）
 • 支撑/压力参考：下方 180（Put Wall）；上方 250（Call Wall）。

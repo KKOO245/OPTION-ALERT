@@ -1,18 +1,18 @@
 # 期权晨报 2026-08-24
 
-市场背景： SPY $765.09 ｜ VIX 15.68 ｜ CNN 恐惧贪婪 56.4（greed）
+市场背景： SPY $764.19 ｜ VIX 15.67 ｜ CNN 恐惧贪婪 56.0（greed）
 
 ## 📅 本周重要美国宏观日历（仅【高】，美东时间）
 - 本周剩余时间暂无【高】重要性美国数据公布
 
 📋 昨日晚报 → 今日晨报（只列关键项，低于阈值不单列）
-SLV  昨收 62.72 → 今晨 62.13（-0.9%） | 较昨收变动（含盘初走势）
+SLV  昨收 62.72 → 今晨 62.16（-0.9%） | 较昨收变动（含盘初走势）
 
 
 ## SLV
 
-Options: P/C量 0.65 | OI比 0.35 | ATM IV 35.7% | Skew -5.9pp | Term 1.28 | ExpMove ±0.6% | Rank — (历史不足)
-   ⇒ Put/Call Volume: 0.65×（Call 成交高于 Put）→ 方向 Unknown
+Options: P/C量 0.64 | OI比 0.35 | ATM IV 32.7% | Skew -6.5pp | Term 1.39 | ExpMove ±0.6% | Rank — (历史不足)
+   ⇒ Put/Call Volume: 0.64×（Call 成交高于 Put）→ 方向 Unknown
    ⇒ Put/Call OI: 0.35×（Put OI 低于 Call OI）→ 存量 Call-dominant
    ⇒ 两者结构一致
 🔧 结构（未验证研究层：Mechanism Scenario A/B——OI 开仓方向不可观测）

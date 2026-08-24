@@ -1,22 +1,22 @@
 # 期权晨报 2026-08-24
 
-市场背景： SPY $765.09 ｜ VIX 15.68 ｜ CNN 恐惧贪婪 56.4（greed）
+市场背景： SPY $764.19 ｜ VIX 15.67 ｜ CNN 恐惧贪婪 56.0（greed）
 
 ## 📅 本周重要美国宏观日历（仅【高】，美东时间）
 - 本周剩余时间暂无【高】重要性美国数据公布
 
 📋 昨日晚报 → 今日晨报（只列关键项，低于阈值不单列）
-GDX  昨收 102.83 → 今晨 102.72（-0.1%） | 较昨收变动（含盘初走势）
+GDX  昨收 102.83 → 今晨 102.74（-0.1%） | 较昨收变动（含盘初走势）
 
 
 ## GDX
 
-Options: P/C量 0.92 | OI比 0.59 | ATM IV 59.6% | Skew -0.9pp | Term 0.86 | ExpMove ±5.1% | Rank — (历史不足)
-   ⇒ Put/Call Volume: 0.92×（Call 成交高于 Put）→ 方向 Unknown
+Options: P/C量 0.89 | OI比 0.59 | ATM IV 60.3% | Skew -1.6pp | Term 0.85 | ExpMove ±5.1% | Rank — (历史不足)
+   ⇒ Put/Call Volume: 0.89×（Call 成交高于 Put）→ 方向 Unknown
    ⇒ Put/Call OI: 0.59×（Put OI 低于 Call OI）→ 存量 Call-dominant
    ⇒ 两者结构一致
 🔧 结构（未验证研究层：Mechanism Scenario A/B——OI 开仓方向不可观测）
-Gamma: POSITIVE | GEX(存量) N/A | GEX Change N/A | Flip: ≈54.39 / ≈65.15 / ≈99.99
+Gamma: POSITIVE | GEX(存量) N/A | GEX Change N/A | Flip: ≈54.43 / ≈65.15 / ≈99.98
 结构观察区: 54–65（局部 Gamma 切换，低置信；Top-3 近似，需全链重定价验证）
 距 Put Wall 80: +28.4% | 距 Call Wall 104: -1.2%
 🧭 结构解读（全部依赖上方假设）

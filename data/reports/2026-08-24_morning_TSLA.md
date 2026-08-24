@@ -1,24 +1,24 @@
 # 期权晨报 2026-08-24
 
-市场背景： SPY $765.09 ｜ VIX 15.69 ｜ CNN 恐惧贪婪 56.4（greed）
+市场背景： SPY $764.19 ｜ VIX 15.67 ｜ CNN 恐惧贪婪 56.0（greed）
 
 ## 📅 本周重要美国宏观日历（仅【高】，美东时间）
 - 本周剩余时间暂无【高】重要性美国数据公布
 
 📋 昨日晚报 → 今日晨报（只列关键项，低于阈值不单列）
-TSLA  昨收 363.92 → 今晨 356.79（-2.0%） | 较昨收变动（含盘初走势）
+TSLA  昨收 363.92 → 今晨 354.71（-2.5%） | 较昨收变动（含盘初走势）
 
 
 ## TSLA
 
-Options: P/C量 0.78 | OI比 0.89 | ATM IV 46.5% | Skew -0.7pp | Term 0.86 | ExpMove ±0.8% | Rank — (历史不足)
+Options: P/C量 0.78 | OI比 0.89 | ATM IV 45.0% | Skew -0.7pp | Term 0.89 | ExpMove ±0.7% | Rank — (历史不足)
    ⇒ Put/Call Volume: 0.78×（Call 成交高于 Put）→ 方向 Unknown
    ⇒ Put/Call OI: 0.89×（Put OI 低于 Call OI）→ 存量 Call-dominant
    ⇒ 两者结构一致
 🔧 结构（未验证研究层：Mechanism Scenario A/B——OI 开仓方向不可观测）
-Gamma: POSITIVE | GEX(存量) N/A | GEX Change N/A | Flip: ≈349.07 / ≈360.59 / ≈379.38
-结构观察区: 349–361（局部 Gamma 切换，低置信；Top-3 近似，需全链重定价验证）
-距 Put Wall 300: +18.9% | 距 Call Wall 400: -10.8%
+Gamma: POSITIVE | GEX(存量) N/A | GEX Change N/A | Flip: ≈349.20 / ≈362.95 / ≈380.70
+结构观察区: 349–363（局部 Gamma 切换，低置信；Top-3 近似，需全链重定价验证）
+距 Put Wall 300: +18.2% | 距 Call Wall 400: -11.3%
 🧭 结构解读（全部依赖上方假设）
 • 支撑/压力参考：下方 300（Put Wall）；上方 400（Call Wall）。
 • Gamma 区域：切换参考 349（Top-3 近似，需全链重定价验证）。
