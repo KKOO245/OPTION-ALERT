@@ -406,9 +406,9 @@ def cmd_report(args) -> int:
         print("没有可用快照，请先运行 store-snapshot / build-snapshot / pipeline_snapshot")
         return 1
     if args.session == "morning":
-        text = render_morning(snap, market=_market_context(), calendar=_calendar_lines())
+        text = render_morning(snap, market=_market_context("morning"), calendar=_calendar_lines())
     else:
-        text = render_evening(snap, market=_market_context(), calendar=_calendar_lines())
+        text = render_evening(snap, market=_market_context("evening"), calendar=_calendar_lines())
     if args.out:
         Path(args.out).write_text(text, encoding="utf-8")
         print(f"报告已写入: {args.out}")
@@ -438,13 +438,20 @@ def _activity_from_analytics(data_root: Path, ticker: str, session: str) -> list
     return out
 
 
-def _market_context() -> dict:
-    out = {"spy": None, "vix": None, "fg_score": None, "fg_rating": None}
+def _market_context(session: str | None = None) -> dict:
+    out = {"spy": None, "qqq": None, "vix": None, "fg_score": None, "fg_rating": None, "vol_environment": None}
     try:
         from src import data_fetcher as fetcher
 
         spy, _ = fetcher.fetch_spot("SPY")
         out["spy"] = spy
+    except Exception:
+        pass
+    try:
+        from src import data_fetcher as fetcher
+
+        qqq, _ = fetcher.fetch_spot_yfinance("QQQ")
+        out["qqq"] = qqq
     except Exception:
         pass
     try:
@@ -591,7 +598,7 @@ def cmd_render_morning(args) -> int:
         prev_snapshot=prev,
         activity=_activity_from_analytics(data_root, ticker, "morning"),
         setup_status=_render_status_arg(status),
-        market=_market_context(),
+        market=_market_context("morning"),
         calendar=_calendar_lines(),
     )
     _write_report(args.out, text)
@@ -618,7 +625,7 @@ def cmd_render_evening(args) -> int:
         activity=_activity_from_analytics(data_root, ticker, "evening"),
         setup_status=_render_status_arg(status),
         reminders=evening_reminder_lines(datetime.fromisoformat(f"{date_str}T17:00:00-04:00")) if date_str else [],
-        market=_market_context(),
+        market=_market_context("evening"),
         calendar=_calendar_lines(),
     )
     _write_report(args.out, text)
@@ -763,7 +770,7 @@ def cmd_send_report(args) -> int:
             prev_snapshot=prev,
             activity=_activity_from_analytics(data_root, ticker, "morning"),
             setup_status=_render_status_arg(status),
-            market=_market_context(),
+            market=_market_context("morning"),
             calendar=_calendar_lines(),
         )
     else:
@@ -784,7 +791,7 @@ def cmd_send_report(args) -> int:
             activity=_activity_from_analytics(data_root, ticker, "evening"),
             setup_status=_render_status_arg(status),
             reminders=evening_reminder_lines(datetime.fromisoformat(f"{date_str}T17:00:00-04:00")) if date_str else [],
-            market=_market_context(),
+            market=_market_context("evening"),
             calendar=_calendar_lines(),
         )
 
@@ -827,16 +834,21 @@ def cmd_send_report_all(args) -> int:
             return 1
 
     session_zh = "晨报" if args.session == "morning" else "晚报"
-    market = _market_context()
+    market = _market_context(args.session)
     cal = _calendar_lines()
     body = []
     used_dates = []
     render_failed = 0
+    market_ve = None
     for t in tickers:
         snap, used_date = _load_snapshot_or_latest(snaps, date_str, t, args.session)
         if snap is None:
             print(f"无 {args.session} 快照，跳过 {t}")
             continue
+        if market_ve is None:
+            snap_ve = (snap.get("context") or {}).get("vol_environment")
+            if isinstance(snap_ve, dict):
+                market_ve = snap_ve
         used_dates.append(used_date)
         try:
             status = _setup_status(snap, store, Path(args.config_root), thresholds)
@@ -869,6 +881,8 @@ def cmd_send_report_all(args) -> int:
     if not body:
         print(f"无 {args.session} 快照，本次跳过（正常情况，例如周末/标的未抓取）")
         return 0
+    if market_ve:
+        market = {**market, "vol_environment": market_ve}
     final_date = max(used_dates)
     if date_str and final_date != date_str and not any(d == date_str for d in used_dates):
         # 整个时段都没有目标日期快照（全部回退到旧日期）：

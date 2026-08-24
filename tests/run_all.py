@@ -28,6 +28,8 @@ MODULES = [
     "test_price_series",
     "test_reminders",
     "test_calendars",
+    "test_tickers",
+    "test_vol_environment",
     "test_regime_map",
     "test_data_quality",
     "test_edges",

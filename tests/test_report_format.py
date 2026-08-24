@@ -43,9 +43,64 @@ def test_render_morning_market_and_calendar():
     market = {"spy": 765.72, "vix": 15.13, "fg_score": 45, "fg_rating": "中性"}
     cal = ["- 周一 08-24 08:30　【高】CPI 通胀　预测 0.2% ｜ 实际 待公布 ｜ 前值 0.3%"]
     text = render_morning(snap, market=market, calendar=cal)
-    assert "市场背景" in text
-    assert "SPY $765.72" in text and "VIX 15.13" in text and "CNN 恐惧贪婪 45（中性）" in text
+    # 快照自带 vol_environment → 渲染新格式市场环境块（头部与快照一致）
+    assert "📊 市场环境" in text
+    assert "SPY $765.72" in text and "VIX 22.40" in text and "Vol Regime: ELEVATED" in text
+    assert "CNN 恐惧贪婪 45（中性）" in text
     assert "宏观日历" in text and "CPI 通胀" in text
+
+
+def test_render_morning_market_legacy_when_snapshot_lacks_vol_env():
+    snap = load_fixture("snapshot_morning_soxx.json")
+    del snap["context"]["vol_environment"]
+    market = {"spy": 765.72, "vix": 15.13}
+    text = render_morning(snap, market=market)
+    assert "市场背景" in text and "VIX 15.13" in text
+
+
+def test_market_block_with_vol_environment():
+    snap = load_fixture("snapshot_morning_soxx.json")
+    ve_env = snap["context"]["vol_environment"]
+    market = {"spy": 764.19, "qqq": 701.4, "fg_score": 56, "fg_rating": "greed", "vol_environment": ve_env}
+    lines = market_block(market)
+    joined = "\n".join(lines)
+    assert "📊 市场环境" in joined
+    assert "SPY $764.19" in joined and "QQQ $701.40" in joined
+    assert "VIX 22.40 ↑2.8%（5D +6.1%）" in joined
+    assert "Vol Regime: ELEVATED" in joined
+    assert "SPX 期权隐含的近 30 日预期波动率" in joined
+    assert "CNN 恐惧贪婪 56（greed）" in joined
+
+
+def test_market_block_legacy_fallback():
+    market = {"spy": 765.72, "vix": 15.13}
+    joined = "\n".join(market_block(market))
+    assert "市场背景" in joined and "SPY $765.72" in joined and "VIX 15.13" in joined
+
+
+def test_ticker_morning_vix_spread_and_env_tag_when_triggered():
+    snap = load_fixture("snapshot_morning_soxx.json")
+    setup_status = {
+        "triggered": True,
+        "setup_id": "A",
+        "version": "v1",
+        "core": {"trend": "DOWN", "location": "below_flip", "gamma": "NEGATIVE（模型层）"},
+        "confirmation": {"satisfied": 1, "rejected": 0, "unknown": 1, "unknown_fields": ["price_break"]},
+        "qualification": {"n_episodes": 5, "oos_lift_pp": None, "ci_lower": None, "level": "EXPERIMENTAL"},
+        "primary_target": {"metric": "3D_close_return", "direction": "<=", "threshold": -0.02},
+        "status": "WATCH",
+    }
+    text = ticker_morning(snap, setup_status=setup_status)
+    assert "IV–VIX Spread" in text
+    assert "仅作相对波动率 Proxy" in text
+    assert "环境: Vol ELEVATED（仅环境标签，不参与计票）" in text
+
+
+def test_ticker_morning_no_vix_lines_without_setup():
+    snap = load_fixture("snapshot_morning_soxx.json")
+    text = ticker_morning(snap)
+    assert "IV–VIX Spread" not in text
+    assert "环境: Vol" not in text
 
 
 def test_render_morning_stale_prev_snapshot():

@@ -26,3 +26,46 @@ transition_rules:
   gamma_switch: 净Gamma符号切换当日记录 transition=SWITCH，并重计 regime.age=0
   trend_break:  价格收盘突破关键位且动量确认时记录 transition=BREAKOUT/BREAKDOWN
   age_rule:     regime.age 从触发日算起连续保持同一状态的自然日/交易日计数
+
+# VIX / Volatility Environment v1.1（冻结 2026-08-24）
+# VIX 是系统的上层波动率环境锚：只描述"市场波动环境"，不判方向，
+# 不进入 Direction Edge / Gate / Setup 触发条件。
+vol_regime:
+  version: vol_regime_v1
+  rule_freeze_date: "2026-08-24"
+  classification_type: descriptive      # 专家经验分桶，非统计校准
+  calibration_status: uncalibrated      # 15/20/25 不是证明出的临界点
+  required_input: vix_level             # 缺失 → label = INSUFFICIENT_DATA
+  buckets:                              # 半开区间 [min, max)
+    LOW:
+      min: null
+      max: 15
+    NORMAL:
+      min: 15
+      max: 20
+    ELEVATED:
+      min: 20
+      max: 25
+    STRESS:
+      min: 25
+      max: null
+  optional_evidence:
+    - vix_1d_pct
+    - vix_5d_pct
+    - vix_percentile_20d
+    - vix_term_structure
+  calibration_note: "v1 为经验默认阈值，待历史数据校准（分环境胜率验证后可调整）"
+  not_direction: true
+  gate_effect: none_in_v1
+
+vix_shock:
+  version: vix_shock_v1
+  rule_freeze_date: "2026-08-24"
+  metric: vix_1d_pct
+  thresholds:   # |1D Δ%|，经验默认，待历史校准
+    elevated: 10.0
+    extreme: 20.0
+  display: false
+  affects_regime: false
+  affects_direction: false
+  affects_gate: false

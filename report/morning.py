@@ -124,7 +124,7 @@ def _structure_interpretation(snapshot: Dict[str, Any]) -> List[str]:
     return lines
 
 
-def _setup_block(setup_status: Optional[Dict[str, Any]]) -> List[str]:
+def _setup_block(setup_status: Optional[Dict[str, Any]], vol_env: Optional[Dict[str, Any]] = None) -> List[str]:
     if not setup_status:
         return ["Setup: 今日无 Setup 触发（机械检查全部 Setup）"]
     core = setup_status.get("core", {})
@@ -146,6 +146,11 @@ def _setup_block(setup_status: Optional[Dict[str, Any]]) -> List[str]:
     st = setup_status.get("status")
     if st:
         lines.append(f"Status: {st}")
+    label = None
+    if isinstance(vol_env, dict):
+        label = (vol_env.get("regime") or {}).get("label")
+    if label and label != "INSUFFICIENT_DATA":
+        lines.append(f"环境: Vol {label}（仅环境标签，不参与计票）")
     return lines
 
 
@@ -176,9 +181,40 @@ def _activity_block(events: Optional[List[Dict[str, Any]]], stale_note: Optional
 
 
 def market_block(market: Optional[Dict[str, Any]]) -> List[str]:
-    """市场背景块（整份报告只出现一次）。"""
+    """市场环境块（整份报告只出现一次）。"""
     if not market:
         return []
+    ve = market.get("vol_environment")
+    if isinstance(ve, dict) and (ve.get("vix") or {}).get("value") is not None:
+        lines = ["📊 市场环境", ""]
+        parts = []
+        if market.get("spy") is not None:
+            parts.append(f"SPY ${market['spy']:,.2f}")
+        if market.get("qqq") is not None:
+            parts.append(f"QQQ ${market['qqq']:,.2f}")
+        if parts:
+            lines.append(" ｜ ".join(parts))
+        v = ve["vix"]
+        vix_txt = f"VIX {v['value']:.2f}"
+        c1 = v.get("change_1d_pct")
+        if c1 is not None:
+            arrow = "↑" if c1 >= 0 else "↓"
+            vix_txt += f" {arrow}{abs(c1):.1f}%"
+        c5 = v.get("change_5d_pct")
+        if c5 is not None:
+            vix_txt += f"（5D {c5:+.1f}%）"
+        label = (ve.get("regime") or {}).get("label")
+        if label and label != "INSUFFICIENT_DATA":
+            vix_txt += f" ｜ Vol Regime: {label}"
+        lines.append(vix_txt)
+        fg = market.get("fg_score")
+        fg_rating = market.get("fg_rating")
+        if fg is not None:
+            lines.append(f"CNN 恐惧贪婪 {fg}{'（' + str(fg_rating) + '）' if fg_rating else ''}")
+        lines.append("")
+        lines.append("⇒ VIX ↑ = SPX 期权隐含的近 30 日预期波动率上升；不判方向，不进入 Direction Edge。")
+        lines.append("")
+        return lines
     m = []
     if market.get("spy") is not None:
         m.append(f"SPY ${market['spy']:,.2f}")
@@ -196,6 +232,30 @@ def calendar_block(calendar: Optional[List[str]]) -> List[str]:
     if not calendar:
         return []
     return ["## 📅 本周重要美国宏观日历（仅【高】，美东时间）"] + list(calendar) + [""]
+
+
+def _vol_env(snapshot: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    return (snapshot.get("context") or {}).get("vol_environment")
+
+
+def _vix_spread_line(snapshot: Dict[str, Any]) -> Optional[str]:
+    """IV–VIX Spread（Proxy）：近月 ATM IV − VIX，只在 Setup 触发时显示。"""
+    ctx = snapshot.get("context") or {}
+    ve = ctx.get("vol_environment") or {}
+    vix = (ve.get("vix") or {}).get("value")
+    if vix is None:
+        vix = ctx.get("vix")
+    atm_iv = (snapshot.get("momentum") or {}).get("atm_iv")
+    if atm_iv is None or vix is None:
+        return None
+    try:
+        spread_pp = (float(atm_iv) - float(vix) / 100.0) * 100.0
+    except (TypeError, ValueError):
+        return None
+    return (
+        f"   ⇒ IV–VIX Spread: {spread_pp:+.1f}pp*"
+        "（*近月 ATM IV − VIX；期限未对齐，仅作相对波动率 Proxy，不直接代表期权定价贵/便宜）"
+    )
 
 
 def ticker_morning(
@@ -234,10 +294,14 @@ def ticker_morning(
         lines.append("")
     lines.append(ticker_heading(ticker))
     lines += _options_block(snapshot)
+    if setup_status:
+        spread = _vix_spread_line(snapshot)
+        if spread:
+            lines.append(spread)
     lines += _structure_block(snapshot, gex=gex, gex_change=gex_change)
     lines += _structure_interpretation(snapshot)
     lines += _activity_block(activity, stale_note=stale_note)
-    lines += _setup_block(setup_status)
+    lines += _setup_block(setup_status, _vol_env(snapshot))
     lines.append("")
     lines.append(f"数据溯源：完整表见附录 / thesis / analytics/daily/{snapshot.get('created_at', '')[:10]}/{ticker}_morning.json")
     return "\n".join(lines)
@@ -257,6 +321,9 @@ def render_morning(
     date = snapshot.get("created_at", "")[:10]
     lines = [f"# 期权晨报 {date}", ""]
     if market:
+        snap_ve = (snapshot.get("context") or {}).get("vol_environment")
+        if isinstance(snap_ve, dict):
+            market = {**market, "vol_environment": snap_ve}
         lines += market_block(market)
     if calendar:
         lines += calendar_block(calendar)

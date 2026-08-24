@@ -54,9 +54,22 @@ def main() -> int:
     if not os.path.exists(analytics_path):
         analytics_path = os.path.join(args.data_root, "data", "analytics", f"{ticker}.csv")
     rows = load_analytics_rows(analytics_path)
+    vol_environment = None
+    try:
+        from src.vol_environment import build_vol_environment_for_run
+
+        vol_environment = build_vol_environment_for_run(
+            datetime.datetime.now().astimezone(),
+            args.session,
+            args.data_root,
+            args.config_root,
+        )
+    except Exception as e:
+        print(f"[警告] vol_environment 构建失败: {e}")
     snap = build_snapshot(
         ticker, args.session, m, spot, created_at,
         analytics_rows=rows, thresholds=thresholds, source=source,
+        vol_environment=vol_environment,
     )
     stored = SnapshotStore(args.data_root).store(snap)
     missing = sum(

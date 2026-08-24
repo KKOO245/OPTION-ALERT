@@ -13,6 +13,8 @@ from report.morning import (
     _structure_block,
     _structure_interpretation,
     _trading_gap,
+    _vix_spread_line,
+    _vol_env,
     calendar_block,
     market_block,
     ticker_heading,
@@ -55,10 +57,14 @@ def ticker_evening(
     lines += _scorecard(morning, snapshot, key_level_status)
     lines.append(ticker_heading(ticker))
     lines += _options_block(snapshot)
+    if setup_status:
+        spread = _vix_spread_line(snapshot)
+        if spread:
+            lines.append(spread)
     lines += _structure_block(snapshot, gex=gex, gex_change=gex_change)
     lines += _structure_interpretation(snapshot)
     lines += _activity_block(activity)
-    lines += _setup_block(setup_status)
+    lines += _setup_block(setup_status, _vol_env(snapshot))
     lines.append("")
     lines.append(f"数据溯源：完整表见附录 / thesis / analytics/daily/{snapshot.get('created_at', '')[:10]}/{ticker}_evening.json")
     return "\n".join(lines)
@@ -79,6 +85,9 @@ def render_evening(
     date = snapshot.get("created_at", "")[:10]
     lines = [f"# 期权晚报 {date}", ""]
     if market:
+        snap_ve = (snapshot.get("context") or {}).get("vol_environment")
+        if isinstance(snap_ve, dict):
+            market = {**market, "vol_environment": snap_ve}
         lines += market_block(market)
     if calendar:
         lines += calendar_block(calendar)

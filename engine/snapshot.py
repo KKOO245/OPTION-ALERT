@@ -34,7 +34,7 @@ GROUPS: Dict[str, List[str]] = {
     "confirmation": ["iv_surge", "skew_surge", "volume_surge", "put_buy_flow", "price_break"],
     "price_extreme": ["price_extreme"],
     "protection_divergence": ["protection_divergence"],
-    "context": ["spy_return", "qqq_return", "sector_relative", "vix", "notes"],
+    "context": ["spy_return", "qqq_return", "sector_relative", "vix", "vol_environment", "notes"],
     "data_quality": ["market_data", "options_structure", "flow", "dealer_mechanism"],
 }
 

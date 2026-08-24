@@ -233,6 +233,15 @@ def main():
     appendix = []
     summaries = []
 
+    # VIX / Volatility Environment v1.1：市场层环境，所有 ticker 共用同一份
+    vol_environment = None
+    try:
+        from src.vol_environment import build_vol_environment_for_run
+
+        vol_environment = build_vol_environment_for_run(now, session_name, BASE_DIR, BASE_DIR)
+    except Exception as e:
+        print(f"[警告] vol_environment 构建失败（快照环境标签将缺失）: {e}")
+
     for ticker in tickers:
         try:
             print(f"处理 {ticker} ...")
@@ -260,6 +269,7 @@ def main():
                     ticker, session_name, m, spot,
                     now.isoformat(timespec="seconds"),
                     analytics_rows=hist_rows, source=source,
+                    vol_environment=vol_environment,
                 )
                 SnapshotStore(BASE_DIR).store(snap)
             except Exception as e:

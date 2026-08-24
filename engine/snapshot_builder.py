@@ -225,6 +225,7 @@ def build_snapshot(
     analytics_rows: Optional[List[Dict[str, Any]]] = None,
     thresholds: Optional[Dict[str, Any]] = None,
     context: Optional[Dict[str, Any]] = None,
+    vol_environment: Optional[Dict[str, Any]] = None,
     source: Optional[str] = None,
 ) -> Dict[str, Any]:
     sess = normalize_session(session)
@@ -413,16 +414,30 @@ def build_snapshot(
         },
         "price_extreme": extreme,
         "protection_divergence": divergence,
-        "context": {
-            "spy_return": _num(_get(context, "spy_return")),
-            "qqq_return": _num(_get(context, "qqq_return")),
-            "sector_relative": _get(context, "sector_relative"),
-            "vix": _num(_get(context, "vix")),
-            "notes": _get(context, "notes"),
-        },
+        "context": _build_context(context, vol_environment),
         "data_quality": grades,
         "data_sufficiency": tags,
     }
+
+
+def _build_context(
+    context: Optional[Dict[str, Any]],
+    vol_environment: Optional[Dict[str, Any]],
+) -> Dict[str, Any]:
+    """组装快照 context；vol_environment 来自市场层（所有 ticker 同一份）。"""
+    ctx = {
+        "spy_return": _num(_get(context, "spy_return")),
+        "qqq_return": _num(_get(context, "qqq_return")),
+        "sector_relative": _get(context, "sector_relative"),
+        "vix": _num(_get(context, "vix")),
+        "vol_environment": vol_environment,
+        "notes": _get(context, "notes"),
+    }
+    if isinstance(vol_environment, dict):
+        vix_block = vol_environment.get("vix") or {}
+        if vix_block.get("value") is not None and ctx["vix"] is None:
+            ctx["vix"] = _num(vix_block.get("value"))
+    return ctx
 
 
 def _prev_pct(row: Dict[str, Any], rows: List[Dict[str, Any]]) -> Optional[float]:
