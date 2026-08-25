@@ -2,9 +2,9 @@
 
 📊 市场环境
 
-SPY $764.92 ｜ QQQ $709.46
-VIX 15.56 ↓1.8%（5D -1.8%） ｜ Vol Regime: NORMAL
-CNN 恐惧贪婪 58.7（greed）
+SPY $765.91 ｜ QQQ $710.72
+VIX 15.45 ↓2.5%（5D -2.5%） ｜ Vol Regime: NORMAL
+CNN 恐惧贪婪 58.8（greed）
 
 ⇒ VIX ↑ = SPX 期权隐含的近 30 日预期波动率上升；不判方向，不进入 Direction Edge。
 
@@ -18,7 +18,7 @@ CNN 恐惧贪婪 58.7（greed）
 - 周五 08-28 10:00　【高】Non Farm Payrolls Annual Revision Prel　实际 待公布 ｜ 前值 -911
 
 📋 Thesis Scorecard（今晨条件 vs 收盘实况，只打事实勾）
-CCO: 今晨 2.38 → 收盘 2.37（-0.2%） ｜ 今日高 2.38 ｜ 低 2.36
+CCO: 今晨 2.38 → 收盘 2.38（+0.2%） ｜ 今日高 2.38 ｜ 低 2.36
 Target 状态: PENDING（evaluation date …）——窗口结束前禁止'预测正确'类措辞
 
 
@@ -30,7 +30,7 @@ Options: P/C量 N/A | OI比 0.28 | ATM IV 58.7% | Skew N/A | Term N/A | ExpMove 
 🔧 结构（未验证研究层：Mechanism Scenario A/B——OI 开仓方向不可观测）
 Gamma Regime: POSITIVE（模型分类） | GEX(存量) N/A | GEX Change N/A | Flip: ≈2.26
 结构观察区: ≈2（局部 Gamma 切换，低置信；Top-3 近似，需全链重定价验证）
-距 Put Wall 2: +18.5% | 距 Call Wall 3: -21.0%
+距 Put Wall 2: +19.0% | 距 Call Wall 3: -20.7%
 🧭 结构解读（全部依赖上方假设）
 • 支撑/压力参考：下方 2（Put Wall）；上方 3（Call Wall）。
 • Gamma 区域：切换参考 2（Top-3 近似，需全链重定价验证）。
