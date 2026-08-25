@@ -2,7 +2,7 @@
 
 📊 市场环境
 
-SPY $763.76 ｜ QQQ $706.32
+SPY $763.47 ｜ QQQ $706.32
 VIX 15.85 ↑4.8%（5D +4.3%）
 CNN 恐惧贪婪 55.0（greed）
 
@@ -18,23 +18,23 @@ CNN 恐惧贪婪 55.0（greed）
 - 周五 08-28 10:00　【高】Non Farm Payrolls Annual Revision Prel　实际 待公布 ｜ 前值 -911
 
 📋 Thesis Scorecard（今晨条件 vs 收盘实况，只打事实勾）
-NVDA: 今晨 210.01 → 收盘 208.44（-0.7%）
+NVDA: 今晨 210.01 → 收盘 208.90（-0.5%） ｜ 今日高 215.59 ｜ 低 207.37
 Target 状态: PENDING（evaluation date …）——窗口结束前禁止'预测正确'类措辞
 
 
 ## NVDA
 
-Options: P/C量 0.61 | OI比 0.64 | ATM IV 31.8% | Skew 0.0pp | Term 1.28 | ExpMove ±0.4% | Rank — (历史不足)
-   ⇒ Put/Call Volume: 0.61×（Call 成交高于 Put）→ 方向 Unknown
-   ⇒ Put/Call OI: 0.64×（Put OI 低于 Call OI）→ 存量 Call-dominant
+Options: P/C量 0.47 | OI比 0.50 | ATM IV 72.6% | Skew 0.0pp | Term 0.56 | ExpMove ±6.1% | Rank — (历史不足)
+   ⇒ Put/Call Volume: 0.47×（Call 成交高于 Put）→ 方向 Unknown
+   ⇒ Put/Call OI: 0.50×（Put OI 低于 Call OI）→ 存量 Call-dominant
    ⇒ 两者结构一致
 🔧 结构（未验证研究层：Mechanism Scenario A/B——OI 开仓方向不可观测）
-Gamma: POSITIVE | GEX(存量) N/A | GEX Change N/A | Flip: ≈229.39 / ≈231.87
-结构观察区: 229–232（局部 Gamma 切换，低置信；Top-3 近似，需全链重定价验证）
-距 Put Wall 190: +9.7% | 距 Call Wall 240: -13.2%
+Gamma: POSITIVE | GEX(存量) N/A | GEX Change N/A | Flip: ≈222.47 / ≈224.08
+结构观察区: 222–224（局部 Gamma 切换，低置信；Top-3 近似，需全链重定价验证）
+距 Put Wall 190: +9.9% | 距 Call Wall 240: -13.0%
 🧭 结构解读（全部依赖上方假设）
 • 支撑/压力参考：下方 190（Put Wall）；上方 240（Call Wall）。
-• Gamma 区域：切换参考 229（Top-3 近似，需全链重定价验证）。
+• Gamma 区域：切换参考 222（Top-3 近似，需全链重定价验证）。
 • 做市商（条件机制）：若 Scenario A + 负 Gamma 成立，跌破关键位下方可能对应顺周期卖出压力增加；实际做市商对冲流量不可观测。Scenario B → 方向相反。不进入方向决策。
 • 失效参考：跌破关键位结构参考失效（结构性参考，非预测）。
 🔺 Activity（事实层，方向 Unknown）

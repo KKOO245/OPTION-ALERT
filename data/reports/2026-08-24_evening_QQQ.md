@@ -2,7 +2,7 @@
 
 📊 市场环境
 
-SPY $763.76 ｜ QQQ $706.32
+SPY $763.47 ｜ QQQ $706.32
 VIX 15.85 ↑4.8%（5D +4.3%）
 CNN 恐惧贪婪 55.0（greed）
 
@@ -18,15 +18,15 @@ CNN 恐惧贪婪 55.0（greed）
 - 周五 08-28 10:00　【高】Non Farm Payrolls Annual Revision Prel　实际 待公布 ｜ 前值 -911
 
 📋 Thesis Scorecard（今晨条件 vs 收盘实况，只打事实勾）
-QQQ: 今晨 708.12 → 收盘 706.36（-0.2%）
+QQQ: 今晨 708.12 → 收盘 706.19（-0.3%） ｜ 今日高 709.79 ｜ 低 702.70
 Target 状态: PENDING（evaluation date …）——窗口结束前禁止'预测正确'类措辞
 
 
 ## QQQ
 
-Options: P/C量 1.05 | OI比 2.13 | ATM IV 18.1% | Skew 3.7pp | Term 1.09 | ExpMove ±0.1% | Rank — (历史不足)
-   ⇒ Put/Call Volume: 1.05×（Put 成交显著高于 Call）→ 方向 Unknown
-   ⇒ Put/Call OI: 2.13×（Put OI 高于 Call OI）→ 存量 Put-dominant
+Options: P/C量 1.56 | OI比 1.17 | ATM IV 16.6% | Skew 3.7pp | Term 1.19 | ExpMove ±0.7% | Rank — (历史不足)
+   ⇒ Put/Call Volume: 1.56×（Put 成交显著高于 Call）→ 方向 Unknown
+   ⇒ Put/Call OI: 1.17×（Put OI 高于 Call OI）→ 存量 Put-dominant
    ⇒ 两者结构一致
 🔧 结构（未验证研究层：Mechanism Scenario A/B——OI 开仓方向不可观测）
 Gamma: NEGATIVE | GEX(存量) N/A | GEX Change N/A | Flip: N/A

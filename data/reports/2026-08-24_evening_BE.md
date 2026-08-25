@@ -18,13 +18,13 @@ CNN 恐惧贪婪 55.0（greed）
 - 周五 08-28 10:00　【高】Non Farm Payrolls Annual Revision Prel　实际 待公布 ｜ 前值 -911
 
 📋 Thesis Scorecard（今晨条件 vs 收盘实况，只打事实勾）
-BE: 今晨 206.00 → 收盘 204.13（-0.9%）
+BE: 今晨 206.00 → 收盘 208.43（+1.2%） ｜ 今日高 209.92 ｜ 低 185.93
 Target 状态: PENDING（evaluation date …）——窗口结束前禁止'预测正确'类措辞
 
 
 ## BE
 
-Options: P/C量 0.43 | OI比 1.39 | ATM IV 98.1% | Skew -6.0pp | Term 0.92 | ExpMove ±8.1% | Rank — (历史不足)
+Options: P/C量 0.43 | OI比 1.39 | ATM IV 98.5% | Skew -6.0pp | Term 0.91 | ExpMove ±8.3% | Rank — (历史不足)
    ⇒ Put/Call Volume: 0.43×（Call 成交高于 Put）→ 方向 Unknown
    ⇒ Put/Call OI: 1.39×（Put OI 高于 Call OI）→ 存量 Put-dominant
    ⇒ 两者结构不一致
@@ -32,7 +32,7 @@ Options: P/C量 0.43 | OI比 1.39 | ATM IV 98.1% | Skew -6.0pp | Term 0.92 | Exp
 Gamma: NEGATIVE | GEX(存量) N/A | GEX Change N/A | Flip: ≈345.58
    ⇒ 全链负Gamma，波动易被放大（模型层）
 结构观察区: ≈346（局部 Gamma 切换，低置信；Top-3 近似，需全链重定价验证）
-距 Put Wall 180: +13.4% | 距 Call Wall 250: -18.3%
+距 Put Wall 180: +15.8% | 距 Call Wall 250: -16.6%
 🧭 结构解读（全部依赖上方假设）
 • 支撑/压力参考：下方 180（Put Wall）；上方 250（Call Wall）。
 • Gamma 区域：切换参考 346（Top-3 近似，需全链重定价验证）。

@@ -2,7 +2,7 @@
 
 📊 市场环境
 
-SPY $763.76 ｜ QQQ $706.32
+SPY $763.47 ｜ QQQ $706.32
 VIX 15.85 ↑4.8%（5D +4.3%）
 CNN 恐惧贪婪 55.0（greed）
 
@@ -18,7 +18,7 @@ CNN 恐惧贪婪 55.0（greed）
 - 周五 08-28 10:00　【高】Non Farm Payrolls Annual Revision Prel　实际 待公布 ｜ 前值 -911
 
 📋 Thesis Scorecard（今晨条件 vs 收盘实况，只打事实勾）
-SOXX: 今晨 505.94 → 收盘 505.92（-0.0%）
+SOXX: 今晨 505.94 → 收盘 505.50（-0.1%） ｜ 今日高 512.10 ｜ 低 498.95
 Target 状态: PENDING（evaluation date …）——窗口结束前禁止'预测正确'类措辞
 
 
@@ -32,7 +32,7 @@ Options: P/C量 1.95 | OI比 0.73 | ATM IV 45.9% | Skew 3.2pp | Term 0.89 | ExpM
 Gamma: NEGATIVE | GEX(存量) N/A | GEX Change N/A | Flip: N/A
    ⇒ 全链负Gamma，波动易被放大（模型层）
 结构观察区: N/A（局部 Gamma 切换，低置信；Top-3 近似，需全链重定价验证）
-距 Put Wall 500: +1.2% | 距 Call Wall 670: -24.5%
+距 Put Wall 500: +1.1% | 距 Call Wall 670: -24.6%
 🧭 结构解读（全部依赖上方假设）
 • 支撑/压力参考：下方 500（Put Wall）；上方 670（Call Wall）。
 • 做市商（条件机制）：若 Scenario A + 负 Gamma 成立，跌破关键位下方可能对应顺周期卖出压力增加；实际做市商对冲流量不可观测。Scenario B → 方向相反。不进入方向决策。

@@ -18,17 +18,17 @@ CNN 恐惧贪婪 55.0（greed）
 - 周五 08-28 10:00　【高】Non Farm Payrolls Annual Revision Prel　实际 待公布 ｜ 前值 -911
 
 📋 Thesis Scorecard（今晨条件 vs 收盘实况，只打事实勾）
-CCO: 今晨 2.35 → 收盘 2.36（+0.6%）
+CCO: 今晨 2.35 → 收盘 2.36（+0.6%） ｜ 今日高 2.38 ｜ 低 2.34
 Target 状态: PENDING（evaluation date …）——窗口结束前禁止'预测正确'类措辞
 
 
 ## CCO
 
-Options: P/C量 N/A | OI比 0.28 | ATM IV 57.3% | Skew N/A | Term N/A | ExpMove ±10.6% | Rank — (历史不足)
+Options: P/C量 N/A | OI比 0.28 | ATM IV 58.7% | Skew N/A | Term N/A | ExpMove ±11.7% | Rank — (历史不足)
    ⇒ Put/Call Volume: 数据不足 → 方向 Unknown
    ⇒ Put/Call OI: 0.28×（Put OI 低于 Call OI）→ 存量 Call-dominant
 🔧 结构（未验证研究层：Mechanism Scenario A/B——OI 开仓方向不可观测）
-Gamma: POSITIVE | GEX(存量) N/A | GEX Change N/A | Flip: ≈2.24
+Gamma: POSITIVE | GEX(存量) N/A | GEX Change N/A | Flip: ≈2.26
 结构观察区: ≈2（局部 Gamma 切换，低置信；Top-3 近似，需全链重定价验证）
 距 Put Wall 2: +18.0% | 距 Call Wall 3: -21.3%
 🧭 结构解读（全部依赖上方假设）

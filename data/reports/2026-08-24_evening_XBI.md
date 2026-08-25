@@ -18,7 +18,7 @@ CNN 恐惧贪婪 55.0（greed）
 - 周五 08-28 10:00　【高】Non Farm Payrolls Annual Revision Prel　实际 待公布 ｜ 前值 -911
 
 📋 Thesis Scorecard（今晨条件 vs 收盘实况，只打事实勾）
-XBI: 今晨 163.86 → 收盘 164.19（+0.2%）
+XBI: 今晨 163.86 → 收盘 164.17（+0.2%） ｜ 今日高 165.55 ｜ 低 161.49
 Target 状态: PENDING（evaluation date …）——窗口结束前禁止'预测正确'类措辞
 
 

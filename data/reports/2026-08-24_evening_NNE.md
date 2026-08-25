@@ -18,19 +18,19 @@ CNN 恐惧贪婪 55.0（greed）
 - 周五 08-28 10:00　【高】Non Farm Payrolls Annual Revision Prel　实际 待公布 ｜ 前值 -911
 
 📋 Thesis Scorecard（今晨条件 vs 收盘实况，只打事实勾）
-NNE: 今晨 18.18 → 收盘 18.30（+0.7%）
+NNE: 今晨 18.18 → 收盘 18.30（+0.7%） ｜ 今日高 18.87 ｜ 低 17.83
 Target 状态: PENDING（evaluation date …）——窗口结束前禁止'预测正确'类措辞
 
 
 ## NNE
 
-Options: P/C量 1.12 | OI比 0.83 | ATM IV 95.8% | Skew 2.6pp | Term 0.91 | ExpMove ±8.3% | Rank — (历史不足)
-   ⇒ Put/Call Volume: 1.12×（Put 成交显著高于 Call）→ 方向 Unknown
+Options: P/C量 0.93 | OI比 0.83 | ATM IV 93.4% | Skew 2.3pp | Term 0.93 | ExpMove ±7.9% | Rank — (历史不足)
+   ⇒ Put/Call Volume: 0.93×（Call 成交高于 Put）→ 方向 Unknown
    ⇒ Put/Call OI: 0.83×（Put OI 低于 Call OI）→ 存量 Call-dominant
-   ⇒ 两者结构不一致
+   ⇒ 两者结构一致
 🔧 结构（未验证研究层：Mechanism Scenario A/B——OI 开仓方向不可观测）
-Gamma: POSITIVE | GEX(存量) N/A | GEX Change N/A | Flip: ≈23.53 / ≈23.97 / ≈24.74
-结构观察区: 24–24（局部 Gamma 切换，低置信；Top-3 近似，需全链重定价验证）
+Gamma: POSITIVE | GEX(存量) N/A | GEX Change N/A | Flip: ≈23.55 / ≈24.62
+结构观察区: 24–25（局部 Gamma 切换，低置信；Top-3 近似，需全链重定价验证）
 距 Put Wall 16: +14.4% | 距 Call Wall 25: -26.8%
 🧭 结构解读（全部依赖上方假设）
 • 支撑/压力参考：下方 16（Put Wall）；上方 25（Call Wall）。

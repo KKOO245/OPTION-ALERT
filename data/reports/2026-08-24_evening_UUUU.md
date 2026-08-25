@@ -2,7 +2,7 @@
 
 📊 市场环境
 
-SPY $763.76 ｜ QQQ $706.32
+SPY $763.47 ｜ QQQ $706.32
 VIX 15.85 ↑4.8%（5D +4.3%）
 CNN 恐惧贪婪 55.0（greed）
 
@@ -18,20 +18,20 @@ CNN 恐惧贪婪 55.0（greed）
 - 周五 08-28 10:00　【高】Non Farm Payrolls Annual Revision Prel　实际 待公布 ｜ 前值 -911
 
 📋 Thesis Scorecard（今晨条件 vs 收盘实况，只打事实勾）
-UUUU: 今晨 14.79 → 收盘 14.82（+0.1%）
+UUUU: 今晨 14.79 → 收盘 14.88（+0.6%） ｜ 今日高 15.43 ｜ 低 14.75
 Target 状态: PENDING（evaluation date …）——窗口结束前禁止'预测正确'类措辞
 
 
 ## UUUU
 
-Options: P/C量 0.48 | OI比 0.60 | ATM IV 80.7% | Skew -4.9pp | Term 0.94 | ExpMove ±6.9% | Rank — (历史不足)
+Options: P/C量 0.48 | OI比 0.60 | ATM IV 80.7% | Skew -4.9pp | Term 0.94 | ExpMove ±6.8% | Rank — (历史不足)
    ⇒ Put/Call Volume: 0.48×（Call 成交高于 Put）→ 方向 Unknown
    ⇒ Put/Call OI: 0.60×（Put OI 低于 Call OI）→ 存量 Call-dominant
    ⇒ 两者结构一致
 🔧 结构（未验证研究层：Mechanism Scenario A/B——OI 开仓方向不可观测）
 Gamma: POSITIVE | GEX(存量) N/A | GEX Change N/A | Flip: ≈6.11 / ≈6.65 / ≈9.01
 结构观察区: 6–7（局部 Gamma 切换，低置信；Top-3 近似，需全链重定价验证）
-距 Put Wall 11: +34.7% | 距 Call Wall 18: -17.7%
+距 Put Wall 11: +35.3% | 距 Call Wall 18: -17.3%
 🧭 结构解读（全部依赖上方假设）
 • 支撑/压力参考：下方 11（Put Wall）；上方 18（Call Wall）。
 • Gamma 区域：切换参考 6（Top-3 近似，需全链重定价验证）。
