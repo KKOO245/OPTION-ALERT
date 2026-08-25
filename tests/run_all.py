@@ -30,6 +30,7 @@ MODULES = [
     "test_calendars",
     "test_tickers",
     "test_vol_environment",
+    "test_forward_structure",
     "test_regime_map",
     "test_data_quality",
     "test_edges",

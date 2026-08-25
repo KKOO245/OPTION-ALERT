@@ -226,6 +226,7 @@ def build_snapshot(
     thresholds: Optional[Dict[str, Any]] = None,
     context: Optional[Dict[str, Any]] = None,
     vol_environment: Optional[Dict[str, Any]] = None,
+    forward_structure: Optional[Dict[str, Any]] = None,
     source: Optional[str] = None,
 ) -> Dict[str, Any]:
     sess = normalize_session(session)
@@ -414,7 +415,13 @@ def build_snapshot(
         },
         "price_extreme": extreme,
         "protection_divergence": divergence,
-        "context": _build_context(context, vol_environment),
+        "forward": forward_structure,
+        "context": _build_context(
+            context,
+            vol_environment,
+            _num(_get(data, "day_high")),
+            _num(_get(data, "day_low")),
+        ),
         "data_quality": grades,
         "data_sufficiency": tags,
     }
@@ -423,6 +430,8 @@ def build_snapshot(
 def _build_context(
     context: Optional[Dict[str, Any]],
     vol_environment: Optional[Dict[str, Any]],
+    day_high: Optional[float] = None,
+    day_low: Optional[float] = None,
 ) -> Dict[str, Any]:
     """组装快照 context；vol_environment 来自市场层（所有 ticker 同一份）。"""
     ctx = {
@@ -431,6 +440,8 @@ def _build_context(
         "sector_relative": _get(context, "sector_relative"),
         "vix": _num(_get(context, "vix")),
         "vol_environment": vol_environment,
+        "day_high": day_high,
+        "day_low": day_low,
         "notes": _get(context, "notes"),
     }
     if isinstance(vol_environment, dict):

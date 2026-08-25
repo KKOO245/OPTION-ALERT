@@ -257,6 +257,9 @@ def main():
             )
             m["price"] = price
             m["prev_close"] = prev_close
+            day_high, day_low = fetcher.fetch_day_range_yfinance(ticker)
+            m["day_high"] = day_high
+            m["day_low"] = day_low
             try:
                 # 方案 A：把当天真实快照写入引擎（供 detect/事件库使用）
                 from engine.snapshot_builder import build_snapshot, load_analytics_rows
@@ -265,11 +268,22 @@ def main():
                 hist_rows = load_analytics_rows(
                     os.path.join(storage.ANALYTICS_DIR, f"{ticker}.csv")
                 )
+                forward = None
+                try:
+                    from src.forward_structure import build_forward_structure
+
+                    forward = build_forward_structure(
+                        contracts, prev, spot,
+                        as_of_date=now.date(), config_root=BASE_DIR,
+                    )
+                except Exception as e:
+                    print(f"[警告] forward structure 构建失败（快照将缺失该层）: {e}")
                 snap = build_snapshot(
                     ticker, session_name, m, spot,
                     now.isoformat(timespec="seconds"),
                     analytics_rows=hist_rows, source=source,
                     vol_environment=vol_environment,
+                    forward_structure=forward,
                 )
                 SnapshotStore(BASE_DIR).store(snap)
             except Exception as e:

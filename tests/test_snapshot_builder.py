@@ -62,6 +62,8 @@ def test_full_metrics_mode():
     data = {
         "n_contracts": 1200,
         "prev_close": 505.0,
+        "day_high": 501.8,
+        "day_low": 496.4,
         "atm_iv_near": 0.52,
         "term_ratio": 0.82,
         "iv_skew_25": 4.0,
@@ -76,6 +78,7 @@ def test_full_metrics_mode():
     snap = build_snapshot(
         "SOXX", "morning", data, 497.2, "2026-08-21T10:15:00-04:00",
         analytics_rows=rows, source="cboe",
+        forward_structure={"expirations": [{"expiration": "2026-09-18", "dte": 25}]},
     )
     assert snap["location"]["call_wall"] == 550.0
     assert snap["location"]["put_wall"] == 490.0
@@ -86,6 +89,9 @@ def test_full_metrics_mode():
     # prev 505 > flip 502 >= spot 497.2 → 向下穿越
     assert snap["confirmation"]["price_break"] is True
     assert snap["data_quality"]["options_structure"] == "A"
+    assert snap["context"]["day_high"] == 501.8
+    assert snap["context"]["day_low"] == 496.4
+    assert snap["forward"]["expirations"][0]["expiration"] == "2026-09-18"
 
 
 def test_helpers():

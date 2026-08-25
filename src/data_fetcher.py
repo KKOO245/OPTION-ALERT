@@ -181,6 +181,27 @@ def fetch_spot_yfinance(ticker):
     return price, prev_close
 
 
+def fetch_day_range_yfinance(ticker):
+    """yfinance 当日 OHLC bar，返回 (day_high, day_low)；失败返回 (None, None)，不猜测。
+
+    晨报取到的是截至抓取时刻的盘中高/低；晚报取到的是当日完整高/低。
+    时间口径随快照 created_at 保存，报告据此展示。
+    """
+    import yfinance as yf
+
+    try:
+        hist = yf.Ticker(ticker).history(period="1d", interval="1d")
+        if hist is None or hist.empty:
+            return None, None
+        row = hist.iloc[-1]
+        high = float(row["High"])
+        low = float(row["Low"])
+        return high, low
+    except Exception as e:
+        print(f"[警告] 获取 {ticker} 当日高/低失败: {e}")
+        return None, None
+
+
 def fetch_chain_yfinance(ticker, spot=None, max_days=40):
     """yfinance 期权链（max_days 天内），IV 有、希腊字母用 vollib 补算"""
     import yfinance as yf

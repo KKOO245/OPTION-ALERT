@@ -51,6 +51,14 @@ activity_magnitude:
     low: 50
     high: 500
 
+forward_structure:
+  version: forward_v1
+  rule_freeze_date: "2026-08-24"
+  n_expirations: 4            # 未来 4 个最近未到期结算日
+  min_dte: 1                  # 排除当天 0 DTE（已过期）
+  top_delta_oi_n: 3           # Top ΔOI 明细条数
+  l3_max_distance_pct: 15.0   # L3 显著区：距现价 ≤ ±15%（经验默认，待校准；覆盖 575C+10.5% 类样本）
+
 comparison_change:
   price_pct: 0.5
   iv_pp: 0.5

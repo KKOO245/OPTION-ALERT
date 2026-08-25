@@ -8,6 +8,8 @@ from typing import Any, Dict, List, Optional
 from report.format import fmt
 from report.morning import (
     _activity_block,
+    _day_range,
+    _forward_block,
     _options_block,
     _setup_block,
     _structure_block,
@@ -34,7 +36,10 @@ def _scorecard(morning: Optional[Dict[str, Any]], evening: Dict[str, Any], key_l
         e_spot = evening.get("spot")
         if m_spot and e_spot:
             chg = (e_spot / m_spot - 1.0) * 100
-            lines.append(f"{ticker}: 今晨 {fmt(m_spot, 2)} → 收盘 {fmt(e_spot, 2)}（{chg:+.1f}%）")
+            lines.append(
+                f"{ticker}: 今晨 {fmt(m_spot, 2)} → 收盘 {fmt(e_spot, 2)}（{chg:+.1f}%）"
+                + (_day_range(evening) or "")
+            )
     if key_level_status:
         lines.append(f"关键位状态: {key_level_status}——纯事实")
     lines.append("Target 状态: PENDING（evaluation date …）——窗口结束前禁止'预测正确'类措辞")
@@ -64,6 +69,7 @@ def ticker_evening(
     lines += _structure_block(snapshot, gex=gex, gex_change=gex_change)
     lines += _structure_interpretation(snapshot)
     lines += _activity_block(activity)
+    lines += _forward_block(snapshot)
     lines += _setup_block(setup_status, _vol_env(snapshot))
     lines.append("")
     lines.append(f"数据溯源：完整表见附录 / thesis / analytics/daily/{snapshot.get('created_at', '')[:10]}/{ticker}_evening.json")

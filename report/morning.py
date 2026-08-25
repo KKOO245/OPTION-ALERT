@@ -238,6 +238,19 @@ def _vol_env(snapshot: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     return (snapshot.get("context") or {}).get("vol_environment")
 
 
+def _day_range(snapshot: Dict[str, Any]) -> Optional[str]:
+    """当日高/低（真实数据，随快照保存；缺失则返回 None，不猜测）。"""
+    ctx = snapshot.get("context") or {}
+    hi = ctx.get("day_high")
+    lo = ctx.get("day_low")
+    if hi is None or lo is None:
+        return None
+    try:
+        return f" ｜ 今日高 {float(hi):.2f} ｜ 低 {float(lo):.2f}"
+    except (TypeError, ValueError):
+        return None
+
+
 def _vix_spread_line(snapshot: Dict[str, Any]) -> Optional[str]:
     """IV–VIX Spread（Proxy）：近月 ATM IV − VIX，只在 Setup 触发时显示。"""
     ctx = snapshot.get("context") or {}
@@ -256,6 +269,146 @@ def _vix_spread_line(snapshot: Dict[str, Any]) -> Optional[str]:
         f"   ⇒ IV–VIX Spread: {spread_pp:+.1f}pp*"
         "（*近月 ATM IV − VIX；期限未对齐，仅作相对波动率 Proxy，不直接代表期权定价贵/便宜）"
     )
+
+
+def _fwd_k(v, signed: bool = True) -> str:
+    if v is None:
+        return "N/A"
+    a = abs(float(v))
+    if a >= 100:
+        sign = "+" if signed and float(v) >= 0 else ""
+        return f"{sign}{float(v) / 1000.0:.1f}k"
+    sign = "+" if signed and float(v) >= 0 else ""
+    return f"{sign}{float(v):.0f}"
+
+
+def _fwd_money(v) -> str:
+    if v is None:
+        return "N/A"
+    a = abs(float(v))
+    if a >= 1e6:
+        return f"${float(v) / 1e6:.2f}M"
+    if a >= 1e3:
+        return f"${float(v) / 1e3:.1f}k"
+    return f"${float(v):.0f}"
+
+
+def _fwd_shares(v) -> str:
+    if v is None:
+        return "N/A"
+    a = abs(float(v))
+    if a >= 1e6:
+        return f"{float(v) / 1e6:.1f}M shares"
+    if a >= 1e3:
+        return f"{float(v) / 1e3:.0f}k shares"
+    return f"{float(v):.0f} shares"
+
+
+def _fwd_l2(e: Dict[str, Any]) -> List[str]:
+    lines = [f"📆 {e['expiration'][5:]} Forward Structure"]
+    lines.append(f"OI:       C {_fwd_k(e.get('call_oi'), signed=False)} / P {_fwd_k(e.get('put_oi'), signed=False)}")
+    dline = f"ΔOI:      C {_fwd_k(e.get('call_delta_oi'))} / P {_fwd_k(e.get('put_delta_oi'))}"
+    new_txt = []
+    if e.get("call_new_oi"):
+        new_txt.append(f"C {_fwd_k(e['call_new_oi'], signed=False)}")
+    if e.get("put_new_oi"):
+        new_txt.append(f"P {_fwd_k(e['put_new_oi'], signed=False)}")
+    if new_txt:
+        dline += "（含新行权价 " + " / ".join(new_txt) + "）"
+    lines.append(dline)
+    if e.get("atm_call_price") is not None and e.get("atm_put_price") is not None:
+        lines.append(
+            f"ATM:      C {fmt(e['atm_call_price'], 2)} / P {fmt(e['atm_put_price'], 2)}"
+        )
+    if e.get("atm_iv") is not None:
+        lines.append(f"ATM IV:   {e['atm_iv'] * 100:.1f}%")
+    if e.get("delta_exposure") is not None:
+        lines.append(f"ΔOI Δ Exposure*: {_fwd_shares(e['delta_exposure'])}")
+    top = e.get("top_delta_oi") or []
+    if top:
+        lines.append("Top ΔOI（行权价 ｜ ΔOI ｜ 最新价 ｜ 名义金额* ｜ 距现价）:")
+        for t in top:
+            dist_txt = f"{t['distance_pct']:+.1f}%" if t.get("distance_pct") is not None else "N/A"
+            last_txt = f"${fmt(t['last_price'], 2)}" if t.get("last_price") is not None else "N/A"
+            lines.append(
+                f"{t['type'][0].upper()} {int(t['strike'])} ｜ {t['delta_oi']:+,} ｜ "
+                f"{last_txt} ｜ 名义 {_fwd_money(t.get('notional'))}* ｜ {dist_txt}"
+            )
+    ref = _fwd_structure_ref(top)
+    if ref:
+        lines.append(f"结构参考：{ref}（结构观察，非价格预测）")
+    lines.append("*模型估算/名义金额代理；买开/卖开方向不可观测（Scenario A/B）")
+    lines.append("")
+    return lines
+
+
+def _fwd_structure_ref(top: List[Dict[str, Any]]) -> Optional[str]:
+    """从 Top ΔOI 提取支撑/压力参考：上方（距现价>0）与下方（<0）各取 ΔOI 最大的正变化行。"""
+    pos = [t for t in top if (t.get("delta_oi") or 0) > 0 and t.get("distance_pct") is not None]
+    if not pos:
+        return None
+    above = max((t for t in pos if t["distance_pct"] > 0), key=lambda t: t["delta_oi"], default=None)
+    below = max((t for t in pos if t["distance_pct"] < 0), key=lambda t: t["delta_oi"], default=None)
+    parts = []
+    if above is not None:
+        parts.append(f"{int(above['strike'])}（{above['distance_pct']:+.1f}%）上方")
+    if below is not None:
+        parts.append(f"{int(below['strike'])}（{below['distance_pct']:+.1f}%）下方")
+    if not parts:
+        return None
+    return " / ".join(parts) + "形成 OI 变化集中区"
+
+
+def _fwd_l3(e: Dict[str, Any], sig: Dict[str, Any]) -> List[str]:
+    lines = ["⚠️ Significant Forward Positioning"]
+    lines.append(
+        f"{e['expiration'][5:]} / {int(sig['strike'])}{sig['type'][0].upper()}"
+    )
+    dist_txt = f"{sig['distance_pct']:+.1f}%" if sig.get("distance_pct") is not None else "N/A"
+    r1_txt = f"{sig['r1']:.0f}%" if sig.get("r1") is not None else "N/A"
+    lines.append(
+        f"ΔOI {sig['delta_oi']:+,} ｜ 距现价 {dist_txt} ｜ OI 集中 Top3 ｜ ΔOI/Volume {r1_txt}"
+    )
+    lines.append("⇒ 该期限/行权价出现显著 OI 变化集中。")
+    lines.append("⇒ 买开/卖开方向不可观测（Scenario A/B）。")
+    lines.append("⇒ 独立结构观察，不进入 Direction Edge / Gate。")
+    lines.append("")
+    return lines
+
+
+def _forward_block(snapshot: Dict[str, Any]) -> List[str]:
+    """Forward Expiration Structure（独立观察层）：L1 固定 4 行，L2 仅 High 展开，L3 极端。"""
+    fwd = snapshot.get("forward")
+    if not isinstance(fwd, dict) or not fwd.get("expirations"):
+        return []
+    lines = ["📆 Forward Expiration Structure", ""]
+    for e in fwd["expirations"]:
+        c_txt = _fwd_k(e.get("call_delta_oi"))
+        p_txt = _fwd_k(e.get("put_delta_oi"))
+        act = e.get("activity") or "LOW"
+        mark = " △" if act == "MEDIUM" else ""
+        line = (
+            f"{e['expiration'][5:]}  C {c_txt} / P {p_txt} ｜ "
+            f"Activity {act}{mark} ｜ {e.get('dte', '?')}D"
+        )
+        if e.get("new_listing"):
+            line += "（新上架）"
+        else:
+            new_txt = []
+            if e.get("call_new_oi"):
+                new_txt.append(f"C {_fwd_k(e['call_new_oi'], signed=False)}")
+            if e.get("put_new_oi"):
+                new_txt.append(f"P {_fwd_k(e['put_new_oi'], signed=False)}")
+            if new_txt:
+                line += "（新行权价 " + " / ".join(new_txt) + "）"
+        lines.append(line)
+    lines.append("")
+    for e in fwd["expirations"]:
+        if e.get("activity") == "HIGH":
+            lines += _fwd_l2(e)
+        for sig in e.get("significant") or []:
+            lines += _fwd_l3(e, sig)
+    return lines
 
 
 def ticker_morning(
@@ -279,6 +432,7 @@ def ticker_morning(
             f"{ticker}  昨收 {fmt(p, 2)} → 今晨 {fmt(c, 2)}"
             + (f"（{chg:+.1f}%）" if chg is not None else "")
             + " | 较昨收变动（含盘初走势）"
+            + (_day_range(snapshot) or "")
         )
         gap = _trading_gap(prev_snapshot.get("created_at", "")[:10], snapshot.get("created_at", "")[:10])
         if gap >= 1:
@@ -301,6 +455,7 @@ def ticker_morning(
     lines += _structure_block(snapshot, gex=gex, gex_change=gex_change)
     lines += _structure_interpretation(snapshot)
     lines += _activity_block(activity, stale_note=stale_note)
+    lines += _forward_block(snapshot)
     lines += _setup_block(setup_status, _vol_env(snapshot))
     lines.append("")
     lines.append(f"数据溯源：完整表见附录 / thesis / analytics/daily/{snapshot.get('created_at', '')[:10]}/{ticker}_morning.json")

@@ -47,6 +47,9 @@ def main() -> int:
     if not m:
         print("compute_metrics 返回空，无法生成快照")
         return 1
+    day_high, day_low = fetcher.fetch_day_range_yfinance(ticker)
+    m["day_high"] = day_high
+    m["day_low"] = day_low
 
     created_at = args.created_at or datetime.datetime.now().astimezone().isoformat(timespec="seconds")
     thresholds = yaml_mini.load(os.path.join(args.config_root, "thresholds.yaml"))
@@ -66,10 +69,22 @@ def main() -> int:
         )
     except Exception as e:
         print(f"[警告] vol_environment 构建失败: {e}")
+    forward = None
+    try:
+        from src.forward_structure import build_forward_structure
+
+        forward = build_forward_structure(
+            contracts, prev, spot,
+            as_of_date=datetime.date.fromisoformat(created_at[:10]),
+            config_root=args.config_root,
+        )
+    except Exception as e:
+        print(f"[警告] forward structure 构建失败: {e}")
     snap = build_snapshot(
         ticker, args.session, m, spot, created_at,
         analytics_rows=rows, thresholds=thresholds, source=source,
         vol_environment=vol_environment,
+        forward_structure=forward,
     )
     stored = SnapshotStore(args.data_root).store(snap)
     missing = sum(
