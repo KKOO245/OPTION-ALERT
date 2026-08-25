@@ -2,15 +2,16 @@
 
 📊 市场环境
 
-SPY $765.19 ｜ QQQ $709.34
-VIX 15.76 ↓0.6%（5D -0.5%）
-CNN 恐惧贪婪 58.8（greed）
+SPY $764.92 ｜ QQQ $709.43
+VIX 15.76 ↓0.6%（5D -0.5%） ｜ Vol Regime: INSUFFICIENT_DATA ⚠️
+CNN 恐惧贪婪 58.7（greed）
 
 ⇒ VIX ↑ = SPX 期权隐含的近 30 日预期波动率上升；不判方向，不进入 Direction Edge。
+⚠️ Vol Regime unavailable: rule evaluation incomplete.
 
 ## 📅 本周重要美国宏观日历（仅【高】，美东时间）
-- 周三 08-26 08:30　【高】Personal Spending MoM　预测 0.2 ｜ 实际 待公布 ｜ 前值 0.3
-- 周三 08-26 08:30　【高】Personal Income MoM　预测 0.3 ｜ 实际 待公布 ｜ 前值 0.2
+- 周三 08-26 08:30　【高】Personal Spending MoM　预测 0.1 ｜ 实际 待公布 ｜ 前值 0.3
+- 周三 08-26 08:30　【高】Personal Income MoM　预测 0.2 ｜ 实际 待公布 ｜ 前值 0.2
 - 周三 08-26 08:30　【高】GDP 增速 Rate QoQ 2nd Est　预测 1.5 ｜ 实际 待公布 ｜ 前值 2.1
 - 周三 08-26 08:30　【高】耐用品订单 Orders MoM　预测 0.7 ｜ 实际 待公布 ｜ 前值 0.3
 - 周三 08-26 08:30　【高】PCE 物价 Price Index MoM　预测 0.2 ｜ 实际 待公布 ｜ 前值 0.1
@@ -24,11 +25,11 @@ BE  昨收 208.43 → 今晨 213.99（+2.7%） | 较昨收变动（含盘初走�
 ## BE
 
 Options: P/C量 0.44 | OI比 1.14 | ATM IV 101.8% | Skew -3.6pp | Term 0.87 | ExpMove ±7.7% | Rank — (历史不足)
-   ⇒ Put/Call Volume: 0.44×（Call 成交高于 Put）→ 方向 Unknown
-   ⇒ Put/Call OI: 1.14×（Put OI 高于 Call OI）→ 存量 Put-dominant
-   ⇒ 两者结构不一致
+   ⇒ Put/Call Volume: 0.44×（Call 成交量高于 Put）→ 方向 Unknown
+   ⇒ Put/Call OI: 1.14×（两侧接近均衡）
+   ⇒ 当日成交 vs 存量仓位：当日成交偏 Call，存量接近均衡
 🔧 结构（未验证研究层：Mechanism Scenario A/B——OI 开仓方向不可观测）
-Gamma: POSITIVE | GEX(存量) N/A | GEX Change N/A | Flip: ≈223.31 / ≈239.16 / ≈248.45
+Gamma Regime: POSITIVE（模型分类） | GEX(存量) N/A | GEX Change N/A | Flip: ≈223.31 / ≈239.16 / ≈248.45
 结构观察区: 223–239（局部 Gamma 切换，低置信；Top-3 近似，需全链重定价验证）
 距 Put Wall 180: +18.9% | 距 Call Wall 250: -14.4%
 🧭 结构解读（全部依赖上方假设）
