@@ -19,6 +19,7 @@ from typing import Any, Dict, List, Optional
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEFAULT_CONFIG_ROOT = os.path.join(BASE_DIR, "config")
+THRESHOLDS_FILE = "thresholds.yaml"
 
 _DEFAULTS = {
     "n_expirations": 4,
@@ -39,7 +40,13 @@ def _load_cfg(config_root: Optional[str]) -> Dict[str, Any]:
     from engine import yaml_mini
 
     root = Path(config_root) if config_root else Path(DEFAULT_CONFIG_ROOT)
-    return yaml_mini.load(root / "thresholds.yaml")
+    path = root / THRESHOLDS_FILE
+    if not path.exists():
+        # 兼容调用方传"仓库根目录"与传"config 目录"两种约定
+        alt = root / "config" / THRESHOLDS_FILE
+        if alt.exists():
+            path = alt
+    return yaml_mini.load(path)
 
 
 def _contract_rows(contracts: Optional[List[Dict[str, Any]]]) -> List[Dict[str, Any]]:

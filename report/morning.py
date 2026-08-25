@@ -73,17 +73,27 @@ def _structure_block(snapshot: Dict[str, Any], gex: Optional[float] = None, gex_
     gamma = (snapshot.get("regime") or {}).get("gamma", "UNKNOWN")
     gex_txt = f"GEX(存量) {fmt(gex, 0)}" if gex is not None else "GEX(存量) N/A"
     chg_txt = f"GEX Change vs 上次快照 {fmt(gex_change, 0)}" if gex_change is not None else "GEX Change N/A"
-    flip_txt = " / ".join(f"≈{f:.2f}" for f in (loc.get("flip_levels") or [])) or "N/A"
-    lines.append(f"Gamma: {gamma} | {gex_txt} | {chg_txt} | Flip: {flip_txt}")
-    lines.append("   ⇒ 全链负Gamma，波动易被放大（模型层）" if gamma == "NEGATIVE" else "")
+    flip_status = loc.get("flip_status")
+    flip_txt = " / ".join(f"≈{f:.2f}" for f in (loc.get("flip_levels") or [])) or (flip_status or "N/A")
+    lines.append(f"Gamma Regime: {gamma}（模型分类） | {gex_txt} | {chg_txt} | Flip: {flip_txt}")
+    if gamma == "NEGATIVE":
+        if gex is not None:
+            lines.append("   ⇒ 全链负Gamma，波动易被放大（模型层）")
+        else:
+            lines.append("   ⇒ Gamma Regime 判定为 NEGATIVE；GEX 数值不可用，不对 Gamma 强度做判断。")
     flips = loc.get("flip_levels") or []
     if len(flips) >= 2:
-        zone_txt = f"{flips[0]:.0f}–{flips[1]:.0f}"
+        lines.append(
+            f"结构观察区: {flips[0]:.0f}–{flips[1]:.0f}"
+            "（局部 Gamma 切换，低置信；Top-3 近似，需全链重定价验证）"
+        )
     elif len(flips) == 1:
-        zone_txt = f"≈{flips[0]:.0f}"
+        lines.append(
+            f"结构观察区: ≈{flips[0]:.0f}"
+            "（局部 Gamma 切换，低置信；Top-3 近似，需全链重定价验证）"
+        )
     else:
-        zone_txt = "N/A"
-    lines.append(f"结构观察区: {zone_txt}（局部 Gamma 切换，低置信；Top-3 近似，需全链重定价验证）")
+        lines.append(f"结构观察区: {flip_status or 'N/A'}")
     cw, pw = loc.get("call_wall"), loc.get("put_wall")
     if cw or pw:
         parts = []
@@ -204,8 +214,11 @@ def market_block(market: Optional[Dict[str, Any]]) -> List[str]:
         if c5 is not None:
             vix_txt += f"（5D {c5:+.1f}%）"
         label = (ve.get("regime") or {}).get("label")
-        if label and label != "INSUFFICIENT_DATA":
-            vix_txt += f" ｜ Vol Regime: {label}"
+        if label:
+            if label == "INSUFFICIENT_DATA":
+                vix_txt += " ｜ Vol Regime: INSUFFICIENT_DATA ⚠️"
+            else:
+                vix_txt += f" ｜ Vol Regime: {label}"
         lines.append(vix_txt)
         fg = market.get("fg_score")
         fg_rating = market.get("fg_rating")
@@ -213,6 +226,8 @@ def market_block(market: Optional[Dict[str, Any]]) -> List[str]:
             lines.append(f"CNN 恐惧贪婪 {fg}{'（' + str(fg_rating) + '）' if fg_rating else ''}")
         lines.append("")
         lines.append("⇒ VIX ↑ = SPX 期权隐含的近 30 日预期波动率上升；不判方向，不进入 Direction Edge。")
+        if label == "INSUFFICIENT_DATA":
+            lines.append("⚠️ Vol Regime unavailable: rule evaluation incomplete.")
         lines.append("")
         return lines
     m = []
@@ -359,6 +374,15 @@ def _fwd_structure_ref(top: List[Dict[str, Any]]) -> Optional[str]:
     return " / ".join(parts) + "形成 OI 变化集中区"
 
 
+def _fwd_medium_top(e: Dict[str, Any]) -> Optional[str]:
+    """Medium 结算日一行紧凑 Top ΔOI（跨两侧 |ΔOI| 排序，取前 2）。"""
+    top = (e.get("top_delta_oi") or [])[:2]
+    if not top:
+        return None
+    parts = [f"{int(t['strike'])}{t['type'][0].upper()} {t['delta_oi']:+,}" for t in top]
+    return "   Top ΔOI: " + " ｜ ".join(parts)
+
+
 def _fwd_l3(e: Dict[str, Any], sig: Dict[str, Any]) -> List[str]:
     lines = ["⚠️ Significant Forward Positioning"]
     lines.append(
@@ -406,8 +430,11 @@ def _forward_block(snapshot: Dict[str, Any]) -> List[str]:
     for e in fwd["expirations"]:
         if e.get("activity") == "HIGH":
             lines += _fwd_l2(e)
-        for sig in e.get("significant") or []:
-            lines += _fwd_l3(e, sig)
+        elif e.get("activity") == "MEDIUM":
+            compact = _fwd_medium_top(e)
+            if compact:
+                lines.append(compact)
+                lines.append("")
     return lines
 
 

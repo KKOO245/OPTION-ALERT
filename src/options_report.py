@@ -238,7 +238,9 @@ def main():
     try:
         from src.vol_environment import build_vol_environment_for_run
 
-        vol_environment = build_vol_environment_for_run(now, session_name, BASE_DIR, BASE_DIR)
+        vol_environment = build_vol_environment_for_run(
+            now, session_name, BASE_DIR, os.path.join(BASE_DIR, "config")
+        )
     except Exception as e:
         print(f"[警告] vol_environment 构建失败（快照环境标签将缺失）: {e}")
 
@@ -274,7 +276,8 @@ def main():
 
                     forward = build_forward_structure(
                         contracts, prev, spot,
-                        as_of_date=now.date(), config_root=BASE_DIR,
+                        as_of_date=now.date(),
+                        config_root=os.path.join(BASE_DIR, "config"),
                     )
                 except Exception as e:
                     print(f"[警告] forward structure 构建失败（快照将缺失该层）: {e}")

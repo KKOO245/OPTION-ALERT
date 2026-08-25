@@ -94,6 +94,40 @@ def test_full_metrics_mode():
     assert snap["forward"]["expirations"][0]["expiration"] == "2026-09-18"
 
 
+def test_flip_status_tri_state():
+    rows = _rows()
+    base = {
+        "n_contracts": 1200,
+        "prev_close": 505.0,
+        "atm_iv_near": 0.52,
+        "structure": {"gamma_flip": 502.0, "call_wall": 550.0, "put_wall": 490.0},
+    }
+    snap = build_snapshot(
+        "SOXX", "morning", base, 497.2, "2026-08-21T10:15:00-04:00",
+        analytics_rows=rows, source="cboe",
+    )
+    assert snap["location"]["flip_levels"] == [502.0]
+    assert snap["location"]["flip_status"] is None
+
+    base2 = dict(base)
+    base2["structure"] = {"gamma_flip": None, "call_wall": 550.0, "put_wall": 490.0}
+    snap2 = build_snapshot(
+        "SOXX", "morning", base2, 497.2, "2026-08-21T10:15:00-04:00",
+        analytics_rows=rows, source="cboe",
+    )
+    assert snap2["location"]["flip_levels"] is None
+    assert snap2["location"]["flip_status"] == "NO_FLIP_IN_RANGE"
+    assert snap2["data_sufficiency"]["location.flip_levels"] == "NO_FLIP_IN_RANGE"
+
+    base3 = dict(base)
+    del base3["structure"]
+    snap3 = build_snapshot(
+        "SOXX", "morning", base3, 497.2, "2026-08-21T10:15:00-04:00",
+        analytics_rows=rows, source="cboe",
+    )
+    assert snap3["location"]["flip_status"] == "INSUFFICIENT_DATA"
+
+
 def test_helpers():
     assert gamma_sign(-1.0) == "NEGATIVE"
     assert gamma_sign(1.0) == "POSITIVE"

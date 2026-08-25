@@ -183,3 +183,10 @@ def test_zero_dte_excluded():
     ]
     out = _build(contracts=contracts, prev=[])
     assert [e["expiration"] for e in out["expirations"]] == ["2026-08-28"]
+
+
+def test_config_root_accepts_repo_root():
+    """回归：options_report 传仓库根目录（BASE_DIR）也能找到 thresholds.yaml（8/25 线上事故）。"""
+    out = _build(config_root=fs.BASE_DIR)
+    assert len(out["expirations"]) == 4
+    assert out["expirations"][0]["expiration"] == "2026-08-28"

@@ -284,15 +284,25 @@ def build_snapshot(
                     break
 
     # ---- location ----
-    flip = _nested(data, "structure", "gamma_flip")
+    structs_for_flip = [
+        _nested(data, "structure"),
+        _nested(data, "structure_near"),
+        _nested(data, "structure_monthly"),
+    ]
     flip_levels = []
-    for fp in (_nested(data, "structure", "gamma_flip"),
-               _nested(data, "structure_near", "gamma_flip"),
-               _nested(data, "structure_monthly", "gamma_flip")):
+    for s in structs_for_flip:
+        fp = _nested(s, "gamma_flip") if isinstance(s, dict) else None
         f = _num(fp)
         if f is not None and f not in flip_levels:
             flip_levels.append(f)
     flip_levels.sort()
+    # Flip 三态：有值 → null；结构已算出但无零交叉 → NO_FLIP_IN_RANGE；结构未算出 → INSUFFICIENT_DATA
+    if flip_levels:
+        flip_status = None
+    elif any(isinstance(s, dict) for s in structs_for_flip):
+        flip_status = "NO_FLIP_IN_RANGE"
+    else:
+        flip_status = "INSUFFICIENT_DATA"
     call_wall = _num(_nested(data, "structure", "call_wall")) or _num(_get(data, "call_wall"))
     put_wall = _num(_nested(data, "structure", "put_wall")) or _num(_get(data, "put_wall"))
     price_loc = price_location_of(spot, flip_levels[0] if flip_levels else None, call_wall, put_wall)
@@ -357,7 +367,7 @@ def build_snapshot(
     if put_wall is None:
         tags["location.put_wall"] = "INSUFFICIENT_DATA"
     if not flip_levels:
-        tags["location.flip_levels"] = "INSUFFICIENT_DATA"
+        tags["location.flip_levels"] = flip_status or "INSUFFICIENT_DATA"
     if price_loc is None:
         tags["location.price_location"] = "INSUFFICIENT_DATA"
     if _get(data, "volume_ratio") is None:
@@ -385,6 +395,7 @@ def build_snapshot(
         "location": {
             "price_location": price_loc,
             "flip_levels": flip_levels or None,
+            "flip_status": flip_status,
             "call_wall": call_wall,
             "put_wall": put_wall,
             "concentration": _get(data, "oi_concentration"),

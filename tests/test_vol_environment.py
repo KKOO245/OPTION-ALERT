@@ -131,3 +131,10 @@ def test_load_prev_regime_label():
         }), encoding="utf-8")
         assert ve.load_prev_regime_label(tmp, "2026-08-24", "evening") == "NORMAL"
         assert ve.load_prev_regime_label(tmp, "2026-08-24", "morning") == "ELEVATED"
+
+
+def test_load_rules_accepts_repo_root_config_root():
+    """回归：options_report 传仓库根目录（BASE_DIR）也能找到 regimes.yaml（8/25 线上事故）。"""
+    rules = ve._load_rules(ve.BASE_DIR)
+    assert rules["vol_regime"]["version"] == "vol_regime_v1"
+    assert ve.classify_regime(15.85, rules) == "NORMAL"

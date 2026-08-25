@@ -48,7 +48,13 @@ def _load_rules(config_root: Optional[str] = None) -> Dict[str, Any]:
     from engine import yaml_mini
 
     root = Path(config_root) if config_root else Path(DEFAULT_CONFIG_ROOT)
-    cfg = yaml_mini.load(root / REGIMES_FILE)
+    path = root / REGIMES_FILE
+    if not path.exists():
+        # 兼容调用方传"仓库根目录"（如 options_report 传 BASE_DIR）与传"config 目录"两种约定
+        alt = root / "config" / REGIMES_FILE
+        if alt.exists():
+            path = alt
+    cfg = yaml_mini.load(path)
     vol = cfg.get("vol_regime") or {}
     shock = cfg.get("vix_shock") or {}
     if not vol.get("buckets"):

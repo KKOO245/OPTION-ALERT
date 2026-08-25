@@ -11,12 +11,31 @@ from engine.annotations import (
 
 def test_options_annotation_fact_only():
     lines = options_annotation(3.10, 0.70)
-    assert len(lines) == 3
+    assert len(lines) == 4
     assert "3.10×" in lines[0]
     assert "方向 Unknown" in lines[0]
     assert "Call-dominant" in lines[1]
     assert "两者结构不一致" in lines[2]
+    assert "当日成交 vs 存量仓位" in lines[3]
     assert all(assert_no_direction_words(l) for l in lines)
+
+
+def test_options_annotation_balanced_band():
+    lines = options_annotation(1.05, 2.13)
+    assert "Put 与 Call 成交量接近" in lines[0]
+    assert "存量 Put 仓位高于 Call" in lines[1]
+    # 成交均衡时不输出"两者结构不一致/一致"（无方向可比）
+    assert len(lines) == 3
+    assert "当日成交接近均衡，存量Put-dominant" in lines[2]
+    assert "显著" not in "".join(lines)
+    assert all(assert_no_direction_words(l) for l in lines)
+
+
+def test_options_annotation_call_heavy_band():
+    lines = options_annotation(0.62, 0.79)
+    assert "Call 成交量高于 Put" in lines[0]
+    assert "存量 Call 仓位高于 Put" in lines[1]
+    assert "当日成交偏 Call，存量Call-dominant" in lines[3]
 
 
 def test_magnitude_low_medium_high():

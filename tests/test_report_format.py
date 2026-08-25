@@ -85,6 +85,32 @@ def test_market_block_legacy_fallback():
     assert "市场背景" in joined and "SPY $765.72" in joined and "VIX 15.13" in joined
 
 
+def test_market_block_vol_regime_insufficient():
+    ve_env = {
+        "vix": {"value": 15.85, "change_1d_pct": -0.6, "change_5d_pct": -0.5},
+        "regime": {"label": "INSUFFICIENT_DATA"},
+    }
+    market = {"spy": 765.19, "qqq": 709.24, "fg_score": 58, "fg_rating": "greed", "vol_environment": ve_env}
+    text = "\n".join(market_block(market))
+    assert "Vol Regime: INSUFFICIENT_DATA ⚠️" in text
+    assert "Vol Regime unavailable: rule evaluation incomplete." in text
+
+
+def test_structure_block_gamma_gex_semantics_and_flip_status():
+    snap = load_fixture("snapshot_morning_soxx.json")
+    text = ticker_morning(snap)
+    assert "Gamma Regime: NEGATIVE（模型分类）" in text
+    assert "不对 Gamma 强度做判断" in text
+    assert "结构观察区: 502–530" in text
+
+    snap2 = load_fixture("snapshot_morning_soxx.json")
+    snap2["location"]["flip_levels"] = None
+    snap2["location"]["flip_status"] = "NO_FLIP_IN_RANGE"
+    text2 = ticker_morning(snap2)
+    assert "结构观察区: NO_FLIP_IN_RANGE" in text2
+    assert "Flip: NO_FLIP_IN_RANGE" in text2
+
+
 def test_ticker_morning_vix_spread_and_env_tag_when_triggered():
     snap = load_fixture("snapshot_morning_soxx.json")
     setup_status = {
@@ -194,10 +220,27 @@ def test_forward_block_l2_l3():
     assert "ΔOI Δ Exposure*: 1.2M shares" in text
     assert "C 575 ｜ +7,348 ｜ $0.87 ｜ 名义 $639.3k* ｜ +11.5%" in text
     assert "结构参考" in text and "形成 OI 变化集中区" in text
-    assert "⚠️ Significant Forward Positioning" in text
-    assert "ΔOI/Volume 126%" in text
-    assert "不进入 Direction Edge / Gate" in text
+    # v1 不渲染 L3（未验证的经验阈值堆叠，后台计算但不上报告）
+    assert "Significant Forward Positioning" not in text
+    assert "ΔOI/Volume 126%" not in text
     assert "买开/卖开方向不可观测" in text
+
+
+def test_forward_block_medium_compact_top():
+    top = [
+        {"strike": 700, "type": "call", "delta_oi": 1800, "last_price": 3.2,
+         "notional": None, "distance_pct": -0.9, "volume": 500, "magnitude": "HIGH"},
+        {"strike": 690, "type": "put", "delta_oi": 900, "last_price": 3.0,
+         "notional": None, "distance_pct": -2.3, "volume": 400, "magnitude": "HIGH"},
+        {"strike": 710, "type": "call", "delta_oi": 700, "last_price": 2.5,
+         "notional": None, "distance_pct": 0.5, "volume": 300, "magnitude": "MEDIUM"},
+    ]
+    snap = {"forward": {"expirations": [
+        _fwd_exp("2026-09-04", 11, 3100, 2100, "MEDIUM", top_delta_oi=top),
+    ]}}
+    text = "\n".join(_forward_block(snap))
+    assert "   Top ΔOI: 700C +1,800 ｜ 690P +900" in text
+    assert "09-04 Forward Structure" not in text
 
 
 def test_forward_block_new_strike_annotation():

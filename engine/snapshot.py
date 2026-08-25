@@ -19,7 +19,7 @@ from engine.schema import assert_valid_snapshot
 
 GROUPS: Dict[str, List[str]] = {
     "regime": ["version", "trend", "gamma", "iv_level", "age", "transition"],
-    "location": ["price_location", "flip_levels", "call_wall", "put_wall", "concentration"],
+    "location": ["price_location", "flip_levels", "flip_status", "call_wall", "put_wall", "concentration"],
     "momentum": [
         "iv_momentum",
         "iv_level",
