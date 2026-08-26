@@ -1,0 +1,111 @@
+# 期权晨报 2026-08-26
+
+📊 市场环境
+
+SPY $764.88 ｜ QQQ $708.50
+VIX 15.62 ↑1.1%（5D +4.9%） ｜ Vol Regime: NORMAL
+CNN 恐惧贪婪 55.1（greed）
+
+⇒ VIX ↑ = SPX 期权隐含的近 30 日预期波动率上升；不判方向，不进入 Direction Edge。
+
+## 📅 本周重要美国宏观日历（仅【高】，美东时间）
+- 周三 08-26 08:30　【高】Personal Spending MoM　预测 0.1 ｜ 实际 0.2 ｜ 前值 0.3　✅ 今日已公布
+- 周三 08-26 08:30　【高】Personal Income MoM　预测 0.2 ｜ 实际 0.4 ｜ 前值 0.2　✅ 今日已公布
+- 周三 08-26 08:30　【高】GDP 增速 Rate QoQ 2nd Est　预测 1.5 ｜ 实际 1.5 ｜ 前值 2.1　✅ 今日已公布
+- 周三 08-26 08:30　【高】耐用品订单 Orders MoM　预测 0.5 ｜ 实际 1.1 ｜ 前值 0.5　✅ 今日已公布
+- 周三 08-26 08:30　【高】PCE 物价 Price Index MoM　预测 0.2 ｜ 实际 0.2 ｜ 前值 0.1　✅ 今日已公布
+- 周五 08-28 10:00　【高】美联储主席讲话 Warsh Speech　实际 待公布
+- 周五 08-28 10:00　【高】Non Farm Payrolls Annual Revision Prel　实际 待公布 ｜ 前值 -911
+
+📋 昨日晚报 → 今日晨报（只列关键项，低于阈值不单列）
+NBIS  昨收 221.85 → 今晨 215.40（-2.9%） | 较昨收变动（含盘初走势） ｜ 今日高 221.47 ｜ 低 213.60
+
+
+## NBIS
+
+Options: P/C量 0.50 | OI比 0.90 | ATM IV 98.3% | Skew -3.1pp | Term 0.90 | ExpMove ±6.0% | Rank — (历史不足)
+   ⇒ Put/Call Volume: 0.50×（Call 成交量高于 Put）→ 方向 Unknown
+   ⇒ Put/Call OI: 0.90×（两侧接近均衡）
+   ⇒ 当日成交 vs 存量仓位：当日成交偏 Call，存量接近均衡
+🔧 结构（未验证研究层：Mechanism Scenario A/B——OI 开仓方向不可观测）
+Gamma Regime: NEGATIVE（模型分类） | GEX(存量) N/A | GEX Change N/A | Flip: NO_FLIP_IN_RANGE
+   ⇒ Gamma Regime 判定为 NEGATIVE；GEX 数值不可用，不对 Gamma 强度做判断。
+结构观察区: NO_FLIP_IN_RANGE
+距 Put Wall 200: +7.7% | 距 Call Wall 250: -13.8%
+🧭 结构解读（全部依赖上方假设）
+• 支撑/压力参考：下方 200（Put Wall）；上方 250（Call Wall）。
+• 做市商（条件机制）：若 Scenario A + 负 Gamma 成立，跌破关键位下方可能对应顺周期卖出压力增加；实际做市商对冲流量不可观测。Scenario B → 方向相反。不进入方向决策。
+• 失效参考：跌破关键位结构参考失效（结构性参考，非预测）。
+🔺 Activity（事实层，方向 Unknown）
+09-04 370.0C — Vol N/A | OI 50→1134 (ΔOI +1084张) | ΔOI/Volume N/A | Magnitude: HIGH | 完整度: LOW
+   ⇒ 大额净增1084张（+2168.0% vs前日OI），连续性待观察（方向未知）
+08-28 250.0C — Vol N/A | OI 5350→6305 (ΔOI +955张) | ΔOI/Volume N/A | Magnitude: MEDIUM | 完整度: LOW
+   ⇒ 净增955张（+17.9% vs前日OI），值得跟踪（方向未知）
+09-04 240.0C — Vol N/A | OI 667→1575 (ΔOI +908张) | ΔOI/Volume N/A | Magnitude: HIGH | 完整度: LOW
+   ⇒ 大额净增908张（+136.1% vs前日OI），连续性待观察（方向未知）
+08-28 245.0C — Vol N/A | OI 931→1792 (ΔOI +861张) | ΔOI/Volume N/A | Magnitude: HIGH | 完整度: LOW
+   ⇒ 大额净增861张（+92.5% vs前日OI），连续性待观察（方向未知）
+08-28 252.5C — Vol N/A | OI 424→1249 (ΔOI +825张) | ΔOI/Volume N/A | Magnitude: HIGH | 完整度: LOW
+   ⇒ 大额净增825张（+194.6% vs前日OI），连续性待观察（方向未知）
+📆 Forward Expiration Structure
+
+08-28  C +5.1k / P +1.3k ｜ Activity HIGH ｜ 2D
+09-04  C +5.0k / P +0.9k ｜ Activity HIGH ｜ 9D
+09-11  C +0.4k / P +0.2k ｜ Activity HIGH ｜ 16D
+09-18  C +1.5k / P +1.0k ｜ Activity HIGH ｜ 23D
+
+📆 08-28 Forward Structure
+OI:       C 68.9k / P 61.7k
+ΔOI:      C +5.1k / P +1.3k
+ATM:      C 6.70 / P 6.35
+ATM IV:   98.3%
+ΔOI Δ Exposure*: 10k shares
+Top ΔOI（行权价 ｜ ΔOI ｜ 最新价 ｜ 名义金额* ｜ 距现价）:
+C 250 ｜ +955 ｜ $0.34 ｜ 名义 $32.5k* ｜ +16.1%
+C 245 ｜ +861 ｜ $0.53 ｜ 名义 $45.6k* ｜ +13.7%
+C 252 ｜ +825 ｜ $0.29 ｜ 名义 $23.9k* ｜ +17.2%
+结构参考：250（+16.1%）上方形成 OI 变化集中区（结构观察，非价格预测）
+*模型估算/名义金额代理；买开/卖开方向不可观测（Scenario A/B）
+
+📆 09-04 Forward Structure
+OI:       C 30.7k / P 20.9k
+ΔOI:      C +5.0k / P +0.9k
+ATM:      C 12.15 / P 11.97
+ATM IV:   89.3%
+ΔOI Δ Exposure*: 35k shares
+Top ΔOI（行权价 ｜ ΔOI ｜ 最新价 ｜ 名义金额* ｜ 距现价）:
+C 370 ｜ +1,084 ｜ $0.03 ｜ 名义 $3.3k* ｜ +71.8%
+C 240 ｜ +908 ｜ $4.44 ｜ 名义 $403.2k* ｜ +11.4%
+C 320 ｜ +592 ｜ $0.32 ｜ 名义 $18.9k* ｜ +48.6%
+结构参考：370（+71.8%）上方形成 OI 变化集中区（结构观察，非价格预测）
+*模型估算/名义金额代理；买开/卖开方向不可观测（Scenario A/B）
+
+📆 09-11 Forward Structure
+OI:       C 7.2k / P 11.1k
+ΔOI:      C +0.4k / P +0.2k
+ATM:      C 15.92 / P 15.32
+ATM IV:   86.0%
+ΔOI Δ Exposure*: 3k shares
+Top ΔOI（行权价 ｜ ΔOI ｜ 最新价 ｜ 名义金额* ｜ 距现价）:
+C 300 ｜ +86 ｜ $1.09 ｜ 名义 $9.4k* ｜ +39.3%
+C 275 ｜ +78 ｜ $3.13 ｜ 名义 $24.4k* ｜ +27.7%
+P 100 ｜ +50 ｜ $0.09 ｜ 名义 $450* ｜ -53.6%
+结构参考：300（+39.3%）上方 / 100（-53.6%）下方形成 OI 变化集中区（结构观察，非价格预测）
+*模型估算/名义金额代理；买开/卖开方向不可观测（Scenario A/B）
+
+📆 09-18 Forward Structure
+OI:       C 94.5k / P 147.8k
+ΔOI:      C +1.5k / P +1.0k
+ATM:      C 19.41 / P 18.45
+ATM IV:   87.4%
+ΔOI Δ Exposure*: 29k shares
+Top ΔOI（行权价 ｜ ΔOI ｜ 最新价 ｜ 名义金额* ｜ 距现价）:
+P 50 ｜ +456 ｜ $0.08 ｜ 名义 $3.6k* ｜ -76.8%
+C 280 ｜ +287 ｜ $3.70 ｜ 名义 $106.2k* ｜ +30.0%
+C 250 ｜ +220 ｜ $8.10 ｜ 名义 $178.2k* ｜ +16.1%
+结构参考：280（+30.0%）上方 / 50（-76.8%）下方形成 OI 变化集中区（结构观察，非价格预测）
+*模型估算/名义金额代理；买开/卖开方向不可观测（Scenario A/B）
+
+Setup: 今日无 Setup 触发（机械检查全部 Setup）
+
+数据溯源：完整表见附录 / thesis / analytics/daily/2026-08-26/NBIS_morning.json
