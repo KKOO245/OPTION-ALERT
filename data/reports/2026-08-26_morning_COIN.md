@@ -2,9 +2,8 @@
 
 📊 市场环境
 
-SPY $769.98 ｜ QQQ $711.37
+SPY $770.35 ｜ QQQ $711.37
 VIX 15.62 ↑1.1%（5D +4.9%） ｜ Vol Regime: NORMAL
-CNN 恐惧贪婪 55.2（greed）
 
 ⇒ VIX ↑ = SPX 期权隐含的近 30 日预期波动率上升；不判方向，不进入 Direction Edge。
 
