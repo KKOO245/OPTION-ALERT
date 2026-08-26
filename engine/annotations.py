@@ -148,14 +148,20 @@ def event_card(
     oi_prev: Optional[float],
     oi_now: Optional[float],
     has_prev_vol: bool = True,
+    last_price: Optional[float] = None,
+    vol_source: Optional[str] = None,
 ) -> List[str]:
     m = event_magnitude(vol, oi_prev, oi_now)
     complete = completeness(vol is not None, has_prev_vol, oi_prev is not None, oi_now is not None)
     delta_txt = f"ΔOI {m['delta_oi']:+d}张" if m["delta_oi"] is not None else "ΔOI N/A"
     oi_txt = f"OI {int(oi_prev)}→{int(oi_now)}" if (oi_prev is not None and oi_now is not None) else "OI N/A"
     r1_txt = f"ΔOI/Volume {m['r1']:.1f}%" if m["r1"] is not None else "ΔOI/Volume N/A"
+    vol_txt = f"Vol {int(vol):,}" if vol is not None else "Vol N/A"
+    if vol_source == "yfinance" and vol is not None:
+        vol_txt += "（Yahoo补）"
+    price_txt = f" | 最新价 ${float(last_price):.2f}" if last_price is not None else ""
     lines = [
-        f"{contract} — Vol {int(vol) if vol is not None else 'N/A'} | {oi_txt} ({delta_txt}) | "
+        f"{contract} — {vol_txt}{price_txt} | {oi_txt} ({delta_txt}) | "
         f"{r1_txt} | Magnitude: {m['magnitude']} | 完整度: {complete}",
         f"   ⇒ {event_annotation(vol, oi_prev, oi_now, m['magnitude'], complete)}",
     ]

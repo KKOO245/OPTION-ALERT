@@ -136,6 +136,26 @@ def test_ticker_morning_high_low():
     assert "今日高 501.80" in text and "低 496.40" in text
 
 
+def test_activity_block_shows_filled_volume_and_price():
+    events = [{
+        "expiration": "2026-08-28",
+        "strike": 505,
+        "type": "put",
+        "volume": 18281,
+        "volume_prev": None,
+        "oi_prev": 162,
+        "open_interest": 18399,
+        "last_price": 0.01,
+        "volume_source": "yfinance",
+    }]
+    from report.morning import _activity_block
+
+    text = "\n".join(_activity_block(events))
+    assert "Vol 18,281（Yahoo补）" in text
+    assert "最新价 $0.01" in text
+    assert "OI 162→18399" in text
+
+
 def test_evening_scorecard_high_low():
     snap = load_fixture("snapshot_evening_soxx.json")
     morning = load_fixture("snapshot_morning_soxx.json")

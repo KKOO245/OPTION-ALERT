@@ -58,9 +58,8 @@ def ticker_evening(
 ) -> str:
     """单个标的的晚报区块（Scorecard + 明细，不含标题/市场/日历/提醒）。"""
     ticker = snapshot.get("ticker", "?")
-    lines: List[str] = []
+    lines: List[str] = [ticker_heading(ticker)]
     lines += _scorecard(morning, snapshot, key_level_status)
-    lines.append(ticker_heading(ticker))
     lines += _options_block(snapshot)
     if setup_status:
         spread = _vix_spread_line(snapshot)

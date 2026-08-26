@@ -185,6 +185,8 @@ def _activity_block(events: Optional[List[Dict[str, Any]]], stale_note: Optional
                 ev.get("oi_prev"),
                 ev.get("open_interest"),
                 has_prev_vol=ev.get("volume_prev") is not None,
+                last_price=ev.get("last_price"),
+                vol_source=ev.get("volume_source"),
             )
         )
     return lines
@@ -448,7 +450,7 @@ def ticker_morning(
 ) -> str:
     """单个标的的晨报区块（不含标题/市场/日历）。"""
     ticker = snapshot.get("ticker", "?")
-    lines: List[str] = []
+    lines: List[str] = [ticker_heading(ticker)]
     stale_note = None
     if prev_snapshot:
         p = prev_snapshot.get("spot")
@@ -473,7 +475,6 @@ def ticker_morning(
                 f"趋势与 OI 增仓指标需 {gap} 个交易日数据恢复"
             )
         lines.append("")
-    lines.append(ticker_heading(ticker))
     lines += _options_block(snapshot)
     if setup_status:
         spread = _vix_spread_line(snapshot)

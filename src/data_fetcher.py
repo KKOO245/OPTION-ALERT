@@ -202,6 +202,49 @@ def fetch_day_range_yfinance(ticker):
         return None, None
 
 
+def fetch_option_volumes_yfinance(ticker, expirations):
+    """按到期日批量抓 yfinance 期权链，返回 {contract_symbol: {"volume": int, "last": float}}。
+
+    仅用于 CBOE 延迟源缺量价时的补量（B 方案，只补量/最新价，不碰 OI/IV/delta）。
+    失败或缺数据返回空 dict，保持原 N/A，不猜测。
+    """
+    import yfinance as yf
+
+    out = {}
+    if not expirations:
+        return out
+    try:
+        tk = yf.Ticker(ticker)
+        for exp in expirations:
+            try:
+                chain = tk.option_chain(str(exp))
+            except Exception:
+                continue
+            rows = []
+            try:
+                rows += chain.calls.to_dict("records")
+            except Exception:
+                pass
+            try:
+                rows += chain.puts.to_dict("records")
+            except Exception:
+                pass
+            for row in rows:
+                sym = row.get("contractSymbol")
+                if not sym:
+                    continue
+                vol = row.get("volume")
+                last = row.get("lastPrice")
+                out[str(sym)] = {
+                    "volume": int(vol) if vol is not None else 0,
+                    "last": float(last) if last is not None else None,
+                }
+    except Exception as e:
+        print(f"[警告] yfinance 补量失败（保持 N/A）: {e}")
+        return {}
+    return out
+
+
 def fetch_chain_yfinance(ticker, spot=None, max_days=40):
     """yfinance 期权链（max_days 天内），IV 有、希腊字母用 vollib 补算"""
     import yfinance as yf

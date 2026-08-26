@@ -258,7 +258,7 @@ def oi_surge(df, prev, window_days=35, top_n=5):
         return None
     scope = df[df["dte"] <= window_days]
     merged = scope.merge(
-        prev[["contractSymbol", "openInterest"]],
+        prev[["contractSymbol", "openInterest", "volume"]],
         left_on="contract_symbol", right_on="contractSymbol",
         how="left", suffixes=("", "_prev"),
     )
@@ -275,14 +275,26 @@ def surge_rows(surge_df):
         return []
     rows = []
     for r in surge_df.itertuples(index=False):
+        last_price = getattr(r, "last", None)
+        vp = getattr(r, "volume_prev", None)
+        try:
+            vp_int = int(vp) if vp is not None and not math.isnan(float(vp)) else 0
+        except (TypeError, ValueError):
+            vp_int = 0
         rows.append({
             "contract_symbol": r.contractSymbol,
             "expiration": r.expiration,
             "type": r.type,
             "strike": float(r.strike),
+            "volume": int(r.volume),
+            "volume_prev": vp_int,
             "oi": int(r.open_interest),
             "oi_prev": int(r.openInterest_prev),
             "oi_change": int(r.oi_change),
+            "last_price": round(float(last_price), 4) if last_price is not None else None,
+            "iv": (round(float(r.iv), 4)
+                   if getattr(r, "iv", None) is not None and not math.isnan(float(r.iv)) else None),
+            "delta": round(float(r.delta), 3) if getattr(r, "delta", None) is not None else None,
         })
     return rows[:5]
 

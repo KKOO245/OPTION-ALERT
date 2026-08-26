@@ -434,6 +434,8 @@ def _activity_from_analytics(data_root: Path, ticker: str, session: str) -> list
             "volume_prev": s.get("volume_prev"),
             "oi_prev": s.get("oi_prev"),
             "open_interest": s.get("oi") or s.get("open_interest"),
+            "last_price": s.get("last_price"),
+            "volume_source": s.get("volume_source"),
         })
     return out
 

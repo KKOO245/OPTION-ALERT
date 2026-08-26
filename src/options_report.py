@@ -47,7 +47,9 @@ TARGET_SESSIONS = [
     ("早报", 10, 15),
     ("晚报", 16, 30),
 ]
-TOLERANCE_MINUTES = 75
+# 与工作流 timecheck 的 135 分钟窗口保持一致（早报 10:15-12:30 / 晚报 16:30-18:45），
+# 否则 12:00/18:00 的兜底 cron 会通过工作流检查、却在这里被挡掉。
+TOLERANCE_MINUTES = 135
 
 DISCLAIMER = ("-# 数据来源: CBOE 延迟数据 / Yahoo Finance，可能有延迟；"
               "本报告由规则计算 + AI 辅助生成，仅供研究参考，不构成投资建议。")
@@ -147,6 +149,46 @@ def market_context(include_fear_greed=False):
         if fg_text:
             parts.append(fg_text)
     return "市场背景： " + " ｜ ".join(parts) if parts else None
+
+
+def _fill_activity_volumes(ticker, contracts, m, fetcher_mod):
+    """B 方案：报告可见合约（top_surge/top_unusual）CBOE 缺量 → yfinance 补量并标来源。
+
+    只补 volume 与最新价（last_price）；OI/IV/delta 不跨源，保持各自口径。
+    补进来的量会同步更新 contracts，让 Forward 的 ΔOI/Volume 也能用上。
+    """
+    rows = list(m.get("top_surge") or []) + list(m.get("top_unusual") or [])
+    missing = {r.get("contract_symbol") for r in rows if not (r.get("volume") or 0)}
+    if not missing:
+        return
+    exps = sorted({
+        r.get("expiration") for r in rows
+        if r.get("contract_symbol") in missing and r.get("expiration")
+    })
+    vol_map = fetcher_mod.fetch_option_volumes_yfinance(ticker, exps)
+    if not vol_map:
+        return
+    for r in rows:
+        sym = r.get("contract_symbol")
+        if sym not in missing or sym not in vol_map:
+            continue
+        e = vol_map[sym]
+        if e.get("volume"):
+            r["volume"] = e["volume"]
+            r["volume_source"] = "yfinance"
+        if not r.get("last_price") and e.get("last") is not None:
+            r["last_price"] = e["last"]
+    by_sym = {c.get("contract_symbol"): c for c in contracts or []}
+    for sym in missing:
+        c = by_sym.get(sym)
+        e = vol_map.get(sym)
+        if c is None or e is None:
+            continue
+        if e.get("volume"):
+            c["volume"] = e["volume"]
+            c["volume_source"] = "yfinance"
+        if not c.get("last") and e.get("last") is not None:
+            c["last"] = e["last"]
 
 
 # ---------- LLM 输入（紧凑指标，不给原始链） ----------
@@ -262,6 +304,10 @@ def main():
             day_high, day_low = fetcher.fetch_day_range_yfinance(ticker)
             m["day_high"] = day_high
             m["day_low"] = day_low
+            try:
+                _fill_activity_volumes(ticker, contracts, m, fetcher)
+            except Exception as e:
+                print(f"[警告] yfinance 补量失败（保持 N/A）: {e}")
             try:
                 # 方案 A：把当天真实快照写入引擎（供 detect/事件库使用）
                 from engine.snapshot_builder import build_snapshot, load_analytics_rows

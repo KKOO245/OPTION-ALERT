@@ -55,8 +55,9 @@ jobs:
           if not run:
               cur = now.hour * 60 + now.minute
               # 单向窗口：只准迟到、不许早到（绝不提前发报告）
-              # 目标 10:15/16:30 之后 75 分钟内触发；实际发送 = 目标后第一个整点
-              run = any(0 <= cur - (h * 60 + m) <= 75 for h, m in ((10, 15), (16, 30)))
+              # 目标 10:15/16:30 之后 135 分钟内触发（早报到 12:30、晚报到 18:45），
+              # 使 11:00/12:00 与 17:00/18:00 两个整点槽都能兜底，降低 GitHub cron 漏触发风险
+              run = any(0 <= cur - (h * 60 + m) <= 135 for h, m in ((10, 15), (16, 30)))
           print(f"多伦多时间 {now:%Y-%m-%d %H:%M}，需要运行={run}")
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
               f.write(f"run_needed={'true' if run else 'false'}\n")

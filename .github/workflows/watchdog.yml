@@ -26,8 +26,8 @@ jobs:
 
           now = datetime.datetime.now(ZoneInfo("America/Toronto"))
           cur = now.hour * 60 + now.minute
-          # 只在 17:30-18:30 检查一次，避免整点重复告警
-          if not (17 * 60 + 30 <= cur <= 18 * 60 + 30):
+          # 16:45-18:45 检查，让 17:00/18:00 两个整点槽都能触发（降低 GitHub cron 漏触发风险）
+          if not (16 * 60 + 45 <= cur <= 18 * 60 + 45):
               print("非检查窗口，跳过")
               raise SystemExit(0)
 

@@ -68,6 +68,17 @@ def test_event_card_shape():
     assert lines[1].startswith("   ⇒ ")
 
 
+def test_event_card_filled_volume_and_price():
+    """B 方案：CBOE 缺量时 yfinance 补量并标来源，同时显示最新价。"""
+    lines = event_card(
+        "8/28 505P", 18281, 162, 18399,
+        has_prev_vol=False, last_price=0.01, vol_source="yfinance",
+    )
+    assert "Vol 18,281（Yahoo补）" in lines[0]
+    assert "最新价 $0.01" in lines[0]
+    assert "ΔOI/Volume 99.8%" in lines[0]
+
+
 def test_delta_computed_without_volume():
     m = event_magnitude(None, 337, 7685)
     assert m["delta_oi"] == 7348
