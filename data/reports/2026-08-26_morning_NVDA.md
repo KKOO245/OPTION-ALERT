@@ -2,9 +2,9 @@
 
 📊 市场环境
 
-SPY $764.88 ｜ QQQ $708.41
+SPY $769.98 ｜ QQQ $711.37
 VIX 15.62 ↑1.1%（5D +4.9%） ｜ Vol Regime: NORMAL
-CNN 恐惧贪婪 55.1（greed）
+CNN 恐惧贪婪 55.2（greed）
 
 ⇒ VIX ↑ = SPX 期权隐含的近 30 日预期波动率上升；不判方向，不进入 Direction Edge。
 
@@ -17,21 +17,32 @@ CNN 恐惧贪婪 55.1（greed）
 - 周五 08-28 10:00　【高】美联储主席讲话 Warsh Speech　实际 待公布
 - 周五 08-28 10:00　【高】Non Farm Payrolls Annual Revision Prel　实际 待公布 ｜ 前值 -911
 
-📋 昨日晚报 → 今日晨报（只列关键项，低于阈值不单列）
-NVDA  昨收 213.48 → 今晨 210.21（-1.5%） | 较昨收变动（含盘初走势） ｜ 今日高 213.60 ｜ 低 209.52
-
 
 ## NVDA
 
-Options: P/C量 0.63 | OI比 0.44 | ATM IV 94.2% | Skew -1.4pp | Term 0.43 | ExpMove ±5.8% | Rank — (历史不足)
+🔍 重点速览
+🔴 **事件差分**: 08-28（2D）ATM IV 94.2% vs 08-31 63.9%（差 +30.3pp），覆盖 Personal Spending MoM、Personal Income MoM、GDP 增速 Rate QoQ 2nd Est、耐用品订单 Orders MoM、PCE 物价 Price Index MoM、美联储主席讲话 Warsh Speech、Non Farm Payrolls Annual Revision Prel
+   ⇒ 覆盖【高】事件的期限隐含波动显著更高（美联储 IFDP 1376 实证；单日截面，需连续多日确认；观察，非预测）
+🟡 **近现价集中开仓**: 08-31 200P ΔOI +5,263（距现价 -4.9%）
+   ⇒ 高等级 OI 变化且贴近现价；方向 Unknown（买开/卖开不可观测）
+🔵 **Flip 状态**: CONDITIONAL（Candidates: 220.6 / 221.4 / 257.3）｜ Primary: N/A
+   ⇒ Top-3 近似 + 有效覆盖待盘点，Gamma 层不作方向/强度解读
+
+📋 昨日晚报 → 今日晨报（只列关键项，低于阈值不单列）
+NVDA  昨收 213.48 → 今晨 210.21（-1.5%） | 较昨收变动（含盘初走势） ｜ 今日高 213.60 ｜ 低 209.52
+
+Options: P/C量 0.63 | OI比 0.44 | ATM IV 94.2% | Skew -1.4pp | Term 0.43 | ExpMove ±5.8%（近端） | Rank — (历史不足)
    ⇒ Put/Call Volume: 0.63×（Call 成交量高于 Put）→ 方向 Unknown
    ⇒ Put/Call OI: 0.44×（存量 Call 仓位高于 Put）→ 存量 Call-dominant
    ⇒ 两者结构一致
    ⇒ 当日成交 vs 存量仓位：当日成交偏 Call，存量Call-dominant
+   ExpMove 期限化（expmove_v1）: 08-28（2D）±5.8% ｜ 08-31（5D）±6.1% ｜ 09-02（7D）±6.5% ｜ 09-04（9D）±6.9%
 🔧 结构（未验证研究层：Mechanism Scenario A/B——OI 开仓方向不可观测）
-Gamma Regime: POSITIVE（模型分类） | GEX(存量) N/A | GEX Change N/A | Flip: ≈220.62 / ≈221.43 / ≈257.28
+Gamma Regime: POSITIVE（模型分类） | GEX(存量) N/A | GEX Change N/A | Flip: Candidates 220.62 / 221.43 / 257.28 ｜ Primary: N/A（CONDITIONAL）
+🔎 测量完整性: GEX 符号契约 gex_sign_v1（Model A: Call+ / Put−）｜ Gamma 口径 Top-3 近似 ｜ Effective GEX 覆盖: 待盘点 ｜ IV 有效性: 待审计
 结构观察区: 221–221（局部 Gamma 切换，低置信；Top-3 近似，需全链重定价验证）
 距 Put Wall 190: +10.6% | 距 Call Wall 230: -8.6%
+最近结构参考: Flip 221（距现价 -4.7%）
 🧭 结构解读（全部依赖上方假设）
 • 支撑/压力参考：下方 190（Put Wall）；上方 230（Call Wall）。
 • Gamma 区域：切换参考 221（Top-3 近似，需全链重定价验证）。
@@ -107,6 +118,10 @@ P 150 ｜ +1,538 ｜ $0.10 ｜ 名义 $15.4k* ｜ -28.6%
 结构参考：227（+8.2%）上方 / 150（-28.6%）下方形成 OI 变化集中区（结构观察，非价格预测）
 *模型估算/名义金额代理；买开/卖开方向不可观测（Scenario A/B）
 
+📅 事件差分（观察，非因果）: 08-28（2D）ATM IV 94.2% vs 08-31 63.9%（差 +30.3pp）——覆盖 Personal Spending MoM、Personal Income MoM、GDP 增速 Rate QoQ 2nd Est、耐用品订单 Orders MoM、PCE 物价 Price Index MoM、美联储主席讲话 Warsh Speech、Non Farm Payrolls Annual Revision Prel
+   符合'覆盖事件的期权溢价更高'（美联储 IFDP 1376 实证；单日截面，需连续多日确认）
+
+数据质量: 行情 A ｜ 期权结构 A ｜ 流向 C ｜ 做市商机制 C —— Flow 相关层（Activity 连续性、做市商机制解读）置信度受限。
 Setup: 今日无 Setup 触发（机械检查全部 Setup）
 
 数据溯源：完整表见附录 / thesis / analytics/daily/2026-08-26/NVDA_morning.json

@@ -2,9 +2,9 @@
 
 📊 市场环境
 
-SPY $764.88 ｜ QQQ $708.50
+SPY $769.88 ｜ QQQ $711.37
 VIX 15.62 ↑1.1%（5D +4.9%） ｜ Vol Regime: NORMAL
-CNN 恐惧贪婪 55.1（greed）
+CNN 恐惧贪婪 55.2（greed）
 
 ⇒ VIX ↑ = SPX 期权隐含的近 30 日预期波动率上升；不判方向，不进入 Direction Edge。
 
@@ -17,21 +17,30 @@ CNN 恐惧贪婪 55.1（greed）
 - 周五 08-28 10:00　【高】美联储主席讲话 Warsh Speech　实际 待公布
 - 周五 08-28 10:00　【高】Non Farm Payrolls Annual Revision Prel　实际 待公布 ｜ 前值 -911
 
-📋 昨日晚报 → 今日晨报（只列关键项，低于阈值不单列）
-NBIS  昨收 221.85 → 今晨 215.40（-2.9%） | 较昨收变动（含盘初走势） ｜ 今日高 221.47 ｜ 低 213.60
-
 
 ## NBIS
 
-Options: P/C量 0.50 | OI比 0.90 | ATM IV 98.3% | Skew -3.1pp | Term 0.90 | ExpMove ±6.0% | Rank — (历史不足)
+🔍 重点速览
+🔴 **Gamma Regime 切换**: POSITIVE → NEGATIVE（模型分类）
+   ⇒ Gamma 状态翻转是波动环境变化信号；仍为模型层，方向不可观测（Scenario A/B）
+🟡 **单日价格波动**: +2.5%（vs 前收盘）
+   ⇒ 价格变动超阈值；纯事实，不解释方向
+
+📋 昨日晚报 → 今日晨报（只列关键项，低于阈值不单列）
+NBIS  昨收 221.85 → 今晨 215.40（-2.9%） | 较昨收变动（含盘初走势） ｜ 今日高 221.47 ｜ 低 213.60
+
+Options: P/C量 0.50 | OI比 0.90 | ATM IV 98.3% | Skew -3.1pp | Term 0.90 | ExpMove ±6.0%（近端） | Rank — (历史不足)
    ⇒ Put/Call Volume: 0.50×（Call 成交量高于 Put）→ 方向 Unknown
    ⇒ Put/Call OI: 0.90×（两侧接近均衡）
    ⇒ 当日成交 vs 存量仓位：当日成交偏 Call，存量接近均衡
+   ExpMove 期限化（expmove_v1）: 08-28（2D）±6.1% ｜ 09-04（9D）±11.2% ｜ 09-11（16D）±14.5% ｜ 09-18（23D）±17.6%
 🔧 结构（未验证研究层：Mechanism Scenario A/B——OI 开仓方向不可观测）
 Gamma Regime: NEGATIVE（模型分类） | GEX(存量) N/A | GEX Change N/A | Flip: NO_FLIP_IN_RANGE
+🔎 测量完整性: GEX 符号契约 gex_sign_v1（Model A: Call+ / Put−）｜ Gamma 口径 Top-3 近似 ｜ Effective GEX 覆盖: 待盘点 ｜ IV 有效性: 待审计
    ⇒ Gamma Regime 判定为 NEGATIVE；GEX 数值不可用，不对 Gamma 强度做判断。
 结构观察区: NO_FLIP_IN_RANGE
 距 Put Wall 200: +7.7% | 距 Call Wall 250: -13.8%
+最近结构参考: Put Wall 200（距现价 +7.7%）
 🧭 结构解读（全部依赖上方假设）
 • 支撑/压力参考：下方 200（Put Wall）；上方 250（Call Wall）。
 • 做市商（条件机制）：若 Scenario A + 负 Gamma 成立，跌破关键位下方可能对应顺周期卖出压力增加；实际做市商对冲流量不可观测。Scenario B → 方向相反。不进入方向决策。
@@ -106,6 +115,10 @@ C 250 ｜ +220 ｜ $8.10 ｜ 名义 $178.2k* ｜ +16.1%
 结构参考：280（+30.0%）上方 / 50（-76.8%）下方形成 OI 变化集中区（结构观察，非价格预测）
 *模型估算/名义金额代理；买开/卖开方向不可观测（Scenario A/B）
 
+📅 事件差分（观察，非因果）: 08-28（2D）ATM IV 98.3% vs 09-04 89.3%（差 +9.0pp）——覆盖 Personal Spending MoM、Personal Income MoM、GDP 增速 Rate QoQ 2nd Est、耐用品订单 Orders MoM、PCE 物价 Price Index MoM、美联储主席讲话 Warsh Speech、Non Farm Payrolls Annual Revision Prel
+   符合'覆盖事件的期权溢价更高'（美联储 IFDP 1376 实证；单日截面，需连续多日确认）
+
+数据质量: 行情 A ｜ 期权结构 A ｜ 流向 C ｜ 做市商机制 C —— Flow 相关层（Activity 连续性、做市商机制解读）置信度受限。
 Setup: 今日无 Setup 触发（机械检查全部 Setup）
 
 数据溯源：完整表见附录 / thesis / analytics/daily/2026-08-26/NBIS_morning.json

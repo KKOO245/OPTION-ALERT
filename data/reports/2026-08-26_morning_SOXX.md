@@ -2,9 +2,9 @@
 
 📊 市场环境
 
-SPY $764.88 ｜ QQQ $708.41
+SPY $769.98 ｜ QQQ $711.37
 VIX 15.62 ↑1.1%（5D +4.9%） ｜ Vol Regime: NORMAL
-CNN 恐惧贪婪 55.1（greed）
+CNN 恐惧贪婪 55.2（greed）
 
 ⇒ VIX ↑ = SPX 期权隐含的近 30 日预期波动率上升；不判方向，不进入 Direction Edge。
 
@@ -17,21 +17,32 @@ CNN 恐惧贪婪 55.1（greed）
 - 周五 08-28 10:00　【高】美联储主席讲话 Warsh Speech　实际 待公布
 - 周五 08-28 10:00　【高】Non Farm Payrolls Annual Revision Prel　实际 待公布 ｜ 前值 -911
 
-📋 昨日晚报 → 今日晨报（只列关键项，低于阈值不单列）
-SOXX  昨收 515.25 → 今晨 512.95（-0.4%） | 较昨收变动（含盘初走势） ｜ 今日高 516.18 ｜ 低 509.30
-
 
 ## SOXX
 
-Options: P/C量 2.80 | OI比 0.82 | ATM IV 51.1% | Skew 3.8pp | Term 0.79 | ExpMove ±3.2% | Rank — (历史不足)
+🔍 重点速览
+🟡 **近现价集中开仓**: 08-28 502P ΔOI +914（距现价 -2.0%）
+   ⇒ 高等级 OI 变化且贴近现价；方向 Unknown（买开/卖开不可观测）
+🔵 **期限 OI 集中**: 09-11 480P ΔOI +1,674 占该期限总 OI 11.3%
+   ⇒ 新增仓位相对该期限总量显著（结构观察，非资金方向）
+🔵 **Flip 状态**: CONDITIONAL（Candidates: 295.1）｜ Primary: N/A
+   ⇒ Top-3 近似 + 有效覆盖待盘点，Gamma 层不作方向/强度解读
+
+📋 昨日晚报 → 今日晨报（只列关键项，低于阈值不单列）
+SOXX  昨收 515.25 → 今晨 512.95（-0.4%） | 较昨收变动（含盘初走势） ｜ 今日高 516.18 ｜ 低 509.30
+
+Options: P/C量 2.80 | OI比 0.82 | ATM IV 51.1% | Skew 3.8pp | Term 0.79 | ExpMove ±3.2%（近端） | Rank — (历史不足)
    ⇒ Put/Call Volume: 2.80×（Put 成交量高于 Call）→ 方向 Unknown
    ⇒ Put/Call OI: 0.82×（两侧接近均衡）
    ⇒ 当日成交 vs 存量仓位：当日成交偏 Put，存量接近均衡
+   ExpMove 期限化（expmove_v1）: 08-28（2D）±3.4% ｜ 09-04（9D）±5.6% ｜ 09-11（16D）±6.9% ｜ 09-18（23D）±8.1%
 🔧 结构（未验证研究层：Mechanism Scenario A/B——OI 开仓方向不可观测）
-Gamma Regime: NEGATIVE（模型分类） | GEX(存量) N/A | GEX Change N/A | Flip: ≈295.07
+Gamma Regime: NEGATIVE（模型分类） | GEX(存量) N/A | GEX Change N/A | Flip: Candidates 295.07 ｜ Primary: N/A（CONDITIONAL）
+🔎 测量完整性: GEX 符号契约 gex_sign_v1（Model A: Call+ / Put−）｜ Gamma 口径 Top-3 近似 ｜ Effective GEX 覆盖: 待盘点 ｜ IV 有效性: 待审计
    ⇒ Gamma Regime 判定为 NEGATIVE；GEX 数值不可用，不对 Gamma 强度做判断。
 结构观察区: ≈295（局部 Gamma 切换，低置信；Top-3 近似，需全链重定价验证）
 距 Put Wall 480: +6.9% | 距 Call Wall 575: -10.8%
+最近结构参考: Put Wall 480（距现价 +6.9%）
 🧭 结构解读（全部依赖上方假设）
 • 支撑/压力参考：下方 480（Put Wall）；上方 575（Call Wall）。
 • Gamma 区域：切换参考 295（Top-3 近似，需全链重定价验证）。
@@ -107,6 +118,10 @@ P 510 ｜ +3,530 ｜ $19.30 ｜ 名义 $6.81M* ｜ -0.6%
 结构参考：575（+12.1%）上方 / 480（-6.4%）下方形成 OI 变化集中区（结构观察，非价格预测）
 *模型估算/名义金额代理；买开/卖开方向不可观测（Scenario A/B）
 
+📅 事件差分（观察，非因果）: 08-28（2D）ATM IV 51.1% vs 09-04 42.8%（差 +8.3pp）——覆盖 Personal Spending MoM、Personal Income MoM、GDP 增速 Rate QoQ 2nd Est、耐用品订单 Orders MoM、PCE 物价 Price Index MoM、美联储主席讲话 Warsh Speech、Non Farm Payrolls Annual Revision Prel
+   符合'覆盖事件的期权溢价更高'（美联储 IFDP 1376 实证；单日截面，需连续多日确认）
+
+数据质量: 行情 A ｜ 期权结构 A ｜ 流向 C ｜ 做市商机制 C —— Flow 相关层（Activity 连续性、做市商机制解读）置信度受限。
 Setup: 今日无 Setup 触发（机械检查全部 Setup）
 
 数据溯源：完整表见附录 / thesis / analytics/daily/2026-08-26/SOXX_morning.json

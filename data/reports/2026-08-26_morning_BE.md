@@ -2,9 +2,9 @@
 
 📊 市场环境
 
-SPY $764.88 ｜ QQQ $708.47
+SPY $769.98 ｜ QQQ $711.37
 VIX 15.62 ↑1.1%（5D +4.9%） ｜ Vol Regime: NORMAL
-CNN 恐惧贪婪 55.1（greed）
+CNN 恐惧贪婪 55.2（greed）
 
 ⇒ VIX ↑ = SPX 期权隐含的近 30 日预期波动率上升；不判方向，不进入 Direction Edge。
 
@@ -17,20 +17,31 @@ CNN 恐惧贪婪 55.1（greed）
 - 周五 08-28 10:00　【高】美联储主席讲话 Warsh Speech　实际 待公布
 - 周五 08-28 10:00　【高】Non Farm Payrolls Annual Revision Prel　实际 待公布 ｜ 前值 -911
 
-📋 昨日晚报 → 今日晨报（只列关键项，低于阈值不单列）
-BE  昨收 217.55 → 今晨 215.20（-1.1%） | 较昨收变动（含盘初走势） ｜ 今日高 227.34 ｜ 低 212.30
-
 
 ## BE
 
-Options: P/C量 0.36 | OI比 0.97 | ATM IV 99.3% | Skew -5.6pp | Term 0.90 | ExpMove ±6.1% | Rank — (历史不足)
+🔍 重点速览
+🟡 **单日价格波动**: +3.2%（vs 前收盘）
+   ⇒ 价格变动超阈值；纯事实，不解释方向
+🟡 **近现价集中开仓**: 08-28 222C ΔOI +803（距现价 +3.4%）
+   ⇒ 高等级 OI 变化且贴近现价；方向 Unknown（买开/卖开不可观测）
+🔵 **Flip 状态**: CONDITIONAL（Candidates: 216.1 / 228.9 / 247.5）｜ Primary: N/A
+   ⇒ Top-3 近似 + 有效覆盖待盘点，Gamma 层不作方向/强度解读
+
+📋 昨日晚报 → 今日晨报（只列关键项，低于阈值不单列）
+BE  昨收 217.55 → 今晨 215.20（-1.1%） | 较昨收变动（含盘初走势） ｜ 今日高 227.34 ｜ 低 212.30
+
+Options: P/C量 0.36 | OI比 0.97 | ATM IV 99.3% | Skew -5.6pp | Term 0.90 | ExpMove ±6.1%（近端） | Rank — (历史不足)
    ⇒ Put/Call Volume: 0.36×（Call 成交量高于 Put）→ 方向 Unknown
    ⇒ Put/Call OI: 0.97×（两侧接近均衡）
    ⇒ 当日成交 vs 存量仓位：当日成交偏 Call，存量接近均衡
+   ExpMove 期限化（expmove_v1）: 08-28（2D）±6.1% ｜ 09-04（9D）±11.9% ｜ 09-11（16D）±15.3% ｜ 09-18（23D）±17.9%
 🔧 结构（未验证研究层：Mechanism Scenario A/B——OI 开仓方向不可观测）
-Gamma Regime: POSITIVE（模型分类） | GEX(存量) N/A | GEX Change N/A | Flip: ≈216.05 / ≈228.94 / ≈247.50
+Gamma Regime: POSITIVE（模型分类） | GEX(存量) N/A | GEX Change N/A | Flip: Candidates 216.05 / 228.94 / 247.50 ｜ Primary: N/A（CONDITIONAL）
+🔎 测量完整性: GEX 符号契约 gex_sign_v1（Model A: Call+ / Put−）｜ Gamma 口径 Top-3 近似 ｜ Effective GEX 覆盖: 待盘点 ｜ IV 有效性: 待审计
 结构观察区: 216–229（局部 Gamma 切换，低置信；Top-3 近似，需全链重定价验证）
 距 Put Wall 180: +19.6% | 距 Call Wall 250: -13.9%
+最近结构参考: Flip 216（距现价 -0.4%）
 🧭 结构解读（全部依赖上方假设）
 • 支撑/压力参考：下方 180（Put Wall）；上方 250（Call Wall）。
 • Gamma 区域：切换参考 216（Top-3 近似，需全链重定价验证）。
@@ -106,6 +117,7 @@ P 175 ｜ +372 ｜ $3.92 ｜ 名义 $145.8k* ｜ -18.7%
 结构参考：175（-18.7%）下方形成 OI 变化集中区（结构观察，非价格预测）
 *模型估算/名义金额代理；买开/卖开方向不可观测（Scenario A/B）
 
+数据质量: 行情 A ｜ 期权结构 A ｜ 流向 C ｜ 做市商机制 C —— Flow 相关层（Activity 连续性、做市商机制解读）置信度受限。
 Setup: 今日无 Setup 触发（机械检查全部 Setup）
 
 数据溯源：完整表见附录 / thesis / analytics/daily/2026-08-26/BE_morning.json
