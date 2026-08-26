@@ -27,3 +27,18 @@ def test_chunk_count():
     chunks = _chunk_text(text, limit=1900)
     # 每行 500，3 行约 1502 上限内 → 每 chunk 3 行；10 行 → 4 chunks
     assert len(chunks) == 4
+
+
+def test_merge_embeds_single_card():
+    from main import _merge_embeds
+
+    embeds = [
+        {"title": "🔍 A 重点速览", "description": "x" * 800, "color": 0xE74C3C},
+        {"title": "🔍 B 重点速览", "description": "y" * 800, "color": 0xF1C40F},
+    ]
+    out = _merge_embeds(embeds)
+    assert len(out) == 1
+    assert out[0]["title"] == "🔍 重点速览"
+    assert out[0]["color"] == 0xE74C3C  # 存在关键级 → 红色
+    assert len(out[0]["description"]) <= 1500
+    assert _merge_embeds([]) == []

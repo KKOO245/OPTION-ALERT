@@ -744,23 +744,52 @@ def _highlights_embeds(snapshot: dict, activity, prev, event_dates) -> dict:
     }
 
 
-def _merge_embeds(embeds: list, max_embeds: int = 10) -> list:
-    if len(embeds) <= max_embeds:
-        return embeds
-    merged = embeds[: max_embeds - 1]
-    extra_lines = [f"{e['title']}\n{e['description']}" for e in embeds[max_embeds - 1:]]
-    merged.append(
-        {
-            "title": "🔍 其他重点（合并）",
-            "description": "\n\n".join(extra_lines)[:3800],
-            "color": 0x95A5A6,
-        }
+def _merge_embeds(embeds: list) -> list:
+    """合并为单张「重点速览」卡片（Discord 多 Embed 消息易触发 HTTP 500，单卡最稳）。"""
+    if not embeds:
+        return []
+    color = (
+        0xE74C3C
+        if any(e.get("color") == 0xE74C3C for e in embeds)
+        else (0xF1C40F if any(e.get("color") == 0xF1C40F for e in embeds) else 0x3498DB)
     )
-    return merged
+    lines = []
+    for e in embeds:
+        title = (e.get("title") or "").replace("🔍 ", "")
+        desc = e.get("description") or ""
+        lines.append(f"**{title}**\n{desc}")
+    return [
+        {
+            "title": "🔍 重点速览",
+            "description": "\n\n".join(lines)[:1500],
+            "color": color,
+        }
+    ]
+
+
+def _post_webhook(webhook: str, body: dict) -> None:
+    """发送单条消息到 Discord webhook：429/5xx 重试一次。"""
+    payload = json.dumps(body).encode("utf-8")
+    req = urllib.request.Request(
+        webhook,
+        data=payload,
+        headers={"Content-Type": "application/json", "User-Agent": DISCORD_USER_AGENT},
+    )
+    for attempt in (1, 2):
+        try:
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                if resp.status >= 300:
+                    raise RuntimeError(f"Discord webhook HTTP {resp.status}")
+            return
+        except urllib.error.HTTPError as e:
+            if attempt == 1 and e.code in (429, 500, 502, 503, 504):
+                time.sleep(1.5)
+                continue
+            raise
 
 
 def _discord_send(webhook: str, text: str, embeds: list = None) -> None:
-    """发送到 Discord webhook：切分 + 429 重试一次；embeds 附加在首条消息。"""
+    """发送到 Discord webhook：切分 + 重试；embeds 附加在首条消息，失败自动降级为纯文本。"""
     webhook = (webhook or "").strip()
     if not webhook:
         raise RuntimeError("webhook URL 为空")
@@ -775,23 +804,14 @@ def _discord_send(webhook: str, text: str, embeds: list = None) -> None:
         body = {"content": chunk}
         if i == 0 and embeds:
             body["embeds"] = embeds
-        payload = json.dumps(body).encode("utf-8")
-        req = urllib.request.Request(
-            webhook,
-            data=payload,
-            headers={"Content-Type": "application/json", "User-Agent": DISCORD_USER_AGENT},
-        )
-        for attempt in (1, 2):
-            try:
-                with urllib.request.urlopen(req, timeout=30) as resp:
-                    if resp.status >= 300:
-                        raise RuntimeError(f"Discord webhook HTTP {resp.status}")
-                break
-            except urllib.error.HTTPError as e:
-                if e.code == 429 and attempt == 1:
-                    time.sleep(1.5)
-                    continue
-                raise
+        try:
+            _post_webhook(webhook, body)
+        except urllib.error.HTTPError as e:
+            if i == 0 and embeds and e.code in (400, 413, 500, 502, 503, 504):
+                print(f"[降级] 带 Embed 发送失败 HTTP {e.code}，重发纯文本（不携带 Embed）")
+                _post_webhook(webhook, {"content": chunk})
+                continue
+            raise
 
 
 def cmd_send_report(args) -> int:
