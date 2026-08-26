@@ -164,6 +164,10 @@ def build_forward_structure(
             atm_put_price = atm_put["last"] if atm_put else None
             ivs = [c["iv"] for c in (atm_call, atm_put) if c and c["iv"] is not None]
             atm_iv = round(sum(ivs) / len(ivs), 4) if ivs else None
+        # ExpMove 期限化（expmove_v1）：ATM 跨式价 ÷ 现价 × 100，逐期限独立
+        expmove_pct = None
+        if spot is not None and atm_call_price is not None and atm_put_price is not None:
+            expmove_pct = round((atm_call_price + atm_put_price) / float(spot) * 100.0, 2)
 
         # Top ΔOI（单一行权价明细，按 |ΔOI| 降序）
         top: List[Dict[str, Any]] = []
@@ -189,6 +193,45 @@ def build_forward_structure(
             })
         top.sort(key=lambda t: -abs(t["delta_oi"]))
         top = top[:top_n]
+
+        # Possible Roll 候选（后台字段，不进报告/评分）：
+        # 同类型、同一期限出现一正一负的大额 ΔOI → 配对为疑似 roll；
+        # 行权价越接近置信越高；仅为观察假设，买开/卖开不可观测。
+        roll_candidates: List[Dict[str, Any]] = []
+        if has_prev:
+            roll_min = float((cfg.get("highlight") or {}).get("roll_candidate_min_abs", 1000))
+            by_type: Dict[str, List[Dict[str, Any]]] = {"call": [], "put": []}
+            for c in crs:
+                if c["symbol"] not in prev_oi:
+                    continue
+                d = c["oi"] - prev_oi[c["symbol"]]
+                if abs(d) < roll_min:
+                    continue
+                by_type[c["type"]].append({"strike": c["strike"], "delta_oi": int(d)})
+            for typ in ("call", "put"):
+                pos = [x for x in by_type[typ] if x["delta_oi"] > 0]
+                neg = [x for x in by_type[typ] if x["delta_oi"] < 0]
+                if not pos or not neg:
+                    continue
+                best = None
+                best_gap = None
+                for p in pos:
+                    for n in neg:
+                        gap = abs(p["strike"] - abs(n["strike"]))
+                        if best_gap is None or gap < best_gap:
+                            best_gap = gap
+                            best = {
+                                "type": typ,
+                                "from_strike": abs(n["strike"]),
+                                "to_strike": p["strike"],
+                                "from_delta_oi": n["delta_oi"],
+                                "to_delta_oi": p["delta_oi"],
+                            }
+                if best is not None:
+                    best["confidence"] = (
+                        "MEDIUM" if best_gap <= max(1.0, 0.10 * best["to_strike"]) else "LOW"
+                    )
+                    roll_candidates.append(best)
 
         # ΔOI Δ Exposure = Σ ΔOI × delta × 100（模型估算）
         delta_exposure = None
@@ -242,9 +285,11 @@ def build_forward_structure(
             "atm_call_price": atm_call_price,
             "atm_put_price": atm_put_price,
             "atm_iv": atm_iv,
+            "expmove_pct": expmove_pct,
             "activity": activity,
             "delta_exposure": delta_exposure,
             "top_delta_oi": top,
+            "roll_candidates": roll_candidates,
             "significant": significant,
         })
 

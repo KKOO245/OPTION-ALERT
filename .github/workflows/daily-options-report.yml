@@ -55,9 +55,12 @@ jobs:
           if not run:
               cur = now.hour * 60 + now.minute
               # 单向窗口：只准迟到、不许早到（绝不提前发报告）
-              # 目标 10:15/16:30 之后 135 分钟内触发（早报到 12:30、晚报到 18:45），
-              # 使 11:00/12:00 与 17:00/18:00 两个整点槽都能兜底，降低 GitHub cron 漏触发风险
-              run = any(0 <= cur - (h * 60 + m) <= 135 for h, m in ((10, 15), (16, 30)))
+              # 早报目标 10:15，容差 135 分钟（到 12:30）；晚报目标 16:30，容差 180 分钟（到 19:30）
+              # 使 11:00/12:00 与 17:00/18:00/19:00 整点槽都能兜底，降低 GitHub cron 漏触发风险
+              run = any(
+                  0 <= cur - (h * 60 + m) <= tol
+                  for (h, m), tol in (((10, 15), 135), ((16, 30), 180))
+              )
           print(f"多伦多时间 {now:%Y-%m-%d %H:%M}，需要运行={run}")
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
               f.write(f"run_needed={'true' if run else 'false'}\n")
@@ -130,7 +133,7 @@ jobs:
               cur = now.hour * 60 + now.minute
               if 10 * 60 + 15 <= cur <= 12 * 60 + 30:
                   print("morning")
-              elif 16 * 60 + 30 <= cur <= 18 * 60 + 45:
+              elif 16 * 60 + 30 <= cur <= 19 * 60 + 30:
                   print("evening")
               else:
                   print("skip")

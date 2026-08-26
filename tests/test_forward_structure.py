@@ -89,6 +89,29 @@ def test_aggregation_and_atm():
     assert e["activity"] == "HIGH"
 
 
+def test_expmove_pct_per_expiry():
+    out = _build()
+    e = next(x for x in out["expirations"] if x["expiration"] == "2026-09-18")
+    assert e["expmove_pct"] == round((5.84 + 14.12) / 515.5 * 100.0, 2)
+    assert abs(e["expmove_pct"] - 3.87) < 0.01
+
+
+def test_roll_candidates_backend_only():
+    contracts = [
+        _c("S0918C700", "2026-09-18", "call", 700, 12000, 300, 1.5, 0.40, 0.30),
+        _c("S0918C720", "2026-09-18", "call", 720, 10000, 300, 1.2, 0.41, 0.28),
+    ]
+    prev = _prev([("S0918C700", 20000, 200), ("S0918C720", 1000, 100)])
+    out = _build(contracts=contracts, prev=prev)
+    e = next(x for x in out["expirations"] if x["expiration"] == "2026-09-18")
+    assert e["roll_candidates"], "应识别同期限同类型一正一负大额 ΔOI"
+    rc = e["roll_candidates"][0]
+    assert rc["type"] == "call"
+    assert rc["from_strike"] == 700 and rc["to_strike"] == 720
+    assert rc["from_delta_oi"] == -8000 and rc["to_delta_oi"] == 9000
+    assert rc["confidence"] == "MEDIUM"  # 行权价差 20 ≤ 10%×720
+
+
 def test_activity_levels():
     out = _build()
     by_exp = {e["expiration"]: e["activity"] for e in out["expirations"]}

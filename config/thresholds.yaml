@@ -59,6 +59,22 @@ forward_structure:
   top_delta_oi_n: 3           # Top ΔOI 明细条数
   l3_max_distance_pct: 15.0   # L3 显著区：距现价 ≤ ±15%（经验默认，待校准；覆盖 575C+10.5% 类样本）
 
+event_differential:
+  version: event_diff_v1
+  min_diff_pp: 5.0            # 事件差分低于此值不提示（经验默认，待校准）
+  control: adjacent           # 对照组 = 相邻下一期限（覆盖事件的期限 vs 不覆盖的相邻期限）
+
+highlight:
+  version: highlight_v1
+  max_items: 3                # 每标的重点速览上限（全是重点 = 没有重点）
+  ping_critical: true         # 仅 🔴 关键级触发角色提醒（角色 id 由部署环境配置）
+  event_diff_critical_pp: 15.0  # 事件差分 ≥ 此值 → 关键
+  event_diff_watch_pp: 10.0     # 事件差分 ≥ 此值 → 关注
+  near_level_pct: 5.0           # Activity HIGH 且距现价 ≤ ±5% → 关注
+  day_move_pct: 2.0             # 单日 |价格变动| ≥ 2% → 关注
+  concentration_min_pct: 10.0   # Top ΔOI / 期限总 OI ≥ 10% → 信息
+  roll_candidate_min_abs: 1000  # 疑似 roll 的最小 |ΔOI|（后台字段，不进报告/评分）
+
 comparison_change:
   price_pct: 0.5
   iv_pp: 0.5

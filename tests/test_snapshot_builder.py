@@ -83,6 +83,10 @@ def test_full_metrics_mode():
     assert snap["location"]["call_wall"] == 550.0
     assert snap["location"]["put_wall"] == 490.0
     assert snap["location"]["flip_levels"] == [502.0]
+    assert snap["location"]["flip_candidates"] == [502.0]
+    assert snap["location"]["flip_primary"] is None
+    assert snap["location"]["flip_status"] == "CONDITIONAL"
+    assert snap["location"]["flip_reason"] == "top3_approx_awaiting_coverage_audit"
     # 497.2 距 put_wall 490 约 1.5% < 2% → 集中区优先于 flip
     assert snap["location"]["price_location"] == "near_put_concentration"
     assert snap["momentum"]["oi_flow"] == "put_building"
@@ -94,7 +98,7 @@ def test_full_metrics_mode():
     assert snap["forward"]["expirations"][0]["expiration"] == "2026-09-18"
 
 
-def test_flip_status_tri_state():
+def test_flip_status_state_machine():
     rows = _rows()
     base = {
         "n_contracts": 1200,
@@ -107,7 +111,10 @@ def test_flip_status_tri_state():
         analytics_rows=rows, source="cboe",
     )
     assert snap["location"]["flip_levels"] == [502.0]
-    assert snap["location"]["flip_status"] is None
+    assert snap["location"]["flip_candidates"] == [502.0]
+    assert snap["location"]["flip_primary"] is None
+    assert snap["location"]["flip_status"] == "CONDITIONAL"
+    assert snap["location"]["flip_reason"] == "top3_approx_awaiting_coverage_audit"
 
     base2 = dict(base)
     base2["structure"] = {"gamma_flip": None, "call_wall": 550.0, "put_wall": 490.0}
@@ -116,8 +123,10 @@ def test_flip_status_tri_state():
         analytics_rows=rows, source="cboe",
     )
     assert snap2["location"]["flip_levels"] is None
-    assert snap2["location"]["flip_status"] == "NO_FLIP_IN_RANGE"
-    assert snap2["data_sufficiency"]["location.flip_levels"] == "NO_FLIP_IN_RANGE"
+    assert snap2["location"]["flip_status"] == "NO_CROSS"
+    assert snap2["location"]["flip_candidates"] is None
+    assert snap2["location"]["flip_primary"] is None
+    assert snap2["data_sufficiency"]["location.flip_levels"] == "NO_CROSS"
 
     base3 = dict(base)
     del base3["structure"]
@@ -126,6 +135,7 @@ def test_flip_status_tri_state():
         analytics_rows=rows, source="cboe",
     )
     assert snap3["location"]["flip_status"] == "INSUFFICIENT_DATA"
+    assert snap3["location"]["flip_candidates"] is None
 
 
 def test_helpers():

@@ -43,13 +43,13 @@ MIN_VOLUME = 500          # 异动候选的最低成交量
 VOL_OI_MIN = 1.0          # 异动候选的最低量/OI 比
 
 TORONTO_TZ = ZoneInfo("America/Toronto")
+# (会话名, 目标小时, 目标分钟, 单向容差分钟) —— 只准迟到、不许早到
 TARGET_SESSIONS = [
-    ("早报", 10, 15),
-    ("晚报", 16, 30),
+    ("早报", 10, 15, 135),   # 10:15–12:30
+    ("晚报", 16, 30, 180),   # 16:30–19:30（配合 23:00 UTC 槽兜底）
 ]
-# 与工作流 timecheck 的 135 分钟窗口保持一致（早报 10:15-12:30 / 晚报 16:30-18:45），
-# 否则 12:00/18:00 的兜底 cron 会通过工作流检查、却在这里被挡掉。
-TOLERANCE_MINUTES = 135
+# 与工作流 timecheck 的单向窗口保持一致（早报 135 / 晚报 180 分钟），
+# 否则 12:00/18:00/19:00 的兜底 cron 会通过工作流检查、却在这里被挡掉。
 
 DISCLAIMER = ("-# 数据来源: CBOE 延迟数据 / Yahoo Finance，可能有延迟；"
               "本报告由规则计算 + AI 辅助生成，仅供研究参考，不构成投资建议。")
@@ -71,9 +71,11 @@ def get_current_session():
         )
         print(f"[FORCE_SEND] 手动测试模式，忽略时间检查，按「{closest[0]}」生成。")
         return closest[0], now
-    for name, hh, mm in TARGET_SESSIONS:
+    for name, hh, mm, tol in TARGET_SESSIONS:
         target = now.replace(hour=hh, minute=mm, second=0, microsecond=0)
-        if abs((now - target).total_seconds()) / 60 <= TOLERANCE_MINUTES:
+        # 单向容差：只允许"晚于目标时刻"（delta >= 0），绝不提前生成
+        delta_min = (now - target).total_seconds() / 60
+        if 0 <= delta_min <= tol:
             return name, now
     return None, now
 

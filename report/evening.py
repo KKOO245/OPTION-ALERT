@@ -8,8 +8,11 @@ from typing import Any, Dict, List, Optional
 from report.format import fmt
 from report.morning import (
     _activity_block,
+    _data_quality_line,
     _day_range,
+    _event_differential_lines,
     _forward_block,
+    _highlights_block,
     _options_block,
     _setup_block,
     _structure_block,
@@ -55,10 +58,12 @@ def ticker_evening(
     gex: Optional[float] = None,
     gex_change: Optional[float] = None,
     key_level_status: Optional[str] = None,
+    event_dates: Optional[List[Dict[str, Any]]] = None,
 ) -> str:
     """单个标的的晚报区块（Scorecard + 明细，不含标题/市场/日历/提醒）。"""
     ticker = snapshot.get("ticker", "?")
     lines: List[str] = [ticker_heading(ticker)]
+    lines += _highlights_block(snapshot, activity, morning, event_dates)
     lines += _scorecard(morning, snapshot, key_level_status)
     lines += _options_block(snapshot)
     if setup_status:
@@ -69,6 +74,10 @@ def ticker_evening(
     lines += _structure_interpretation(snapshot)
     lines += _activity_block(activity)
     lines += _forward_block(snapshot)
+    lines += _event_differential_lines(snapshot, event_dates)
+    dq_line = _data_quality_line(snapshot)
+    if dq_line:
+        lines.append(dq_line)
     lines += _setup_block(setup_status, _vol_env(snapshot))
     lines.append("")
     lines.append(f"数据溯源：完整表见附录 / thesis / analytics/daily/{snapshot.get('created_at', '')[:10]}/{ticker}_evening.json")
@@ -86,6 +95,7 @@ def render_evening(
     reminders: Optional[List[str]] = None,
     calendar: Optional[List[str]] = None,
     market: Optional[Dict[str, Any]] = None,
+    event_dates: Optional[List[Dict[str, Any]]] = None,
 ) -> str:
     date = snapshot.get("created_at", "")[:10]
     lines = [f"# 期权晚报 {date}", ""]
@@ -99,5 +109,10 @@ def render_evening(
     if reminders:
         lines += [r for r in reminders if r]
         lines.append("")
-    lines.append(ticker_evening(snapshot, morning, activity, setup_status, gex, gex_change, key_level_status))
+    lines.append(
+        ticker_evening(
+            snapshot, morning, activity, setup_status, gex, gex_change,
+            key_level_status, event_dates,
+        )
+    )
     return "\n".join(lines)

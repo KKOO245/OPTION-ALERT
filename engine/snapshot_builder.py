@@ -296,13 +296,23 @@ def build_snapshot(
         if f is not None and f not in flip_levels:
             flip_levels.append(f)
     flip_levels.sort()
-    # Flip 三态：有值 → null；结构已算出但无零交叉 → NO_FLIP_IN_RANGE；结构未算出 → INSUFFICIENT_DATA
+    # Flip 状态机 v1（flip_status_v1）：
+    #   PRIMARY          全链重定价 + 有效覆盖达标（quality gate 冻结前不输出）
+    #   CONDITIONAL      存在穿越点但为 Top-3/模型近似，覆盖未盘点（当前默认态）
+    #   NO_CROSS         结构已算出、带内无符号穿越（诚实报无，不编数）
+    #   INSUFFICIENT_DATA 结构层未算出
     if flip_levels:
-        flip_status = None
+        flip_status = "CONDITIONAL"
+        flip_primary = None
+        flip_reason = "top3_approx_awaiting_coverage_audit"
     elif any(isinstance(s, dict) for s in structs_for_flip):
-        flip_status = "NO_FLIP_IN_RANGE"
+        flip_status = "NO_CROSS"
+        flip_primary = None
+        flip_reason = "no_sign_change_in_band"
     else:
         flip_status = "INSUFFICIENT_DATA"
+        flip_primary = None
+        flip_reason = "structure_not_computed"
     call_wall = _num(_nested(data, "structure", "call_wall")) or _num(_get(data, "call_wall"))
     put_wall = _num(_nested(data, "structure", "put_wall")) or _num(_get(data, "put_wall"))
     price_loc = price_location_of(spot, flip_levels[0] if flip_levels else None, call_wall, put_wall)
@@ -396,6 +406,9 @@ def build_snapshot(
             "price_location": price_loc,
             "flip_levels": flip_levels or None,
             "flip_status": flip_status,
+            "flip_candidates": flip_levels or None,
+            "flip_primary": flip_primary,
+            "flip_reason": flip_reason,
             "call_wall": call_wall,
             "put_wall": put_wall,
             "concentration": _get(data, "oi_concentration"),

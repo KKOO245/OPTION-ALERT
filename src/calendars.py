@@ -250,6 +250,28 @@ def build_macro_lines(now):
     return lines
 
 
+def macro_event_dates(now):
+    """本周剩余【高】美国事件的结构化日期列表（供事件差分使用）。
+
+    返回 [{"date": "YYYY-MM-DD", "name": str, "time": "HH:MM"}, ...]；
+    抓取失败返回 []（事件差分层缺输入时自动沉默，不编造）。
+    """
+    week_start, week_end = _week_range(now)
+    try:
+        events = fetch_macro_calendar(week_start, week_end, high_only=True)
+    except Exception as e:
+        print(f"[警告] 宏观日历获取失败（事件差分）: {e}")
+        return []
+    today = now.date()
+    out = []
+    for e in events:
+        if e["date"] < today:
+            continue
+        out.append({"date": e["date"].isoformat(), "name": e["name"], "time": e["time"]})
+    out.sort(key=lambda x: (x["date"], x["time"]))
+    return out
+
+
 def load_earnings_watchlist():
     """读取 config/earnings_watchlist.txt：每行「代码,中文名」"""
     out = []

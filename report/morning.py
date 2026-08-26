@@ -47,6 +47,10 @@ def _options_block(snapshot: Dict[str, Any]) -> List[str]:
         rank_txt = f"{rank * 100:.0f}%" if rank <= 1 else f"{rank:.0f}%"
     expmove = m.get("expected_move_pct")
     expmove_txt = f"±{fmt(expmove, 1)}%" if expmove is not None else "N/A"
+    fwd = snapshot.get("forward") or {}
+    exps = fwd.get("expirations") or []
+    if expmove is not None and exps:
+        expmove_txt = f"±{fmt(expmove, 1)}%（近端）"
     skew = m.get("skew")
     skew_txt = f"{fmt(skew, 1)}pp" if skew is not None else "N/A"
     line = (
@@ -57,6 +61,19 @@ def _options_block(snapshot: Dict[str, Any]) -> List[str]:
     lines = [line]
     for a in options_annotation(m.get("pc_ratio"), m.get("pc_oi_ratio")):
         lines.append("   ⇒ " + a)
+    # ExpMove 期限化（expmove_v1）：逐结算日独立计算，杜绝单值混用期限
+    exp_parts = []
+    for e in exps:
+        ev = e.get("expmove_pct")
+        if ev is None:
+            # 旧快照兜底：用 ATM C/P 与 spot 现算（与 expmove_v1 同公式）
+            cp, pp = e.get("atm_call_price"), e.get("atm_put_price")
+            if cp is not None and pp is not None and snapshot.get("spot"):
+                ev = round((float(cp) + float(pp)) / float(snapshot["spot"]) * 100.0, 2)
+        if ev is not None:
+            exp_parts.append(f"{e['expiration'][5:]}（{e.get('dte', '?')}D）±{ev:.1f}%")
+    if exp_parts:
+        lines.append("   ExpMove 期限化（expmove_v1）: " + " ｜ ".join(exp_parts))
     return lines
 
 
@@ -74,8 +91,20 @@ def _structure_block(snapshot: Dict[str, Any], gex: Optional[float] = None, gex_
     gex_txt = f"GEX(存量) {fmt(gex, 0)}" if gex is not None else "GEX(存量) N/A"
     chg_txt = f"GEX Change vs 上次快照 {fmt(gex_change, 0)}" if gex_change is not None else "GEX Change N/A"
     flip_status = loc.get("flip_status")
-    flip_txt = " / ".join(f"≈{f:.2f}" for f in (loc.get("flip_levels") or [])) or (flip_status or "N/A")
+    flip_candidates = loc.get("flip_candidates") or loc.get("flip_levels") or []
+    flip_primary = loc.get("flip_primary")
+    if flip_candidates:
+        cand_txt = " / ".join(f"{f:.2f}" for f in flip_candidates)
+        primary_txt = f"{flip_primary:.2f}" if flip_primary is not None else "N/A"
+        status_txt = flip_status or "CONDITIONAL"
+        flip_txt = f"Candidates {cand_txt} ｜ Primary: {primary_txt}（{status_txt}）"
+    else:
+        flip_txt = flip_status or "N/A"
     lines.append(f"Gamma Regime: {gamma}（模型分类） | {gex_txt} | {chg_txt} | Flip: {flip_txt}")
+    lines.append(
+        "🔎 测量完整性: GEX 符号契约 gex_sign_v1（Model A: Call+ / Put−）｜ "
+        "Gamma 口径 Top-3 近似 ｜ Effective GEX 覆盖: 待盘点 ｜ IV 有效性: 待审计"
+    )
     if gamma == "NEGATIVE":
         if gex is not None:
             lines.append("   ⇒ 全链负Gamma，波动易被放大（模型层）")
@@ -102,6 +131,17 @@ def _structure_block(snapshot: Dict[str, Any], gex: Optional[float] = None, gex_
         if cw:
             parts.append(f"距 Call Wall {fmt(cw, 0)}: {_dist_str(_distance(spot, cw))}")
         lines.append(" | ".join(parts))
+    # 最近结构参考：离现价最近的结构位（Wall / Flip 候选），一行给结论
+    cands = []
+    if pw:
+        cands.append(("Put Wall", pw))
+    if cw:
+        cands.append(("Call Wall", cw))
+    for f in flip_candidates:
+        cands.append(("Flip", f))
+    if cands and spot is not None:
+        name, lvl = min(cands, key=lambda x: abs(spot / float(x[1]) - 1.0))
+        lines.append(f"最近结构参考: {name} {lvl:.0f}（距现价 {_dist_str(_distance(spot, lvl))}）")
     return [l for l in lines if l]
 
 
@@ -190,6 +230,65 @@ def _activity_block(events: Optional[List[Dict[str, Any]]], stale_note: Optional
             )
         )
     return lines
+
+
+def _highlights_block(
+    snapshot: Dict[str, Any],
+    activity: Optional[List[Dict[str, Any]]],
+    prev: Optional[Dict[str, Any]],
+    event_dates: Optional[List[Dict[str, Any]]],
+) -> List[str]:
+    from report.highlight import LEVEL_EMOJI, build_highlights
+
+    items = build_highlights(snapshot, activity=activity, prev=prev, event_dates=event_dates)
+    if not items:
+        return ["🔍 重点速览: 今日无重点项（机械检查 highlight_v1）", ""]
+    lines = ["🔍 重点速览"]
+    for it in items:
+        lines.append(f"{LEVEL_EMOJI[it['level']]} **{it['title']}**: {it['detail']}")
+        if it.get("reason"):
+            lines.append(f"   ⇒ {it['reason']}")
+    lines.append("")
+    return lines
+
+
+def _event_differential_lines(
+    snapshot: Dict[str, Any],
+    event_dates: Optional[List[Dict[str, Any]]],
+) -> List[str]:
+    from report.highlight import event_differential
+
+    diff = event_differential(snapshot, event_dates)
+    if diff is None:
+        return []
+    return [
+        f"📅 事件差分（观察，非因果）: {diff['expiration'][5:]}（{diff['dte']}D）ATM IV "
+        f"{diff['covered_iv_pct']:.1f}% vs {diff['control_expiration'][5:]} "
+        f"{diff['control_iv_pct']:.1f}%（差 {diff['diff_pp']:+.1f}pp）——覆盖 {diff['events']}",
+        "   符合'覆盖事件的期权溢价更高'（美联储 IFDP 1376 实证；单日截面，需连续多日确认）",
+        "",
+    ]
+
+
+def _data_quality_line(snapshot: Dict[str, Any]) -> Optional[str]:
+    dq = snapshot.get("data_quality") or {}
+    if not dq:
+        return None
+    parts = []
+    for k, label in (
+        ("market_data", "行情"),
+        ("options_structure", "期权结构"),
+        ("flow", "流向"),
+        ("dealer_mechanism", "做市商机制"),
+    ):
+        if dq.get(k):
+            parts.append(f"{label} {dq[k]}")
+    if not parts:
+        return None
+    return (
+        "数据质量: " + " ｜ ".join(parts)
+        + " —— Flow 相关层（Activity 连续性、做市商机制解读）置信度受限。"
+    )
 
 
 def market_block(market: Optional[Dict[str, Any]]) -> List[str]:
@@ -447,10 +546,12 @@ def ticker_morning(
     setup_status: Optional[Dict[str, Any]] = None,
     gex: Optional[float] = None,
     gex_change: Optional[float] = None,
+    event_dates: Optional[List[Dict[str, Any]]] = None,
 ) -> str:
     """单个标的的晨报区块（不含标题/市场/日历）。"""
     ticker = snapshot.get("ticker", "?")
     lines: List[str] = [ticker_heading(ticker)]
+    lines += _highlights_block(snapshot, activity, prev_snapshot, event_dates)
     stale_note = None
     if prev_snapshot:
         p = prev_snapshot.get("spot")
@@ -484,6 +585,10 @@ def ticker_morning(
     lines += _structure_interpretation(snapshot)
     lines += _activity_block(activity, stale_note=stale_note)
     lines += _forward_block(snapshot)
+    lines += _event_differential_lines(snapshot, event_dates)
+    dq_line = _data_quality_line(snapshot)
+    if dq_line:
+        lines.append(dq_line)
     lines += _setup_block(setup_status, _vol_env(snapshot))
     lines.append("")
     lines.append(f"数据溯源：完整表见附录 / thesis / analytics/daily/{snapshot.get('created_at', '')[:10]}/{ticker}_morning.json")
@@ -500,6 +605,7 @@ def render_morning(
     reminders: Optional[List[str]] = None,
     calendar: Optional[List[str]] = None,
     market: Optional[Dict[str, Any]] = None,
+    event_dates: Optional[List[Dict[str, Any]]] = None,
 ) -> str:
     date = snapshot.get("created_at", "")[:10]
     lines = [f"# 期权晨报 {date}", ""]
@@ -513,5 +619,9 @@ def render_morning(
     if reminders:
         lines += [r for r in reminders if r]
         lines.append("")
-    lines.append(ticker_morning(snapshot, prev_snapshot, activity, setup_status, gex, gex_change))
+    lines.append(
+        ticker_morning(
+            snapshot, prev_snapshot, activity, setup_status, gex, gex_change, event_dates
+        )
+    )
     return "\n".join(lines)

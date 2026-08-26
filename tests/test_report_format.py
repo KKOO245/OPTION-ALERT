@@ -101,14 +101,74 @@ def test_structure_block_gamma_gex_semantics_and_flip_status():
     text = ticker_morning(snap)
     assert "Gamma Regime: NEGATIVE（模型分类）" in text
     assert "不对 Gamma 强度做判断" in text
+    assert "Flip: Candidates 502.00 / 530.00 ｜ Primary: N/A（CONDITIONAL）" in text
     assert "结构观察区: 502–530" in text
+    assert "测量完整性" in text and "gex_sign_v1" in text
+    assert "最近结构参考" in text
 
     snap2 = load_fixture("snapshot_morning_soxx.json")
     snap2["location"]["flip_levels"] = None
-    snap2["location"]["flip_status"] = "NO_FLIP_IN_RANGE"
+    snap2["location"]["flip_candidates"] = None
+    snap2["location"]["flip_status"] = "NO_CROSS"
     text2 = ticker_morning(snap2)
-    assert "结构观察区: NO_FLIP_IN_RANGE" in text2
-    assert "Flip: NO_FLIP_IN_RANGE" in text2
+    assert "结构观察区: NO_CROSS" in text2
+    assert "Flip: NO_CROSS" in text2
+
+
+def test_ticker_morning_expmove_tenor_line():
+    snap = load_fixture("snapshot_morning_soxx.json")
+    snap["forward"] = {"expirations": [
+        _fwd_exp("2026-08-28", 2, 1000, 500, "LOW", atm_iv=0.94,
+                 atm_call_price=6.23, atm_put_price=5.93),
+        _fwd_exp("2026-09-04", 9, 2000, 1000, "LOW", atm_iv=0.54,
+                 atm_call_price=7.45, atm_put_price=6.98),
+    ]}
+    # expmove_pct = (6.23+5.93)/497.2*100 ≈ 2.45；07.45+6.98)/497.2*100 ≈ 2.90
+    snap["forward"]["expirations"][0]["expmove_pct"] = round((6.23 + 5.93) / 497.2 * 100.0, 2)
+    snap["forward"]["expirations"][1]["expmove_pct"] = round((7.45 + 6.98) / 497.2 * 100.0, 2)
+    text = ticker_morning(snap)
+    assert "ExpMove 期限化（expmove_v1）" in text
+    assert "08-28（2D）±2.5%" in text
+    assert "09-04（9D）±2.9%" in text
+
+    # 旧快照兜底：无 expmove_pct 字段时用 ATM C/P 与 spot 现算
+    snap3 = load_fixture("snapshot_morning_soxx.json")
+    snap3["forward"] = {"expirations": [
+        _fwd_exp("2026-08-28", 2, 1000, 500, "LOW", atm_iv=0.94,
+                 atm_call_price=6.23, atm_put_price=5.93),
+    ]}
+    text3 = ticker_morning(snap3)
+    assert "08-28（2D）±2.5%" in text3
+
+
+def test_ticker_morning_event_differential_and_highlights():
+    snap = load_fixture("snapshot_morning_soxx.json")
+    snap["forward"] = {"expirations": [
+        _fwd_exp("2026-08-28", 2, 1000, 500, "LOW", atm_iv=0.94,
+                 atm_call_price=6.23, atm_put_price=5.93),
+        _fwd_exp("2026-09-04", 9, 2000, 1000, "LOW", atm_iv=0.54,
+                 atm_call_price=7.45, atm_put_price=6.98),
+    ]}
+    event_dates = [
+        {"date": "2026-08-28", "name": "美联储主席讲话", "time": "10:00"},
+    ]
+    text = ticker_morning(snap, event_dates=event_dates)
+    assert "事件差分" in text
+    assert "94.0%" in text and "54.0%" in text
+    assert "美联储 IFDP 1376" in text
+    assert "重点速览" in text
+    assert "🔴" in text
+    assert "数据质量" in text
+
+
+def test_ticker_highlights_empty_state():
+    snap = load_fixture("snapshot_morning_soxx.json")
+    snap["momentum"]["price_momentum"] = 0.001  # 消除"单日价格波动"关注项，验证空态
+    snap["location"]["flip_candidates"] = None
+    snap["location"]["flip_levels"] = None
+    snap["location"]["flip_status"] = "INSUFFICIENT_DATA"
+    text = ticker_morning(snap)
+    assert "今日无重点项" in text
 
 
 def test_ticker_morning_vix_spread_and_env_tag_when_triggered():

@@ -487,6 +487,19 @@ def _calendar_lines():
         return None
 
 
+def _macro_event_dates():
+    """本周剩余【高】美国事件的结构化日期（供事件差分；失败返回 None，差分自动沉默）。"""
+    try:
+        from datetime import datetime
+        from zoneinfo import ZoneInfo
+
+        from src.calendars import macro_event_dates
+
+        return macro_event_dates(datetime.now(ZoneInfo("America/New_York")))
+    except Exception:
+        return None
+
+
 def _load_tickers() -> list:
     path = Path(__file__).resolve().parent / "config" / "tickers.txt"
     out = []
@@ -602,6 +615,7 @@ def cmd_render_morning(args) -> int:
         setup_status=_render_status_arg(status),
         market=_market_context("morning"),
         calendar=_calendar_lines(),
+        event_dates=_macro_event_dates(),
     )
     _write_report(args.out, text)
     return 0
@@ -629,6 +643,7 @@ def cmd_render_evening(args) -> int:
         reminders=evening_reminder_lines(datetime.fromisoformat(f"{date_str}T17:00:00-04:00")) if date_str else [],
         market=_market_context("evening"),
         calendar=_calendar_lines(),
+        event_dates=_macro_event_dates(),
     )
     _write_report(args.out, text)
     return 0
@@ -701,8 +716,51 @@ def _chunk_text(text: str, limit: int = 1900) -> list:
     return chunks
 
 
-def _discord_send(webhook: str, text: str) -> None:
-    """发送到 Discord webhook：切分 + 429 重试一次。"""
+def _highlights_embeds(snapshot: dict, activity, prev, event_dates) -> dict:
+    """把重点速览打包成 Discord Embed（彩色侧条：红/黄/蓝）。"""
+    try:
+        from report.highlight import LEVEL_EMOJI, build_highlights
+
+        items = build_highlights(snapshot, activity=activity, prev=prev, event_dates=event_dates)
+    except Exception:
+        return None
+    if not items:
+        return None
+    color = (
+        0xE74C3C
+        if any(i["level"] == "CRITICAL" for i in items)
+        else (0xF1C40F if any(i["level"] == "WATCH" for i in items) else 0x3498DB)
+    )
+    lines = []
+    for i in items:
+        line = f"{LEVEL_EMOJI[i['level']]} **{i['title']}**: {i['detail']}"
+        if i.get("reason"):
+            line += f"\n_{i['reason']}_"
+        lines.append(line)
+    return {
+        "title": f"🔍 {snapshot.get('ticker', '?')} 重点速览",
+        "description": "\n".join(lines)[:3800],
+        "color": color,
+    }
+
+
+def _merge_embeds(embeds: list, max_embeds: int = 10) -> list:
+    if len(embeds) <= max_embeds:
+        return embeds
+    merged = embeds[: max_embeds - 1]
+    extra_lines = [f"{e['title']}\n{e['description']}" for e in embeds[max_embeds - 1:]]
+    merged.append(
+        {
+            "title": "🔍 其他重点（合并）",
+            "description": "\n\n".join(extra_lines)[:3800],
+            "color": 0x95A5A6,
+        }
+    )
+    return merged
+
+
+def _discord_send(webhook: str, text: str, embeds: list = None) -> None:
+    """发送到 Discord webhook：切分 + 429 重试一次；embeds 附加在首条消息。"""
     webhook = (webhook or "").strip()
     if not webhook:
         raise RuntimeError("webhook URL 为空")
@@ -713,8 +771,11 @@ def _discord_send(webhook: str, text: str) -> None:
     except IndexError:
         webhook_id = "?"
     print(f"webhook id: {webhook_id}")
-    for chunk in _chunk_text(text):
-        payload = json.dumps({"content": chunk}).encode("utf-8")
+    for i, chunk in enumerate(_chunk_text(text)):
+        body = {"content": chunk}
+        if i == 0 and embeds:
+            body["embeds"] = embeds
+        payload = json.dumps(body).encode("utf-8")
         req = urllib.request.Request(
             webhook,
             data=payload,
@@ -759,6 +820,7 @@ def cmd_send_report(args) -> int:
             print(f"webhook 验证失败: {type(e).__name__}: {e}")
             return 1
 
+    event_dates = _macro_event_dates()
     if args.session == "morning":
         snap, used_date = _load_snapshot_or_latest(snaps, date_str, ticker, "morning")
         if snap is None:
@@ -774,6 +836,7 @@ def cmd_send_report(args) -> int:
             setup_status=_render_status_arg(status),
             market=_market_context("morning"),
             calendar=_calendar_lines(),
+            event_dates=event_dates,
         )
     else:
         snap, used_date = _load_snapshot_or_latest(snaps, date_str, ticker, "evening")
@@ -795,6 +858,7 @@ def cmd_send_report(args) -> int:
             reminders=evening_reminder_lines(datetime.fromisoformat(f"{date_str}T17:00:00-04:00")) if date_str else [],
             market=_market_context("evening"),
             calendar=_calendar_lines(),
+            event_dates=event_dates,
         )
 
     if args.dry_run:
@@ -804,7 +868,11 @@ def cmd_send_report(args) -> int:
         print("未提供 --webhook-url，本次只打印不发送")
         print(text)
         return 1
-    _discord_send(args.webhook_url, text)
+    activity = _activity_from_analytics(data_root, ticker, args.session)
+    prev_ref = prev if args.session == "morning" else (morning if args.session == "evening" else None)
+    embed = _highlights_embeds(snap, activity, prev_ref, event_dates)
+    embeds = _merge_embeds([e for e in [embed] if e])
+    _discord_send(args.webhook_url, text, embeds=embeds)
     print(f"已发送 {args.session} {ticker} {date_str} 到 Discord")
     return 0
 
@@ -838,7 +906,9 @@ def cmd_send_report_all(args) -> int:
     session_zh = "晨报" if args.session == "morning" else "晚报"
     market = _market_context(args.session)
     cal = _calendar_lines()
+    event_dates = _macro_event_dates()
     body = []
+    embeds = []
     used_dates = []
     render_failed = 0
     market_ve = None
@@ -854,13 +924,15 @@ def cmd_send_report_all(args) -> int:
         used_dates.append(used_date)
         try:
             status = _setup_status(snap, store, Path(args.config_root), thresholds)
+            activity = _activity_from_analytics(data_root, t, args.session)
             if args.session == "morning":
                 prev = _prev_evening_snapshot(snaps, used_date, t)
                 text = ticker_morning(
                     snap,
                     prev_snapshot=prev,
-                    activity=_activity_from_analytics(data_root, t, "morning"),
+                    activity=activity,
                     setup_status=_render_status_arg(status),
+                    event_dates=event_dates,
                 )
             else:
                 morning = None
@@ -871,9 +943,14 @@ def cmd_send_report_all(args) -> int:
                 text = ticker_evening(
                     snap,
                     morning=morning,
-                    activity=_activity_from_analytics(data_root, t, "evening"),
+                    activity=activity,
                     setup_status=_render_status_arg(status),
+                    event_dates=event_dates,
                 )
+            prev_ref = prev if args.session == "morning" else (morning if args.session == "evening" else None)
+            embed = _highlights_embeds(snap, activity, prev_ref, event_dates)
+            if embed:
+                embeds.append(embed)
         except Exception as e:
             render_failed += 1
             text = f"⚠️ {t} 区块渲染失败（已跳过）：{type(e).__name__}: {e}"
@@ -926,7 +1003,7 @@ def cmd_send_report_all(args) -> int:
     if not args.webhook_url:
         print("未提供 --webhook-url")
         return 1
-    _discord_send(args.webhook_url, full)
+    _discord_send(args.webhook_url, full, embeds=_merge_embeds(embeds))
     print(f"已发送合并{session_zh}（{len(body)} 个标的）到 Discord")
     return 1 if render_failed else 0
 
