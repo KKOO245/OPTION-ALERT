@@ -91,19 +91,38 @@ def _structure_block(snapshot: Dict[str, Any], gex: Optional[float] = None, gex_
     gex_txt = f"GEX(存量) {fmt(gex, 0)}" if gex is not None else "GEX(存量) N/A"
     chg_txt = f"GEX Change vs 上次快照 {fmt(gex_change, 0)}" if gex_change is not None else "GEX Change N/A"
     flip_status = loc.get("flip_status")
+    flip_reason = loc.get("flip_reason")
     flip_candidates = loc.get("flip_candidates") or loc.get("flip_levels") or []
     flip_primary = loc.get("flip_primary")
     if flip_candidates:
-        cand_txt = " / ".join(f"{f:.2f}" for f in flip_candidates)
-        primary_txt = f"{flip_primary:.2f}" if flip_primary is not None else "N/A"
-        status_txt = flip_status or "CONDITIONAL"
-        flip_txt = f"Candidates {cand_txt} ｜ Primary: {primary_txt}（{status_txt}）"
+        shown = flip_candidates[:5]
+        cand_txt = " / ".join(f"{f:.2f}" for f in shown)
+        if len(flip_candidates) > 5:
+            cand_txt += f" …共{len(flip_candidates)}个"
+        if flip_primary is not None and flip_status == "PRIMARY":
+            flip_txt = f"Primary Flip: {flip_primary:.2f}（PRIMARY，全链重定价 + 覆盖达标）"
+        else:
+            status_txt = flip_status or "CONDITIONAL"
+            flip_txt = f"Candidates {cand_txt} ｜ Primary: N/A（{status_txt}）"
     else:
         flip_txt = flip_status or "N/A"
     lines.append(f"Gamma Regime: {gamma}（模型分类） | {gex_txt} | {chg_txt} | Flip: {flip_txt}")
+    p3 = snapshot.get("p3") or {}
+    cov = p3.get("coverage") or {}
+    eff = cov.get("effective_gex_coverage_pct")
+    ivv = cov.get("iv_valid") or {}
+    eff_txt = f"{eff:.0f}%（带内）" if eff is not None else "待盘点"
+    if ivv:
+        iv_txt = (
+            f"VALID {ivv.get('VALID', 0)} / LOW {ivv.get('LOW_LIQUIDITY', 0)} / "
+            f"INVALID {ivv.get('INVALID', 0)}"
+        )
+    else:
+        iv_txt = "待审计"
+    gamma_calc = "全链重定价" if loc.get("flip_source") == "full_chain" else "Top-3 近似"
     lines.append(
         "🔎 测量完整性: GEX 符号契约 gex_sign_v1（Model A: Call+ / Put−）｜ "
-        "Gamma 口径 Top-3 近似 ｜ Effective GEX 覆盖: 待盘点 ｜ IV 有效性: 待审计"
+        f"Gamma 口径 {gamma_calc} ｜ Effective GEX 覆盖: {eff_txt} ｜ IV 有效性: {iv_txt}"
     )
     if gamma == "NEGATIVE":
         if gex is not None:

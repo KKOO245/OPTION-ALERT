@@ -61,3 +61,46 @@ def test_missing_iv_skipped():
     r = regime_map(contracts, spot=100.0)
     assert r["n_contracts_used"] == 1
     assert r["n_contracts_skipped"] == 1
+
+
+def test_primary_flip_sign_resolved_nearest():
+    # spot 处 ATM Put 主导（负 GEX）→ Primary = 上方最近的零穿越
+    contracts = _contracts([
+        ("put", 100.0, 30, 0.3, 80000),
+        ("put", 95.0, 30, 0.3, 80000),
+        ("call", 105.0, 30, 0.3, 80000),
+        ("call", 110.0, 30, 0.3, 80000),
+    ])
+    r = regime_map(contracts, spot=100.0)
+    assert r["net_gex_at_spot"] is not None
+    assert r["spot_zone"] == "NEGATIVE"
+    above = [f for f in r["flip_levels"] if f > 100.0]
+    assert above
+    assert r["primary_flip"] == min(above)
+    assert r["primary_rule"] == "sign_resolved_nearest_v1"
+
+    # 反向：spot 处 Call 主导（正 GEX）→ Primary = 下方最近的零穿越
+    r2 = regime_map(
+        _contracts([
+            ("put", 90.0, 30, 0.3, 80000),
+            ("put", 95.0, 30, 0.3, 80000),
+            ("call", 105.0, 30, 0.3, 80000),
+            ("call", 110.0, 30, 0.3, 80000),
+        ]),
+        spot=100.0,
+    )
+    assert r2["spot_zone"] == "POSITIVE"
+    below = [f for f in r2["flip_levels"] if f < 100.0]
+    assert below
+    assert r2["primary_flip"] == max(below)
+
+
+def test_zero_straddle_rule():
+    # 同档 Call/Put 完全均衡 → 净 GEX 恒为 0（NEUTRAL）→ 不报 Flip（零跨规则）
+    contracts = _contracts([
+        ("call", 100.0, 30, 0.3, 50000),
+        ("put", 100.0, 30, 0.3, 50000),
+    ])
+    r = regime_map(contracts, spot=100.0)
+    assert r["flip_levels"] == []
+    assert r["spot_zone"] == "ZERO"

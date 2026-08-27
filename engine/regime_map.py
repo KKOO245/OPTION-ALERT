@@ -84,15 +84,23 @@ def _normalize_contracts(contracts: List[Dict[str, Any]], as_of: Optional[date])
 
 
 def _zero_crossings(net_by_spot: List[Dict[str, Any]]) -> List[float]:
+    """零跨规则（paper 1）：精确零点只有左右邻点异号才算 Flip；同号/连续零不算。
+    避免"净 GEX 恒为 0（NEUTRAL）"时把每个网格点都报成 Flip。"""
     flips = []
-    for a, b in zip(net_by_spot, net_by_spot[1:]):
+    n = len(net_by_spot)
+    for i in range(n - 1):
+        a, b = net_by_spot[i], net_by_spot[i + 1]
         na, nb = a["net_gex"], b["net_gex"]
         if na == 0:
-            flips.append(round(a["spot"], 4))
-        elif na * nb < 0:
+            if i > 0:
+                prev = net_by_spot[i - 1]["net_gex"]
+                if prev * nb < 0:  # 左右异号 → 真翻转
+                    flips.append(a["spot"])
+            continue
+        if na * nb < 0:
             frac = -na / (nb - na)
             flips.append(round(a["spot"] + (b["spot"] - a["spot"]) * frac, 4))
-    return flips
+    return sorted({round(f, 4) for f in flips})
 
 
 def regime_map(
@@ -129,8 +137,21 @@ def regime_map(
     flips = _zero_crossings(net_by_spot)
     current = next((p for p in net_by_spot if p["spot"] == round(spot, 4)), None)
     zone = "ZERO"
+    current_net = None
     if current is not None:
+        current_net = current["net_gex"]
         zone = "NEGATIVE" if current["net_gex"] < 0 else ("POSITIVE" if current["net_gex"] > 0 else "ZERO")
+
+    # Primary Flip = 当前 regime 的边界（符号解析最近，paper 2 口径）：
+    #   net GEX > 0 → 向下找最近的零穿越（spot 下方）；net GEX < 0 → 向上找最近的零穿越（spot 上方）
+    primary_flip = None
+    if flips and current_net is not None:
+        if current_net > 0:
+            below = [f for f in flips if f < spot]
+            primary_flip = max(below) if below else None
+        elif current_net < 0:
+            above = [f for f in flips if f > spot]
+            primary_flip = min(above) if above else None
 
     negative = [p["spot"] for p in net_by_spot if p["net_gex"] < 0]
     negative_zone = {"low": negative[0], "high": negative[-1]} if negative else None
@@ -143,12 +164,16 @@ def regime_map(
             "Black-Scholes 欧式近似",
             "sticky-strike IV（重定价时 IV 固定）",
             "Scenario 依赖：OI 视为客户仓位；方向不可观测",
+            "q=0（无股息近似；高股息个股 gamma 略偏，已知近似）",
         ],
         "spot": spot,
         "grid": {"low": spot * grid_low, "high": spot * grid_high, "step": spot * step, "n_points": len(spots)},
         "n_contracts_used": len(rows),
         "n_contracts_skipped": skipped,
         "flip_levels": flips,
+        "primary_flip": primary_flip,
+        "primary_rule": "sign_resolved_nearest_v1",
+        "net_gex_at_spot": round(current_net, 2) if current_net is not None else None,
         "spot_zone": zone,
         "negative_zone": negative_zone,
         "net_gex_by_spot": net_by_spot,

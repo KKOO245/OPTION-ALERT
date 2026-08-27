@@ -75,6 +75,21 @@ highlight:
   concentration_min_pct: 10.0   # Top ΔOI / 期限总 OI ≥ 10% → 信息
   roll_candidate_min_abs: 1000  # 疑似 roll 的最小 |ΔOI|（后台字段，不进报告/评分）
 
+quality_gate:
+  version: quality_gate_v1
+  # Primary Flip 发布门槛：Flip 搜索带（±15%）内、OI 加权有效覆盖率 ≥ 此值（v1 候选值，待校准）
+  effective_coverage_pct: 80.0
+  flip_search_band_pct: 15.0
+
+p3_collect:
+  version: p3_collect_v1
+  ivrv_rv_window: 20          # IV/RV 用最近 N 个交易日收盘计算 realized vol
+  ivrv_min_obs: 5             # 少于 N 个收盘价 → RV 为 None（不编造）
+  vanna_gate_vol_pp: 0.5      # vanna 门控：|IV 变动| ≥ 0.5 vol pts（经验默认，待校准）
+  charm_gate_max_dte: 5       # charm 门控：最近期限 DTE ≤ 5
+  confluence_band_pct: 2.0    # Confluence：±2% 价格带内聚合同族
+  event_overlap_include_past: false  # 事件覆盖仅统计未来（>= 今日）事件
+
 comparison_change:
   price_pct: 0.5
   iv_pp: 0.5

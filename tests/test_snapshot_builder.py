@@ -138,6 +138,67 @@ def test_flip_status_state_machine():
     assert snap3["location"]["flip_candidates"] is None
 
 
+def test_full_chain_primary_gate():
+    rows = _rows()
+    base = {
+        "prev_close": 505.0,
+        "atm_iv_near": 0.52,
+        "structure": {"call_wall": 550.0, "put_wall": 490.0},
+    }
+    th = {"quality_gate": {"effective_coverage_pct": 80.0}}
+    full_chain = {
+        "flip_levels": [497.0, 530.0],
+        "primary_flip": 497.0,
+        "net_gex_at_spot": -1e6,
+    }
+
+    # 覆盖达标 → PRIMARY
+    snap = build_snapshot(
+        "SOXX", "morning", base, 497.2, "2026-08-21T10:15:00-04:00",
+        analytics_rows=rows, source="cboe",
+        full_chain=full_chain,
+        coverage={"effective_gex_coverage_pct": 92.0},
+        thresholds=th,
+    )
+    assert snap["location"]["flip_status"] == "PRIMARY"
+    assert snap["location"]["flip_primary"] == 497.0
+    assert snap["location"]["flip_reason"] == "full_chain_reprice_gate_pass"
+
+    # 覆盖不足 → CONDITIONAL（Primary 不输出）
+    snap2 = build_snapshot(
+        "SOXX", "morning", base, 497.2, "2026-08-21T10:15:00-04:00",
+        analytics_rows=rows, source="cboe",
+        full_chain=full_chain,
+        coverage={"effective_gex_coverage_pct": 55.0},
+        thresholds=th,
+    )
+    assert snap2["location"]["flip_status"] == "CONDITIONAL"
+    assert snap2["location"]["flip_primary"] is None
+
+    # 全链算出但无穿越 → NO_CROSS
+    snap3 = build_snapshot(
+        "SOXX", "morning", base, 497.2, "2026-08-21T10:15:00-04:00",
+        analytics_rows=rows, source="cboe",
+        full_chain={"flip_levels": [], "primary_flip": None, "net_gex_at_spot": -1e6},
+        coverage={"effective_gex_coverage_pct": 92.0},
+        thresholds=th,
+    )
+    assert snap3["location"]["flip_status"] == "NO_CROSS"
+    assert snap3["location"]["flip_primary"] is None
+
+    # p3 采集字段原样入库
+    p3 = {"schema_version": "p3_collect_v1", "gex": None}
+    snap4 = build_snapshot(
+        "SOXX", "morning", base, 497.2, "2026-08-21T10:15:00-04:00",
+        analytics_rows=rows, source="cboe",
+        full_chain=full_chain,
+        coverage={"effective_gex_coverage_pct": 92.0},
+        thresholds=th,
+        p3=p3,
+    )
+    assert snap4["p3"] == p3
+
+
 def test_helpers():
     assert gamma_sign(-1.0) == "NEGATIVE"
     assert gamma_sign(1.0) == "POSITIVE"

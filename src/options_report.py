@@ -287,6 +287,20 @@ def main():
         )
     except Exception as e:
         print(f"[警告] vol_environment 构建失败（快照环境标签将缺失）: {e}")
+    try:
+        from engine import yaml_mini
+
+        thresholds = yaml_mini.load(os.path.join(BASE_DIR, "config", "thresholds.yaml"))
+    except Exception as e:
+        print(f"[警告] thresholds 加载失败（P1/P3 用默认值）: {e}")
+        thresholds = {}
+    event_dates = None
+    try:
+        from src.calendars import macro_event_dates
+
+        event_dates = macro_event_dates(now)
+    except Exception as e:
+        print(f"[警告] 宏观日历获取失败（P3 事件覆盖将缺失）: {e}")
 
     for ticker in tickers:
         try:
@@ -329,12 +343,71 @@ def main():
                     )
                 except Exception as e:
                     print(f"[警告] forward structure 构建失败（快照将缺失该层）: {e}")
+                # P1：全链重定价 + 覆盖审计；P3：研究采集字段（只进 JSON，不进报告/评分）
+                full_chain = None
+                coverage = None
+                p3 = None
+                try:
+                    from engine.coverage import coverage_audit
+                    from engine.p3_collect import collect_p3
+                    from engine.regime_map import regime_map
+                    from engine.second_order import second_order_aggregate
+
+                    full_chain = regime_map(contracts, spot, as_of=now.date())
+                    qg = thresholds.get("quality_gate") or {}
+                    coverage = coverage_audit(
+                        contracts, spot,
+                        band_pct=float(qg.get("flip_search_band_pct", 15.0)),
+                    )
+                    sess_rank = {"morning": 0, "evening": 1}.get(session_name, 0)
+                    today_key = now.date().isoformat()
+                    prev_atm = None
+                    for r in reversed(hist_rows):
+                        rk = (str(r.get("date", "")), {"morning": 0, "evening": 1}.get(r.get("session"), 0))
+                        if rk < (today_key, sess_rank) and r.get("atm_iv_near") is not None:
+                            prev_atm = r.get("atm_iv_near")
+                            break
+                    iv_move_pp = None
+                    if m.get("atm_iv_near") is not None and prev_atm is not None:
+                        iv_move_pp = (float(m["atm_iv_near"]) - float(prev_atm)) * 100.0
+                    pc = thresholds.get("p3_collect") or {}
+                    so = second_order_aggregate(
+                        contracts, spot, as_of=now.date(),
+                        iv_move_pp=iv_move_pp,
+                        vanna_gate_vol_pp=float(pc.get("vanna_gate_vol_pp", 0.5)),
+                        charm_gate_max_dte=int(pc.get("charm_gate_max_dte", 5)),
+                    )
+                    fwd_exps = ((forward or {}).get("expirations")) if forward else None
+                    struct = m.get("structure") or {}
+                    conc = m.get("oi_concentration")
+                    p3 = collect_p3(
+                        regime_result=full_chain,
+                        coverage=coverage,
+                        second_order=so,
+                        atm_iv_near=m.get("atm_iv_near"),
+                        price_rows=hist_rows,
+                        forward_expirations=fwd_exps,
+                        event_dates=event_dates,
+                        as_of=now,
+                        spot=spot,
+                        call_wall=struct.get("call_wall"),
+                        put_wall=struct.get("put_wall"),
+                        oi_strikes=conc if isinstance(conc, list) else None,
+                        rv_window=int(pc.get("ivrv_rv_window", 20)),
+                        rv_min_obs=int(pc.get("ivrv_min_obs", 5)),
+                        confluence_band_pct=float(pc.get("confluence_band_pct", 2.0)),
+                    )
+                except Exception as e:
+                    print(f"[警告] {ticker} P1/P3 计算失败（快照保留旧结构层）: {e}")
                 snap = build_snapshot(
                     ticker, session_name, m, spot,
                     now.isoformat(timespec="seconds"),
                     analytics_rows=hist_rows, source=source,
                     vol_environment=vol_environment,
                     forward_structure=forward,
+                    full_chain=full_chain,
+                    coverage=coverage,
+                    p3=p3,
                 )
                 SnapshotStore(BASE_DIR).store(snap)
             except Exception as e:

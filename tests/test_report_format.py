@@ -171,6 +171,25 @@ def test_ticker_highlights_empty_state():
     assert "今日无重点项" in text
 
 
+def test_structure_block_primary_flip_and_coverage():
+    snap = load_fixture("snapshot_morning_soxx.json")
+    snap["location"]["flip_status"] = "PRIMARY"
+    snap["location"]["flip_primary"] = 512.3
+    snap["location"]["flip_reason"] = "full_chain_reprice_gate_pass"
+    snap["location"]["flip_source"] = "full_chain"
+    snap["p3"] = {
+        "coverage": {
+            "effective_gex_coverage_pct": 88.0,
+            "iv_valid": {"VALID": 60, "LOW_LIQUIDITY": 5, "INVALID": 3},
+        }
+    }
+    text = ticker_morning(snap)
+    assert "Primary Flip: 512.30（PRIMARY，全链重定价 + 覆盖达标）" in text
+    assert "Gamma 口径 全链重定价" in text
+    assert "Effective GEX 覆盖: 88%（带内）" in text
+    assert "IV 有效性: VALID 60 / LOW 5 / INVALID 3" in text
+
+
 def test_ticker_morning_vix_spread_and_env_tag_when_triggered():
     snap = load_fixture("snapshot_morning_soxx.json")
     setup_status = {

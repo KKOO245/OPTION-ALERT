@@ -227,6 +227,9 @@ def build_snapshot(
     context: Optional[Dict[str, Any]] = None,
     vol_environment: Optional[Dict[str, Any]] = None,
     forward_structure: Optional[Dict[str, Any]] = None,
+    full_chain: Optional[Dict[str, Any]] = None,
+    coverage: Optional[Dict[str, Any]] = None,
+    p3: Optional[Dict[str, Any]] = None,
     source: Optional[str] = None,
 ) -> Dict[str, Any]:
     sess = normalize_session(session)
@@ -289,33 +292,64 @@ def build_snapshot(
         _nested(data, "structure_near"),
         _nested(data, "structure_monthly"),
     ]
-    flip_levels = []
+    legacy_flip_levels = []
     for s in structs_for_flip:
         fp = _nested(s, "gamma_flip") if isinstance(s, dict) else None
         f = _num(fp)
-        if f is not None and f not in flip_levels:
-            flip_levels.append(f)
-    flip_levels.sort()
+        if f is not None and f not in legacy_flip_levels:
+            legacy_flip_levels.append(f)
+    legacy_flip_levels.sort()
+
     # Flip 状态机 v1（flip_status_v1）：
-    #   PRIMARY          全链重定价 + 有效覆盖达标（quality gate 冻结前不输出）
-    #   CONDITIONAL      存在穿越点但为 Top-3/模型近似，覆盖未盘点（当前默认态）
+    #   PRIMARY          全链重定价 + 带内有效覆盖达标 + Primary Flip 存在
+    #   CONDITIONAL      存在穿越点但覆盖未达标 / Top-3 近似
     #   NO_CROSS         结构已算出、带内无符号穿越（诚实报无，不编数）
     #   INSUFFICIENT_DATA 结构层未算出
-    if flip_levels:
-        flip_status = "CONDITIONAL"
-        flip_primary = None
-        flip_reason = "top3_approx_awaiting_coverage_audit"
-    elif any(isinstance(s, dict) for s in structs_for_flip):
-        flip_status = "NO_CROSS"
-        flip_primary = None
-        flip_reason = "no_sign_change_in_band"
+    flip_levels: Optional[List[float]] = None
+    flip_status: Optional[str] = None
+    flip_primary: Optional[float] = None
+    flip_reason: Optional[str] = None
+    flip_source = "top3_approx"
+    if isinstance(full_chain, dict) and full_chain.get("flip_levels") is not None:
+        # 全链重定价结果优先（P1）
+        flip_source = "full_chain"
+        ffl = sorted({round(float(x), 4) for x in full_chain["flip_levels"]})
+        flip_levels = ffl or None
+        eff = _num(((coverage or {}).get("effective_gex_coverage_pct")))
+        gate = float(
+            ((thresholds or {}).get("quality_gate") or {}).get("effective_coverage_pct", 80.0)
+        )
+        if flip_levels:
+            if eff is not None and eff >= gate and full_chain.get("primary_flip") is not None:
+                flip_status = "PRIMARY"
+                flip_primary = float(full_chain["primary_flip"])
+                flip_reason = "full_chain_reprice_gate_pass"
+            else:
+                flip_status = "CONDITIONAL"
+                flip_primary = None
+                flip_reason = "full_chain_reprice_gate_not_met"
+        else:
+            flip_status = "NO_CROSS"
+            flip_primary = None
+            flip_reason = "no_sign_change_in_band"
     else:
-        flip_status = "INSUFFICIENT_DATA"
-        flip_primary = None
-        flip_reason = "structure_not_computed"
+        flip_levels = legacy_flip_levels or None
+        if flip_levels:
+            flip_status = "CONDITIONAL"
+            flip_primary = None
+            flip_reason = "top3_approx_awaiting_coverage_audit"
+        elif any(isinstance(s, dict) for s in structs_for_flip):
+            flip_status = "NO_CROSS"
+            flip_primary = None
+            flip_reason = "no_sign_change_in_band"
+        else:
+            flip_status = "INSUFFICIENT_DATA"
+            flip_primary = None
+            flip_reason = "structure_not_computed"
     call_wall = _num(_nested(data, "structure", "call_wall")) or _num(_get(data, "call_wall"))
     put_wall = _num(_nested(data, "structure", "put_wall")) or _num(_get(data, "put_wall"))
-    price_loc = price_location_of(spot, flip_levels[0] if flip_levels else None, call_wall, put_wall)
+    price_ref = flip_primary if flip_primary is not None else (flip_levels[0] if flip_levels else None)
+    price_loc = price_location_of(spot, price_ref, call_wall, put_wall)
 
     # ---- momentum ----
     cur_skew = _num(_get(data, "iv_skew_25"))
@@ -409,10 +443,12 @@ def build_snapshot(
             "flip_candidates": flip_levels or None,
             "flip_primary": flip_primary,
             "flip_reason": flip_reason,
+            "flip_source": flip_source,
             "call_wall": call_wall,
             "put_wall": put_wall,
             "concentration": _get(data, "oi_concentration"),
         },
+        "p3": p3 if p3 is not None else ({"schema_version": "p3_collect_v1", "coverage": coverage} if coverage is not None else None),
         "momentum": {
             "iv_momentum": round(z, 3) if z is not None else None,
             "iv_momentum_1d": round(iv_1d, 3) if iv_1d is not None else None,
