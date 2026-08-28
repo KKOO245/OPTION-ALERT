@@ -479,7 +479,8 @@ def main():
         print("[提示] 未配置 DISCORD_WEBHOOK_URL，本次只打印报告，不发送。")
         send_discord_message("", report, dry_run=True)
 
-    if not is_forced:
+    # 幂等：只有真正发送（非 dry-run）才写发送记录；新渲染器路径由 send-report-all 在成功发送后写入
+    if not is_forced and not dry_run:
         mark_sent(session_name, today_str)
 
 

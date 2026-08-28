@@ -760,6 +760,44 @@ def _discord_send(webhook: str, text: str) -> None:
         _post_webhook(webhook, {"content": chunk})
 
 
+def _sent_log_path(data_root) -> Path:
+    return Path(data_root) / "data" / "history" / "_sent_log.json"
+
+
+def _session_zh(session: str) -> str:
+    return {"morning": "早报", "evening": "晚报"}.get(session, session)
+
+
+def _already_sent_today(data_root, session: str, today_str: str) -> bool:
+    """幂等检查：当天该会话是否已成功发送（写入了 _sent_log.json）。"""
+    path = _sent_log_path(data_root)
+    if not path.exists():
+        return False
+    try:
+        log = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return False
+    return log.get("date") == today_str and _session_zh(session) in log.get("sessions", [])
+
+
+def _mark_sent_today(data_root, session: str, today_str: str) -> None:
+    """发送成功后写入发送记录（与 options_report.mark_sent 同格式，供看门狗/幂等共用）。"""
+    path = _sent_log_path(data_root)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    log = {"date": today_str, "sessions": []}
+    if path.exists():
+        try:
+            existing = json.loads(path.read_text(encoding="utf-8"))
+            if existing.get("date") == today_str:
+                log = existing
+        except Exception:
+            pass
+    name = _session_zh(session)
+    if name not in log["sessions"]:
+        log["sessions"].append(name)
+    path.write_text(json.dumps(log, ensure_ascii=False), encoding="utf-8")
+
+
 def cmd_send_report(args) -> int:
     data_root = _data_root(args)
     snaps = SnapshotStore(data_root)
@@ -978,7 +1016,11 @@ def cmd_send_report_all(args) -> int:
     if not args.webhook_url:
         print("未提供 --webhook-url")
         return 1
+    if _already_sent_today(data_root, args.session, final_date):
+        print(f"[幂等] {final_date} {session_zh} 已发送过（_sent_log），跳过本次发送")
+        return 0
     _discord_send(args.webhook_url, full)
+    _mark_sent_today(data_root, args.session, final_date)
     print(f"已发送合并{session_zh}（{len(body)} 个标的）到 Discord")
     return 1 if render_failed else 0
 
