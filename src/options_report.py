@@ -60,9 +60,12 @@ def get_current_session():
     now = datetime.datetime.now(TORONTO_TZ)
     if os.environ.get("FORCE_SEND", "false").lower() == "true":
         force_session = os.environ.get("FORCE_SESSION")
-        if force_session and any(s[0] == force_session for s in TARGET_SESSIONS):
-            print(f"[FORCE_SEND] 手动测试模式，强制按「{force_session}」生成。")
-            return force_session, now
+        # 兼容工作流 session 输入的英文值（morning/evening）与本地中文值（早报/晚报）
+        force_map = {"morning": "早报", "evening": "晚报"}
+        fs = force_map.get(force_session, force_session)
+        if fs and any(s[0] == fs for s in TARGET_SESSIONS):
+            print(f"[FORCE_SEND] 手动测试模式，强制按「{fs}」生成。")
+            return fs, now
         closest = min(
             TARGET_SESSIONS,
             key=lambda s: abs(

@@ -15,6 +15,15 @@ on:
         description: "强制发送(忽略时间检查，用于手动测试，不影响自动定时运行)"
         type: boolean
         default: true
+      session:
+        description: "指定发送会话（需配合 force_send=true 用于手动补发；auto 走正常时间窗口）"
+        type: choice
+        default: auto
+        options:
+          - auto
+          - morning
+          - evening
+          - both
       use_new_renderer:
         description: "使用 P0.3 新格式报告（false 则退回旧格式）"
         type: boolean
@@ -85,6 +94,7 @@ jobs:
           OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
           LLM_ENABLED: ${{ vars.LLM_ENABLED }}
           FORCE_SEND: ${{ github.event.inputs.force_send }}
+          FORCE_SESSION: ${{ github.event.inputs.session }}
           # 新格式启用时旧脚本只抓数据/存快照/标记已发送，不发旧格式
           REPORT_DRY_RUN: ${{ env.USE_NEW_RENDERER }}
         run: python src/options_report.py
@@ -122,12 +132,20 @@ jobs:
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           FORCE: ${{ github.event.inputs.force_send }}
+          SESSION_INPUT: ${{ github.event.inputs.session }}
         run: |
           SESSIONS=$(python3 - <<'PY'
           import datetime, os
           from zoneinfo import ZoneInfo
           now = datetime.datetime.now(ZoneInfo("America/Toronto"))
-          if os.environ.get("FORCE", "") == "true":
+          sess_input = os.environ.get("SESSION_INPUT", "auto")
+          if sess_input == "morning":
+              print("morning")
+          elif sess_input == "evening":
+              print("evening")
+          elif sess_input == "both":
+              print("morning evening")
+          elif os.environ.get("FORCE", "") == "true":
               print("morning evening")
           else:
               cur = now.hour * 60 + now.minute
