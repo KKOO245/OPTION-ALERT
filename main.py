@@ -716,84 +716,6 @@ def _chunk_text(text: str, limit: int = 1900) -> list:
     return chunks
 
 
-def _highlights_embeds(snapshot: dict, activity, prev, event_dates) -> dict:
-    """把重点速览打包成 Discord Embed（彩色侧条：红/黄/蓝）。"""
-    try:
-        from report.highlight import LEVEL_EMOJI, build_highlights
-
-        items = build_highlights(snapshot, activity=activity, prev=prev, event_dates=event_dates)
-    except Exception:
-        return None
-    if not items:
-        return None
-    color = (
-        0xE74C3C
-        if any(i["level"] == "CRITICAL" for i in items)
-        else (0xF1C40F if any(i["level"] == "WATCH" for i in items) else 0x3498DB)
-    )
-    lines = []
-    for i in items:
-        line = f"{LEVEL_EMOJI[i['level']]} **{i['title']}**: {i['detail']}"
-        if i.get("reason"):
-            line += f"\n_{i['reason']}_"
-        lines.append(line)
-    return {
-        "title": f"🔍 {snapshot.get('ticker', '?')} 重点速览",
-        "description": "\n".join(lines)[:3800],
-        "color": color,
-    }
-
-
-def _embed_from_highlights(items: list) -> dict:
-    """从聚合后的重点条目（可含 ticker 前缀）生成单张 Discord Embed。"""
-    if not items:
-        return None
-    try:
-        from report.highlight import LEVEL_EMOJI
-    except Exception:
-        LEVEL_EMOJI = {"CRITICAL": "🔴", "WATCH": "🟡", "INFO": "🔵"}
-    color = (
-        0xE74C3C
-        if any(i.get("level") == "CRITICAL" for i in items)
-        else (0xF1C40F if any(i.get("level") == "WATCH" for i in items) else 0x3498DB)
-    )
-    lines = []
-    for i in items:
-        prefix = f"{i.get('ticker', '')} ｜ " if i.get("ticker") else ""
-        line = f"{LEVEL_EMOJI.get(i.get('level'), '🔵')} **{prefix}{i.get('title')}**: {i.get('detail')}"
-        if i.get("reason"):
-            line += f"\n_{i['reason']}_"
-        lines.append(line)
-    return {
-        "title": "🔍 重点速览",
-        "description": "\n".join(lines)[:1500],
-        "color": color,
-    }
-
-
-def _merge_embeds(embeds: list) -> list:
-    """合并为单张「重点速览」卡片（Discord 多 Embed 消息易触发 HTTP 500，单卡最稳）。"""
-    if not embeds:
-        return []
-    color = (
-        0xE74C3C
-        if any(e.get("color") == 0xE74C3C for e in embeds)
-        else (0xF1C40F if any(e.get("color") == 0xF1C40F for e in embeds) else 0x3498DB)
-    )
-    lines = []
-    for e in embeds:
-        title = (e.get("title") or "").replace("🔍 ", "")
-        desc = e.get("description") or ""
-        lines.append(f"**{title}**\n{desc}")
-    return [
-        {
-            "title": "🔍 重点速览",
-            "description": "\n\n".join(lines)[:1500],
-            "color": color,
-        }
-    ]
-
-
 def _post_webhook(webhook: str, body: dict) -> None:
     """发送单条消息到 Discord webhook：429/5xx 重试一次。"""
     payload = json.dumps(body).encode("utf-8")
@@ -815,8 +737,8 @@ def _post_webhook(webhook: str, body: dict) -> None:
             raise
 
 
-def _discord_send(webhook: str, text: str, embeds: list = None) -> None:
-    """发送到 Discord webhook：切分 + 重试；embeds 附加在首条消息，失败自动降级为纯文本。"""
+def _discord_send(webhook: str, text: str) -> None:
+    """发送到 Discord webhook：切分 + 重试（纯文本，无彩色卡片）。"""
     webhook = (webhook or "").strip()
     if not webhook:
         raise RuntimeError("webhook URL 为空")
@@ -827,18 +749,8 @@ def _discord_send(webhook: str, text: str, embeds: list = None) -> None:
     except IndexError:
         webhook_id = "?"
     print(f"webhook id: {webhook_id}")
-    for i, chunk in enumerate(_chunk_text(text)):
-        body = {"content": chunk}
-        if i == 0 and embeds:
-            body["embeds"] = embeds
-        try:
-            _post_webhook(webhook, body)
-        except urllib.error.HTTPError as e:
-            if i == 0 and embeds and e.code in (400, 413, 500, 502, 503, 504):
-                print(f"[降级] 带 Embed 发送失败 HTTP {e.code}，重发纯文本（不携带 Embed）")
-                _post_webhook(webhook, {"content": chunk})
-                continue
-            raise
+    for chunk in _chunk_text(text):
+        _post_webhook(webhook, {"content": chunk})
 
 
 def cmd_send_report(args) -> int:
@@ -915,11 +827,7 @@ def cmd_send_report(args) -> int:
         print("未提供 --webhook-url，本次只打印不发送")
         print(text)
         return 1
-    activity = _activity_from_analytics(data_root, ticker, args.session)
-    prev_ref = prev if args.session == "morning" else (morning if args.session == "evening" else None)
-    embed = _highlights_embeds(snap, activity, prev_ref, event_dates)
-    embeds = _merge_embeds([e for e in [embed] if e])
-    _discord_send(args.webhook_url, text, embeds=embeds)
+    _discord_send(args.webhook_url, text)
     print(f"已发送 {args.session} {ticker} {date_str} 到 Discord")
     return 0
 
@@ -1063,8 +971,7 @@ def cmd_send_report_all(args) -> int:
     if not args.webhook_url:
         print("未提供 --webhook-url")
         return 1
-    embed = _embed_from_highlights(agg_items)
-    _discord_send(args.webhook_url, full, embeds=_merge_embeds([e for e in [embed] if e]))
+    _discord_send(args.webhook_url, full)
     print(f"已发送合并{session_zh}（{len(body)} 个标的）到 Discord")
     return 1 if render_failed else 0
 
