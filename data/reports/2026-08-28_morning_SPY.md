@@ -2,7 +2,7 @@
 
 📊 市场环境
 
-SPY $769.31 ｜ QQQ $716.43
+SPY $769.35 ｜ QQQ $716.43
 VIX 14.19 ↓2.2%（5D -6.2%） ｜ Vol Regime: LOW
 CNN 恐惧贪婪 54.4（neutral）
 
