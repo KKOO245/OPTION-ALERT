@@ -2,9 +2,9 @@
 
 📊 市场环境
 
-SPY $770.63 ｜ QQQ $719.09
+SPY $771.10 ｜ QQQ $721.11
 VIX 14.49 ↓4.7%（5D -9.5%） ｜ Vol Regime: LOW
-CNN 恐惧贪婪 58.3（greed）
+CNN 恐惧贪婪 58.2（greed）
 
 ⇒ VIX ↑ = SPX 期权隐含的近 30 日预期波动率上升；不判方向，不进入 Direction Edge。
 
@@ -12,14 +12,14 @@ CNN 恐惧贪婪 58.3（greed）
 - 周五 08-28 10:00　【高】美联储主席讲话 Warsh Speech　实际 待公布
 - 周五 08-28 10:00　【高】Non Farm Payrolls Annual Revision Prel　实际 待公布 ｜ 前值 -911
 
-
-## SPY
-
 🔍 重点速览
 🔴 **Gamma Regime 切换**: NEGATIVE → POSITIVE（模型分类）
    ⇒ Gamma 状态翻转是波动环境变化信号；仍为模型层，方向不可观测（Scenario A/B）
 🟡 **近现价集中开仓**: 08-28 778C ΔOI +3,347（距现价 +1.0%）
    ⇒ 高等级 OI 变化且贴近现价；方向 Unknown（买开/卖开不可观测）
+
+
+## SPY
 
 📋 昨日晚报 → 今日晨报（只列关键项，低于阈值不单列）
 SPY  昨收 769.98 → 今晨 770.53（+0.1%） | 较昨收变动（含盘初走势） ｜ 今日高 771.10 ｜ 低 767.16

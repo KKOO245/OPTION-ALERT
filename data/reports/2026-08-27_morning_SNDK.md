@@ -2,18 +2,15 @@
 
 📊 市场环境
 
-SPY $770.63 ｜ QQQ $719.05
+SPY $771.10 ｜ QQQ $721.11
 VIX 14.49 ↓4.7%（5D -9.5%） ｜ Vol Regime: LOW
-CNN 恐惧贪婪 58.3（greed）
+CNN 恐惧贪婪 58.2（greed）
 
 ⇒ VIX ↑ = SPX 期权隐含的近 30 日预期波动率上升；不判方向，不进入 Direction Edge。
 
 ## 📅 本周重要美国宏观日历（仅【高】，美东时间）
 - 周五 08-28 10:00　【高】美联储主席讲话 Warsh Speech　实际 待公布
 - 周五 08-28 10:00　【高】Non Farm Payrolls Annual Revision Prel　实际 待公布 ｜ 前值 -911
-
-
-## SNDK
 
 🔍 重点速览
 🔴 **Gamma Regime 切换**: POSITIVE → NEGATIVE（模型分类）
@@ -22,6 +19,9 @@ CNN 恐惧贪婪 58.3（greed）
    ⇒ 价格变动超阈值；纯事实，不解释方向
 🟡 **近现价集中开仓**: 09-04 1465P ΔOI +865（距现价 -0.5%）
    ⇒ 高等级 OI 变化且贴近现价；方向 Unknown（买开/卖开不可观测）
+
+
+## SNDK
 
 📋 昨日晚报 → 今日晨报（只列关键项，低于阈值不单列）
 SNDK  昨收 1,553.01 → 今晨 1,471.95（-5.2%） | 较昨收变动（含盘初走势） ｜ 今日高 1557.89 ｜ 低 1456.00
@@ -111,9 +111,9 @@ C 3500 ｜ +224 ｜ $0.10 ｜ 名义 $2.2k* ｜ +137.8%
 Setup A v1 — Core Conditions
 Price Regime DOWN | Location below_flip | Gamma Regime NEGATIVE（模型层）
 Confirmation: ✓ 0 ｜ ✗ 3 ｜ ? 1（? put_buy_confirmation）
-验证状态: N=1 ｜ OOS Lift N/A ｜ CI 下界 N/A
+验证状态: N=2 ｜ OOS Lift N/A ｜ CI 下界 N/A
 Target: 3D_close_return <= -0.02 — PENDING（evaluation date 待窗口结束）
-Status: 实验中，样本不足（N=1）
+Status: 实验中，样本不足（N=2）
 环境: Vol LOW（仅环境标签，不参与计票）
 
 数据溯源：完整表见附录 / thesis / analytics/daily/2026-08-27/SNDK_morning.json

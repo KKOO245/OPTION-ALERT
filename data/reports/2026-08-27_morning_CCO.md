@@ -2,9 +2,9 @@
 
 📊 市场环境
 
-SPY $770.63 ｜ QQQ $719.18
+SPY $771.10 ｜ QQQ $721.11
 VIX 14.49 ↓4.7%（5D -9.5%） ｜ Vol Regime: LOW
-CNN 恐惧贪婪 58.3（greed）
+CNN 恐惧贪婪 58.2（greed）
 
 ⇒ VIX ↑ = SPX 期权隐含的近 30 日预期波动率上升；不判方向，不进入 Direction Edge。
 
@@ -12,12 +12,12 @@ CNN 恐惧贪婪 58.3（greed）
 - 周五 08-28 10:00　【高】美联储主席讲话 Warsh Speech　实际 待公布
 - 周五 08-28 10:00　【高】Non Farm Payrolls Annual Revision Prel　实际 待公布 ｜ 前值 -911
 
-
-## CCO
-
 🔍 重点速览
 🔵 **Flip 状态**: CONDITIONAL（Candidates: 2.2）｜ Primary: N/A
    ⇒ Top-3 近似 + 有效覆盖待盘点，Gamma 层不作方向/强度解读
+
+
+## CCO
 
 📋 昨日晚报 → 今日晨报（只列关键项，低于阈值不单列）
 CCO  昨收 2.40 → 今晨 2.38（-0.6%） | 较昨收变动（含盘初走势） ｜ 今日高 2.39 ｜ 低 2.38
