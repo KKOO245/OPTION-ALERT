@@ -42,14 +42,18 @@ def main() -> int:
 
     ticker = args.ticker.upper()
     contracts, spot, source = fetcher.fetch_chain(ticker)
+    ohlc = fetcher.fetch_ohlc_yfinance(ticker)
+    if args.session in ("晚报", "evening") and ohlc is not None and ohlc[3] is not None:
+        spot = ohlc[3]  # 晚报用常规时段收盘价，避免盘后价
     prev = storage.load_prev_snapshot(ticker)
     m = metrics_mod.compute_metrics(contracts, spot, prev=prev)
     if not m:
         print("compute_metrics 返回空，无法生成快照")
         return 1
-    day_high, day_low = fetcher.fetch_day_range_yfinance(ticker)
-    m["day_high"] = day_high
-    m["day_low"] = day_low
+    if ohlc is not None:
+        m["day_high"] = ohlc[0]
+        m["day_low"] = ohlc[1]
+        m["day_open"] = ohlc[2]
 
     created_at = args.created_at or datetime.datetime.now().astimezone().isoformat(timespec="seconds")
     thresholds = yaml_mini.load(os.path.join(args.config_root, "thresholds.yaml"))

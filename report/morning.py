@@ -130,7 +130,18 @@ def _structure_block(snapshot: Dict[str, Any], gex: Optional[float] = None, gex_
         else:
             lines.append("   ⇒ Gamma Regime 判定为 NEGATIVE；GEX 数值不可用，不对 Gamma 强度做判断。")
     flips = loc.get("flip_levels") or []
-    if len(flips) >= 2:
+    if loc.get("flip_source") == "full_chain":
+        # 全链口径：不再出现 Top-3 近似文案
+        cov_short = f"覆盖 {eff:.0f}%" if eff is not None else "覆盖待盘点"
+        if flip_primary is not None and flip_status == "PRIMARY":
+            lines.append(f"结构观察区: Primary Flip {flip_primary:.2f}（全链重定价，{cov_short}）")
+        elif len(flips) >= 2:
+            lines.append(f"结构观察区: {flips[0]:.0f}–{flips[1]:.0f}（全链重定价，{cov_short}，CONDITIONAL）")
+        elif len(flips) == 1:
+            lines.append(f"结构观察区: ≈{flips[0]:.0f}（全链重定价，{cov_short}，CONDITIONAL）")
+        else:
+            lines.append(f"结构观察区: {flip_status or 'N/A'}")
+    elif len(flips) >= 2:
         lines.append(
             f"结构观察区: {flips[0]:.0f}–{flips[1]:.0f}"
             "（局部 Gamma 切换，低置信；Top-3 近似，需全链重定价验证）"
@@ -146,9 +157,9 @@ def _structure_block(snapshot: Dict[str, Any], gex: Optional[float] = None, gex_
     if cw or pw:
         parts = []
         if pw:
-            parts.append(f"距 Put Wall {fmt(pw, 0)}: {_dist_str(_distance(spot, pw))}")
+            parts.append(f"Put Wall {fmt(pw, 0)}（{_dist_label(spot, pw)}）")
         if cw:
-            parts.append(f"距 Call Wall {fmt(cw, 0)}: {_dist_str(_distance(spot, cw))}")
+            parts.append(f"Call Wall {fmt(cw, 0)}（{_dist_label(spot, cw)}）")
         lines.append(" | ".join(parts))
     # 最近结构参考：离现价最近的结构位（Wall / Flip 候选），一行给结论
     cands = []
@@ -160,12 +171,22 @@ def _structure_block(snapshot: Dict[str, Any], gex: Optional[float] = None, gex_
         cands.append(("Flip", f))
     if cands and spot is not None:
         name, lvl = min(cands, key=lambda x: abs(spot / float(x[1]) - 1.0))
-        lines.append(f"最近结构参考: {name} {lvl:.0f}（距现价 {_dist_str(_distance(spot, lvl))}）")
+        lines.append(f"最近结构参考: {name} {lvl:.0f}（{_dist_label(spot, lvl)}）")
     return [l for l in lines if l]
 
 
 def _dist_str(v: Optional[float]) -> str:
     return "N/A" if v is None else f"{v:+.1f}%"
+
+
+def _dist_label(spot: Optional[float], level: Optional[float]) -> str:
+    """结构位相对现价的明确方向标签：口径 (spot/level - 1) × 100。"""
+    dist = _distance(spot, level)
+    if dist is None:
+        return "N/A"
+    if dist >= 0:
+        return f"现价高于该位 {dist:.1f}%"
+    return f"现价低于该位 {abs(dist):.1f}%"
 
 
 def _structure_interpretation(snapshot: Dict[str, Any]) -> List[str]:
@@ -184,7 +205,15 @@ def _structure_interpretation(snapshot: Dict[str, Any]) -> List[str]:
         lines.append(f"• 支撑/压力参考：下方 {' / '.join(downs)}；上方 {' / '.join(ups) if ups else 'N/A'}。")
     flips = loc.get("flip_levels") or []
     if flips:
-        lines.append(f"• Gamma 区域：切换参考 {flips[0]:.0f}（Top-3 近似，需全链重定价验证）。")
+        ref = (loc.get("flip_primary") or flips[0])
+        if loc.get("flip_source") == "full_chain":
+            p3 = snapshot.get("p3") or {}
+            cov = p3.get("coverage") or {}
+            eff = cov.get("effective_gex_coverage_pct")
+            cov_txt = f"覆盖 {eff:.0f}%" if eff is not None else "覆盖待盘点"
+            lines.append(f"• Gamma 区域：切换参考 {ref:.0f}（全链重定价，{cov_txt}）。")
+        else:
+            lines.append(f"• Gamma 区域：切换参考 {ref:.0f}（Top-3 近似，需全链重定价验证）。")
     lines.append(
         "• 做市商（条件机制）：若 Scenario A + 负 Gamma 成立，跌破关键位下方可能对应顺周期卖出压力增加；"
         "实际做市商对冲流量不可观测。Scenario B → 方向相反。不进入方向决策。"

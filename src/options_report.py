@@ -309,7 +309,15 @@ def main():
         try:
             print(f"处理 {ticker} ...")
             price, prev_close = fetcher.fetch_spot(ticker)
+            try:
+                ohlc = fetcher.fetch_ohlc_yfinance(ticker)
+            except Exception as e:
+                print(f"[警告] {ticker} 当日 OHLC 获取失败（高/低/开/收 保持原逻辑）: {e}")
+                ohlc = None
             contracts, chain_spot, source = fetcher.fetch_chain(ticker, max_days=FETCH_WINDOW_DAYS)
+            # 晚报：收盘价用常规时段 Close（4:00pm ET），避免盘后 last_price 污染"昨收/收盘"
+            if is_afternoon and ohlc is not None and ohlc[3] is not None:
+                price = ohlc[3]
             spot = price or chain_spot
             prev = storage.load_prev_snapshot(ticker)
             m = metrics_mod.compute_metrics(
@@ -320,9 +328,10 @@ def main():
             )
             m["price"] = price
             m["prev_close"] = prev_close
-            day_high, day_low = fetcher.fetch_day_range_yfinance(ticker)
-            m["day_high"] = day_high
-            m["day_low"] = day_low
+            if ohlc is not None:
+                m["day_high"] = ohlc[0]
+                m["day_low"] = ohlc[1]
+                m["day_open"] = ohlc[2]
             try:
                 _fill_activity_volumes(ticker, contracts, m, fetcher)
             except Exception as e:

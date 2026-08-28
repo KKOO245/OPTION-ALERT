@@ -27,7 +27,7 @@ from report.morning import (
 
 def _scorecard(morning: Optional[Dict[str, Any]], evening: Dict[str, Any], key_level_status: Optional[str]) -> List[str]:
     ticker = evening.get("ticker", "?")
-    lines = ["📋 Thesis Scorecard（今晨条件 vs 收盘实况，只打事实勾）"]
+    lines = ["📋 Thesis Scorecard（今开/晨间条件 vs 收盘实况，只打事实勾）"]
     if morning is None:
         lines.append(f"{ticker}: 晨报缺失（当日未生成），只报收盘事实")
     else:
@@ -36,10 +36,16 @@ def _scorecard(morning: Optional[Dict[str, Any]], evening: Dict[str, Any], key_l
             lines.append(f"{ticker}: ⚠️ 晨报为 {gap} 个交易日前（标的可能停更），仅作收盘事实对照")
         m_spot = morning.get("spot")
         e_spot = evening.get("spot")
-        if m_spot and e_spot:
-            chg = (e_spot / m_spot - 1.0) * 100
+        # 今开 = 当日常规时段开盘价（晨报快照 context.day_open，缺则用晚报快照的，再缺回退晨报 spot）
+        m_open = ((morning.get("context") or {}).get("day_open"))
+        if m_open is None:
+            m_open = ((evening.get("context") or {}).get("day_open"))
+        m_ref = m_open if m_open is not None else m_spot
+        ref_label = "今开" if m_open is not None else "今晨"
+        if m_ref and e_spot:
+            chg = (e_spot / m_ref - 1.0) * 100
             lines.append(
-                f"{ticker}: 今晨 {fmt(m_spot, 2)} → 收盘 {fmt(e_spot, 2)}（{chg:+.1f}%）"
+                f"{ticker}: {ref_label} {fmt(m_ref, 2)} → 收盘 {fmt(e_spot, 2)}（{chg:+.1f}%）"
                 + (_day_range(evening) or "")
             )
     if key_level_status:

@@ -11,6 +11,7 @@ CBOE 数据仅供个人研究；商用或再分发前需取得 Cboe 授权。
 """
 
 import datetime
+import math
 import re
 import threading
 import time
@@ -181,10 +182,11 @@ def fetch_spot_yfinance(ticker):
     return price, prev_close
 
 
-def fetch_day_range_yfinance(ticker):
-    """yfinance 当日 OHLC bar，返回 (day_high, day_low)；失败返回 (None, None)，不猜测。
+def fetch_ohlc_yfinance(ticker):
+    """yfinance 当日 OHLC bar，返回 (day_high, day_low, day_open, day_close)；失败返回 (None,)*4，不猜测。
 
     晨报取到的是截至抓取时刻的盘中高/低；晚报取到的是当日完整高/低。
+    day_close 是常规时段（4:00pm ET）收盘价——晚报用它与现价区分，避免抓取到盘后价。
     时间口径随快照 created_at 保存，报告据此展示。
     """
     import yfinance as yf
@@ -192,14 +194,19 @@ def fetch_day_range_yfinance(ticker):
     try:
         hist = yf.Ticker(ticker).history(period="1d", interval="1d")
         if hist is None or hist.empty:
-            return None, None
+            return None, None, None, None
         row = hist.iloc[-1]
         high = float(row["High"])
         low = float(row["Low"])
-        return high, low
+        opn = float(row["Open"])
+        close = float(row["Close"])
+        if not all(math.isfinite(v) for v in (high, low, opn, close)):
+            print(f"[警告] 获取 {ticker} 当日 OHLC 含非有限值（NaN/Inf），忽略")
+            return None, None, None, None
+        return high, low, opn, close
     except Exception as e:
-        print(f"[警告] 获取 {ticker} 当日高/低失败: {e}")
-        return None, None
+        print(f"[警告] 获取 {ticker} 当日 OHLC 失败: {e}")
+        return None, None, None, None
 
 
 def fetch_option_volumes_yfinance(ticker, expirations):

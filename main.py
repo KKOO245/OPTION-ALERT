@@ -445,7 +445,14 @@ def _market_context(session: str | None = None) -> dict:
     try:
         from src import data_fetcher as fetcher
 
-        spy, _ = fetcher.fetch_spot("SPY")
+        if session == "evening":
+            # 晚报市场背景 SPY 用常规时段收盘价，避免盘后价（与 ticker 口径一致）
+            ohlc = fetcher.fetch_ohlc_yfinance("SPY")
+            spy = ohlc[3] if (ohlc and ohlc[3] is not None) else None
+            if spy is None:
+                spy, _ = fetcher.fetch_spot("SPY")
+        else:
+            spy, _ = fetcher.fetch_spot("SPY")
         out["spy"] = spy
     except Exception:
         pass

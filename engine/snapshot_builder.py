@@ -350,6 +350,13 @@ def build_snapshot(
     put_wall = _num(_nested(data, "structure", "put_wall")) or _num(_get(data, "put_wall"))
     price_ref = flip_primary if flip_primary is not None else (flip_levels[0] if flip_levels else None)
     price_loc = price_location_of(spot, price_ref, call_wall, put_wall)
+    spot_vs_primary_flip = None
+    if flip_primary is not None and spot is not None:
+        dist = (spot / flip_primary - 1.0) * 100.0
+        spot_vs_primary_flip = {
+            "distance_pct": round(dist, 2),
+            "side": "ABOVE" if dist >= 0 else "BELOW",
+        }
 
     # ---- momentum ----
     cur_skew = _num(_get(data, "iv_skew_25"))
@@ -444,6 +451,7 @@ def build_snapshot(
             "flip_primary": flip_primary,
             "flip_reason": flip_reason,
             "flip_source": flip_source,
+            "spot_vs_primary_flip": spot_vs_primary_flip,
             "call_wall": call_wall,
             "put_wall": put_wall,
             "concentration": _get(data, "oi_concentration"),
@@ -481,6 +489,7 @@ def build_snapshot(
             vol_environment,
             _num(_get(data, "day_high")),
             _num(_get(data, "day_low")),
+            _num(_get(data, "day_open")),
         ),
         "data_quality": grades,
         "data_sufficiency": tags,
@@ -492,6 +501,7 @@ def _build_context(
     vol_environment: Optional[Dict[str, Any]],
     day_high: Optional[float] = None,
     day_low: Optional[float] = None,
+    day_open: Optional[float] = None,
 ) -> Dict[str, Any]:
     """组装快照 context；vol_environment 来自市场层（所有 ticker 同一份）。"""
     ctx = {
@@ -502,6 +512,7 @@ def _build_context(
         "vol_environment": vol_environment,
         "day_high": day_high,
         "day_low": day_low,
+        "day_open": day_open,
         "notes": _get(context, "notes"),
     }
     if isinstance(vol_environment, dict):

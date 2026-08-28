@@ -64,6 +64,7 @@ def test_full_metrics_mode():
         "prev_close": 505.0,
         "day_high": 501.8,
         "day_low": 496.4,
+        "day_open": 500.0,
         "atm_iv_near": 0.52,
         "term_ratio": 0.82,
         "iv_skew_25": 4.0,
@@ -95,6 +96,7 @@ def test_full_metrics_mode():
     assert snap["data_quality"]["options_structure"] == "A"
     assert snap["context"]["day_high"] == 501.8
     assert snap["context"]["day_low"] == 496.4
+    assert snap["context"]["day_open"] == 500.0
     assert snap["forward"]["expirations"][0]["expiration"] == "2026-09-18"
 
 
@@ -163,6 +165,10 @@ def test_full_chain_primary_gate():
     assert snap["location"]["flip_status"] == "PRIMARY"
     assert snap["location"]["flip_primary"] == 497.0
     assert snap["location"]["flip_reason"] == "full_chain_reprice_gate_pass"
+    assert snap["location"]["spot_vs_primary_flip"] == {
+        "distance_pct": 0.04,
+        "side": "ABOVE",
+    }
 
     # 覆盖不足 → CONDITIONAL（Primary 不输出）
     snap2 = build_snapshot(

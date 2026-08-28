@@ -222,6 +222,13 @@ def test_structure_block_primary_flip_and_coverage():
     assert "Gamma 口径 全链重定价" in text
     assert "Effective GEX 覆盖: 88%（带内）" in text
     assert "IV 有效性: VALID 60 / LOW 5 / INVALID 3" in text
+    # 全链口径下：结构观察区 / Gamma 区域不再出现 Top-3 近似文案
+    assert "结构观察区: Primary Flip 512.30（全链重定价，覆盖 88%）" in text
+    assert "Top-3 近似" not in text
+    # 墙的距离标签改为明确方向
+    assert "Put Wall 490（现价高于该位 1.5%）" in text
+    assert "Call Wall 550（现价低于该位 9.6%）" in text
+    assert "距现价 +" not in text
 
 
 def test_ticker_morning_vix_spread_and_env_tag_when_triggered():
@@ -274,6 +281,20 @@ def test_evening_scorecard_high_low():
     morning = load_fixture("snapshot_morning_soxx.json")
     text = ticker_evening(snap, morning=morning)
     assert "今日高 503.50" in text and "低 495.10" in text
+
+
+def test_evening_scorecard_uses_day_open():
+    snap = load_fixture("snapshot_evening_soxx.json")
+    morning = load_fixture("snapshot_morning_soxx.json")
+    morning["context"]["day_open"] = 500.0
+    text = ticker_evening(snap, morning=morning)
+    assert "今开 500.00 → 收盘" in text
+    score_line = next(l for l in text.split("\n") if "→ 收盘" in l)
+    assert "今开" in score_line and "今晨" not in score_line
+    # 无 day_open 时回退"今晨"（晨报 spot）
+    morning2 = load_fixture("snapshot_morning_soxx.json")
+    text2 = ticker_evening(snap, morning=morning2)
+    assert "今晨" in text2
 
 
 def test_ticker_morning_no_vix_lines_without_setup():

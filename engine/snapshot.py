@@ -22,6 +22,7 @@ GROUPS: Dict[str, List[str]] = {
     "location": [
         "price_location", "flip_levels", "flip_status",
         "flip_candidates", "flip_primary", "flip_reason",
+        "spot_vs_primary_flip",
         "call_wall", "put_wall", "concentration",
     ],
     "momentum": [
@@ -41,7 +42,7 @@ GROUPS: Dict[str, List[str]] = {
     "forward": ["expirations"],
     "context": [
         "spy_return", "qqq_return", "sector_relative", "vix", "vol_environment",
-        "day_high", "day_low", "notes",
+        "day_high", "day_low", "day_open", "notes",
     ],
     "data_quality": ["market_data", "options_structure", "flow", "dealer_mechanism"],
 }
