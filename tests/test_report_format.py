@@ -141,7 +141,7 @@ def test_ticker_morning_expmove_tenor_line():
     assert "08-28（2D）±2.5%" in text3
 
 
-def test_ticker_morning_event_differential_and_highlights():
+def test_ticker_morning_event_differential():
     snap = load_fixture("snapshot_morning_soxx.json")
     snap["forward"] = {"expirations": [
         _fwd_exp("2026-08-28", 2, 1000, 500, "LOW", atm_iv=0.94,
@@ -156,19 +156,53 @@ def test_ticker_morning_event_differential_and_highlights():
     assert "事件差分" in text
     assert "94.0%" in text and "54.0%" in text
     assert "美联储 IFDP 1376" in text
-    assert "重点速览" in text
-    assert "🔴" in text
     assert "数据质量" in text
 
 
-def test_ticker_highlights_empty_state():
+def test_render_highlights_at_report_top():
+    snap = load_fixture("snapshot_morning_soxx.json")
+    snap["forward"] = {"expirations": [
+        _fwd_exp("2026-08-28", 2, 1000, 500, "LOW", atm_iv=0.94,
+                 atm_call_price=6.23, atm_put_price=5.93),
+        _fwd_exp("2026-09-04", 9, 2000, 1000, "LOW", atm_iv=0.54,
+                 atm_call_price=7.45, atm_put_price=6.98),
+    ]}
+    event_dates = [{"date": "2026-08-28", "name": "美联储主席讲话", "time": "10:00"}]
+    text = render_morning(snap, event_dates=event_dates, calendar=["- 周一 08-24　【高】测试事件"])
+    # 重点速览位于宏观日历之后、ticker 区块之前
+    assert "🔍 重点速览" in text and "🔴" in text
+    assert text.index("宏观日历") < text.index("🔍 重点速览") < text.index("## SOXX")
+    # ticker 区块内不再重复渲染重点速览
+    ticker_part = text[text.index("## SOXX"):]
+    assert "🔍 重点速览" not in ticker_part
+
+
+def test_render_highlights_empty_state():
     snap = load_fixture("snapshot_morning_soxx.json")
     snap["momentum"]["price_momentum"] = 0.001  # 消除"单日价格波动"关注项，验证空态
     snap["location"]["flip_candidates"] = None
     snap["location"]["flip_levels"] = None
     snap["location"]["flip_status"] = "INSUFFICIENT_DATA"
-    text = ticker_morning(snap)
+    text = render_morning(snap)
     assert "今日无重点项" in text
+
+
+def test_aggregate_highlights_ticker_prefix_and_order():
+    from report.highlight import aggregate_highlights, highlights_section
+
+    per = {
+        "NVDA": [{"level": "INFO", "title": "Flip 状态", "detail": "CONDITIONAL", "reason": "r"}],
+        "QQQ": [{"level": "CRITICAL", "title": "事件差分", "detail": "+30pp", "reason": "r2"}],
+    }
+    items, truncated = aggregate_highlights(per, max_items=10)
+    assert not truncated
+    assert items[0]["ticker"] == "QQQ" and items[0]["level"] == "CRITICAL"  # 关键级在前
+    lines = "\n".join(highlights_section(items))
+    assert "**QQQ ｜ 事件差分**" in lines
+    assert "**NVDA ｜ Flip 状态**" in lines
+    # 截断
+    items2, truncated2 = aggregate_highlights(per, max_items=1)
+    assert truncated2 and len(items2) == 1
 
 
 def test_structure_block_primary_flip_and_coverage():

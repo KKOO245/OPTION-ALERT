@@ -12,7 +12,6 @@ from report.morning import (
     _day_range,
     _event_differential_lines,
     _forward_block,
-    _highlights_block,
     _options_block,
     _setup_block,
     _structure_block,
@@ -63,7 +62,6 @@ def ticker_evening(
     """单个标的的晚报区块（Scorecard + 明细，不含标题/市场/日历/提醒）。"""
     ticker = snapshot.get("ticker", "?")
     lines: List[str] = [ticker_heading(ticker)]
-    lines += _highlights_block(snapshot, activity, morning, event_dates)
     lines += _scorecard(morning, snapshot, key_level_status)
     lines += _options_block(snapshot)
     if setup_status:
@@ -106,6 +104,10 @@ def render_evening(
         lines += market_block(market)
     if calendar:
         lines += calendar_block(calendar)
+    from report.highlight import build_highlights, highlights_section
+
+    hl_items = build_highlights(snapshot, activity=activity, prev=morning, event_dates=event_dates)
+    lines += highlights_section(hl_items)
     if reminders:
         lines += [r for r in reminders if r]
         lines.append("")

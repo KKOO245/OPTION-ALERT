@@ -744,6 +744,33 @@ def _highlights_embeds(snapshot: dict, activity, prev, event_dates) -> dict:
     }
 
 
+def _embed_from_highlights(items: list) -> dict:
+    """从聚合后的重点条目（可含 ticker 前缀）生成单张 Discord Embed。"""
+    if not items:
+        return None
+    try:
+        from report.highlight import LEVEL_EMOJI
+    except Exception:
+        LEVEL_EMOJI = {"CRITICAL": "🔴", "WATCH": "🟡", "INFO": "🔵"}
+    color = (
+        0xE74C3C
+        if any(i.get("level") == "CRITICAL" for i in items)
+        else (0xF1C40F if any(i.get("level") == "WATCH" for i in items) else 0x3498DB)
+    )
+    lines = []
+    for i in items:
+        prefix = f"{i.get('ticker', '')} ｜ " if i.get("ticker") else ""
+        line = f"{LEVEL_EMOJI.get(i.get('level'), '🔵')} **{prefix}{i.get('title')}**: {i.get('detail')}"
+        if i.get("reason"):
+            line += f"\n_{i['reason']}_"
+        lines.append(line)
+    return {
+        "title": "🔍 重点速览",
+        "description": "\n".join(lines)[:1500],
+        "color": color,
+    }
+
+
 def _merge_embeds(embeds: list) -> list:
     """合并为单张「重点速览」卡片（Discord 多 Embed 消息易触发 HTTP 500，单卡最稳）。"""
     if not embeds:
@@ -928,7 +955,7 @@ def cmd_send_report_all(args) -> int:
     cal = _calendar_lines()
     event_dates = _macro_event_dates()
     body = []
-    embeds = []
+    ticker_hl = {}
     used_dates = []
     render_failed = 0
     market_ve = None
@@ -968,9 +995,9 @@ def cmd_send_report_all(args) -> int:
                     event_dates=event_dates,
                 )
             prev_ref = prev if args.session == "morning" else (morning if args.session == "evening" else None)
-            embed = _highlights_embeds(snap, activity, prev_ref, event_dates)
-            if embed:
-                embeds.append(embed)
+            from report.highlight import build_highlights
+
+            ticker_hl[t] = build_highlights(snap, activity=activity, prev=prev_ref, event_dates=event_dates)
         except Exception as e:
             render_failed += 1
             text = f"⚠️ {t} 区块渲染失败（已跳过）：{type(e).__name__}: {e}"
@@ -1011,6 +1038,19 @@ def cmd_send_report_all(args) -> int:
         lines.append("")
     lines += market_block(market)
     lines += calendar_block(cal)
+    from report.highlight import aggregate_highlights, highlights_section
+
+    agg_items, truncated = aggregate_highlights(ticker_hl)
+    hl_note = None
+    no_hl = [t for t in tickers if not ticker_hl.get(t)]
+    notes = []
+    if truncated:
+        notes.append("…（其余重点已截断，详见各标的区块）")
+    if no_hl and agg_items:
+        notes.append(f"其余 {len(no_hl)} 个标的今日无重点项（机械检查 highlight_v1）")
+    if notes:
+        hl_note = "\n".join(notes)
+    lines += highlights_section(agg_items, note=hl_note)
     if args.session == "evening" and final_date:
         reminders = evening_reminder_lines(datetime.fromisoformat(f"{final_date}T17:00:00-04:00"))
         if reminders:
@@ -1023,7 +1063,8 @@ def cmd_send_report_all(args) -> int:
     if not args.webhook_url:
         print("未提供 --webhook-url")
         return 1
-    _discord_send(args.webhook_url, full, embeds=_merge_embeds(embeds))
+    embed = _embed_from_highlights(agg_items)
+    _discord_send(args.webhook_url, full, embeds=_merge_embeds([e for e in [embed] if e]))
     print(f"已发送合并{session_zh}（{len(body)} 个标的）到 Discord")
     return 1 if render_failed else 0
 

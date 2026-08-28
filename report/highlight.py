@@ -260,3 +260,36 @@ def build_highlights(
             seen[key] = it
     out = sorted(seen.values(), key=lambda x: LEVEL_RANK[x["level"]])
     return out[:max_items]
+
+
+def aggregate_highlights(
+    per_ticker: Dict[str, List[Dict[str, str]]],
+    max_items: int = 15,
+) -> tuple:
+    """把各 ticker 的重点合并成一份（按级别排序，带 ticker 前缀，超限截断）。
+
+    返回 (items, truncated)；truncated=True 表示还有更多被截断。
+    """
+    out: List[Dict[str, str]] = []
+    for ticker in sorted(per_ticker):
+        for it in per_ticker.get(ticker) or []:
+            out.append({**it, "ticker": ticker})
+    out.sort(key=lambda x: LEVEL_RANK.get(x["level"], 9))
+    truncated = len(out) > max_items
+    return out[:max_items], truncated
+
+
+def highlights_section(items: List[Dict[str, str]], note: Optional[str] = None) -> List[str]:
+    """渲染「🔍 重点速览」段（报告顶部聚合版；ticker 前缀由 items 自带）。"""
+    if not items:
+        return ["🔍 重点速览: 今日无重点项（机械检查 highlight_v1）", ""]
+    lines = ["🔍 重点速览"]
+    for it in items:
+        prefix = f"{it.get('ticker', '')} ｜ " if it.get("ticker") else ""
+        lines.append(f"{LEVEL_EMOJI.get(it['level'], '🔵')} **{prefix}{it['title']}**: {it['detail']}")
+        if it.get("reason"):
+            lines.append(f"   ⇒ {it['reason']}")
+    if note:
+        lines.append(note)
+    lines.append("")
+    return lines

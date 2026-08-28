@@ -251,26 +251,6 @@ def _activity_block(events: Optional[List[Dict[str, Any]]], stale_note: Optional
     return lines
 
 
-def _highlights_block(
-    snapshot: Dict[str, Any],
-    activity: Optional[List[Dict[str, Any]]],
-    prev: Optional[Dict[str, Any]],
-    event_dates: Optional[List[Dict[str, Any]]],
-) -> List[str]:
-    from report.highlight import LEVEL_EMOJI, build_highlights
-
-    items = build_highlights(snapshot, activity=activity, prev=prev, event_dates=event_dates)
-    if not items:
-        return ["🔍 重点速览: 今日无重点项（机械检查 highlight_v1）", ""]
-    lines = ["🔍 重点速览"]
-    for it in items:
-        lines.append(f"{LEVEL_EMOJI[it['level']]} **{it['title']}**: {it['detail']}")
-        if it.get("reason"):
-            lines.append(f"   ⇒ {it['reason']}")
-    lines.append("")
-    return lines
-
-
 def _event_differential_lines(
     snapshot: Dict[str, Any],
     event_dates: Optional[List[Dict[str, Any]]],
@@ -570,7 +550,6 @@ def ticker_morning(
     """单个标的的晨报区块（不含标题/市场/日历）。"""
     ticker = snapshot.get("ticker", "?")
     lines: List[str] = [ticker_heading(ticker)]
-    lines += _highlights_block(snapshot, activity, prev_snapshot, event_dates)
     stale_note = None
     if prev_snapshot:
         p = prev_snapshot.get("spot")
@@ -635,6 +614,10 @@ def render_morning(
         lines += market_block(market)
     if calendar:
         lines += calendar_block(calendar)
+    from report.highlight import build_highlights, highlights_section
+
+    hl_items = build_highlights(snapshot, activity=activity, prev=prev_snapshot, event_dates=event_dates)
+    lines += highlights_section(hl_items)
     if reminders:
         lines += [r for r in reminders if r]
         lines.append("")
