@@ -1,0 +1,18 @@
+name: 定时调度测试
+
+on:
+  schedule:
+    # 每 5 分钟一次，用于验证 GitHub 定时调度是否派发（测试完请禁用或删除本工作流）
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 记录触发时间
+        run: |
+          echo "调度测试触发: $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
