@@ -44,6 +44,7 @@ from report.evening import render_evening
 from report.evening import ticker_evening
 from report.morning import calendar_block, market_block, render_morning, ticker_morning
 from src.reminders import evening_reminder_lines, morning_reminder_lines
+from src.storage import load_rv_iv_aligned
 from validation.base_rate import conditional_setup_rate, freeze_partition, unconditional_base_rate
 from validation.confidence import format_rate
 from validation.data_sufficiency import label_for_episodes
@@ -147,6 +148,13 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--contracts", required=True, help="合约 JSON 列表文件")
     sp.add_argument("--spot", type=float, required=True)
     sp.add_argument("--as-of", help="YYYY-MM-DD，用于 dte 计算")
+
+    sp = sub.add_parser("replay", help="历史回放引擎（P3-1）：批量构造 episode→outcome 样本")
+    sp.add_argument("--tickers", nargs="*", help="默认读 config/tickers.txt")
+    sp.add_argument("--start", help="YYYY-MM-DD")
+    sp.add_argument("--end", help="YYYY-MM-DD")
+    sp.add_argument("--layers", nargs="*", choices=["iv", "gamma"], help="默认 iv+gamma")
+    sp.add_argument("--out", help="输出 JSONL 路径（默认 thesis/replay_episodes_v1.jsonl）")
 
     sp = sub.add_parser("send-report", help="渲染新格式报告并发送 Discord")
     sp.add_argument("--session", choices=["morning", "evening"], required=True)
@@ -558,7 +566,14 @@ def _setup_status(snapshot: dict, store: EventStore, config_root: Path, threshol
     unknown_fields = [c.get("name") for c in conf if c.get("met") is None]
     direction = direction_components(snapshot)
     vol = volatility_components(snapshot)
-    pricing = pricing_proxy(snapshot.get("momentum", {}).get("atm_iv"))
+    # RV 接入：历史已实现波动率（data/closes）+ 历史 IV（data/iv_history）
+    # 按日期对齐后交给 pricing_proxy，IV−RV spread 百分位从此走真实计算而非退化路径。
+    _p_dates, _p_ivs, _p_rvs = load_rv_iv_aligned(snapshot.get("ticker") or "")
+    pricing = pricing_proxy(
+        snapshot.get("momentum", {}).get("atm_iv"),
+        rv_series=_p_rvs,
+        iv_series=_p_ivs,
+    )
     mech = mechanism_confidence(snapshot)
     gate = gate_pipeline(
         setup_trigger_met=True,
@@ -1065,6 +1080,22 @@ def cmd_audit(args) -> int:
     return 0 if ok and missing == 0 else 1
 
 
+def cmd_replay(args) -> int:
+    from engine.replay import run_replay
+
+    tickers = args.tickers or _load_tickers()
+    stats = run_replay(
+        tickers,
+        start=args.start,
+        end=args.end,
+        layers=args.layers or None,
+        out=Path(args.out) if args.out else None,
+    )
+    for t, n in stats.items():
+        print(f"{t}: {n}")
+    return 0
+
+
 def main() -> int:
     _ensure_utf8()
     args = build_parser().parse_args()
@@ -1084,6 +1115,7 @@ def main() -> int:
         "send-report": cmd_send_report,
         "send-report-all": cmd_send_report_all,
         "audit": cmd_audit,
+        "replay": cmd_replay,
     }[args.command](args)
 
 

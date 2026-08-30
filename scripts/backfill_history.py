@@ -74,9 +74,18 @@ _RAW_ENV = os.environ.get("THETADATA_RAW_DIR")
 if _RAW_ENV:
     RAW_DIR = Path(_RAW_ENV)
 else:
-    _RAW_NEW = Path(r"D:\git\EXTERNAL DATA\OPTION-ALERT-RAW")
+    # 移动后的真实结构是 D:\git\EXTERNAL DATA\OPTION-ALERT-RAW\thetadata\{ticker}
+    # （data\raw 整目录改名搬过去，thetadata 是子目录）；平铺结构仅作兼容。
+    _RAW_BASE = Path(r"D:\git\EXTERNAL DATA\OPTION-ALERT-RAW")
+    _RAW_NEW = _RAW_BASE / "thetadata"
+    _RAW_FLAT = _RAW_BASE
     _RAW_LEGACY = REPO_ROOT / "data" / "raw" / "thetadata"
-    RAW_DIR = _RAW_NEW if _RAW_NEW.exists() else _RAW_LEGACY
+    if _RAW_NEW.exists():
+        RAW_DIR = _RAW_NEW
+    elif _RAW_FLAT.exists():
+        RAW_DIR = _RAW_FLAT
+    else:
+        RAW_DIR = _RAW_LEGACY
 CLOSES_DIR = REPO_ROOT / "data" / "closes"
 IV_HIST_DIR = REPO_ROOT / "data" / "iv_history"
 TICKERS_FILE = REPO_ROOT / "config" / "tickers.txt"

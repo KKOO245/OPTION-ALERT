@@ -214,7 +214,8 @@ def pricing_proxy(
     spread_pp = (iv - mean_rv) * 100.0
     iv_vals = [float(x) for x in (iv_series or []) if x is not None]
     if len(iv_vals) >= 20:
-        spreads = [i - r for i, r in zip(iv_vals, vals) if r is not None]
+        # 单位统一：spread 历史序列也用百分点，与当前 spread_pp 同单位比较
+        spreads = [(i - r) * 100.0 for i, r in zip(iv_vals, vals) if r is not None]
         spreads = [s for s in spreads if s is not None]
         if len(spreads) >= 20:
             percentile = sum(1 for s in spreads if s <= spread_pp) / len(spreads) * 100.0

@@ -154,12 +154,13 @@ def _structure_block(snapshot: Dict[str, Any], gex: Optional[float] = None, gex_
     else:
         lines.append(f"结构观察区: {flip_status or 'N/A'}")
     cw, pw = loc.get("call_wall"), loc.get("put_wall")
+    cw_cls, pw_cls = loc.get("call_wall_class"), loc.get("put_wall_class")
     if cw or pw:
         parts = []
         if pw:
-            parts.append(f"Put Wall {fmt(pw, 0)}（{_dist_label(spot, pw)}）")
+            parts.append(f"Put Wall {fmt(pw, 0)}（{_wall_label(spot, pw, pw_cls)}）")
         if cw:
-            parts.append(f"Call Wall {fmt(cw, 0)}（{_dist_label(spot, cw)}）")
+            parts.append(f"Call Wall {fmt(cw, 0)}（{_wall_label(spot, cw, cw_cls)}）")
         lines.append(" | ".join(parts))
     # 最近结构参考：离现价最近的结构位（Wall / Flip 候选），一行给结论
     cands = []
@@ -189,18 +190,25 @@ def _dist_label(spot: Optional[float], level: Optional[float]) -> str:
     return f"现价低于该位 {abs(dist):.1f}%"
 
 
+def _wall_label(spot: Optional[float], level: Optional[float], cls: Optional[str]) -> str:
+    """Wall 显示标签：WEAK 结构标注"弱结构｜"，PRIMARY/REMOTE 不加（REMOTE 已不在显示值里）。"""
+    base = _dist_label(spot, level)
+    return ("弱结构｜" + base) if cls == "WEAK" else base
+
+
 def _structure_interpretation(snapshot: Dict[str, Any]) -> List[str]:
     loc = snapshot.get("location") or {}
     spot = snapshot.get("spot")
     mp = (snapshot.get("context") or {}).get("max_pain")
     cw, pw = loc.get("call_wall"), loc.get("put_wall")
+    cw_cls, pw_cls = loc.get("call_wall_class"), loc.get("put_wall_class")
     lines = ["🧭 结构解读（全部依赖上方假设）"]
-    downs = [f"{fmt(pw, 0)}（Put Wall）"] if pw else []
+    downs = [f"{fmt(pw, 0)}（Put Wall{('，弱结构' if pw_cls == 'WEAK' else '')}）"] if pw else []
     ups = []
     if mp:
         ups.append(f"{fmt(mp, 0)}（MaxPain，仅结算参考）")
     if cw:
-        ups.append(f"{fmt(cw, 0)}（Call Wall）")
+        ups.append(f"{fmt(cw, 0)}（Call Wall{('，弱结构' if cw_cls == 'WEAK' else '')}）")
     if downs:
         lines.append(f"• 支撑/压力参考：下方 {' / '.join(downs)}；上方 {' / '.join(ups) if ups else 'N/A'}。")
     flips = loc.get("flip_levels") or []

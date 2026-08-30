@@ -229,9 +229,11 @@ def structure_block(metrics, spot):
     nd2 = metrics.get("new_delta")
     ng2_txt = f"{ng2:+,.0f}" if ng2 is not None else "N/A"
     nd2_txt = f"{nd2:+,.0f}" if nd2 is not None else "N/A"
+    cw_cls = s.get("call_wall_class")
+    pw_cls = s.get("put_wall_class")
     line1 = " | ".join([
-        f"Call Wall {_fmt(s.get('call_wall'), 0)}",
-        f"Put Wall {_fmt(s.get('put_wall'), 0)}",
+        f"Call Wall {_fmt(s.get('call_wall'), 0)}{'（弱）' if cw_cls == 'WEAK' else ''}",
+        f"Put Wall {_fmt(s.get('put_wall'), 0)}{'（弱）' if pw_cls == 'WEAK' else ''}",
         f"近周Flip {nflip}",
         f"月度Flip {mflip}",
         f"GEX失衡 {ng_txt}",
@@ -259,6 +261,7 @@ def structure_text(metrics, spot):
     lines = ["🧭 市场结构解读"]
     mp = metrics.get("max_pain_near")
     cw, pw, flip = s.get("call_wall"), s.get("put_wall"), s.get("gamma_flip")
+    cw_cls, pw_cls = s.get("call_wall_class"), s.get("put_wall_class")
     nflip = near.get("gamma_flip")
     mflip = monthly.get("gamma_flip")
     ng, nd = s.get("net_gex"), metrics.get("net_delta_oi")
@@ -271,11 +274,13 @@ def structure_text(metrics, spot):
                          mflip if mflip and mflip < spot else None) if x]
     if ups:
         lines.append(f"• 上方压力位：{_fmt(min(ups), 0)}（Call Wall {_fmt(cw, 0)}"
+                     + ("，弱结构" if cw_cls == "WEAK" else "")
                      + (f" / MaxPain {_fmt(mp, 0)}" if mp and mp > spot else "")
                      + (f" / 近周Flip {_fmt(nflip, 0)}" if nflip and nflip > spot else "")
                      + (f" / 月度Flip {_fmt(mflip, 0)}" if mflip and mflip > spot else "") + "）。")
     if downs:
         lines.append(f"• 下方支撑位：{_fmt(max(downs), 0)}（Put Wall {_fmt(pw, 0)}"
+                     + ("，弱结构" if pw_cls == "WEAK" else "")
                      + (f" / MaxPain {_fmt(mp, 0)}" if mp and mp < spot else "")
                      + (f" / 近周Flip {_fmt(nflip, 0)}" if nflip and nflip < spot else "")
                      + (f" / 月度Flip {_fmt(mflip, 0)}" if mflip and mflip < spot else "") + "）。")

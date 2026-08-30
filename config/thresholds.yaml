@@ -59,6 +59,14 @@ forward_structure:
   top_delta_oi_n: 3           # Top ΔOI 明细条数
   l3_max_distance_pct: 15.0   # L3 显著区：距现价 ≤ ±15%（经验默认，待校准；覆盖 575C+10.5% 类样本）
 
+wall_quality_v1:
+  version: wall_quality_v1
+  rule_freeze_date: "2026-08-30"
+  distance_cap_pct: 10.0      # 候选参数（待历史校准）：距现价超此值 → REMOTE（后台保留，不进主结构解读）
+  dominance_min: 1.5          # 候选参数（待历史校准）：Wall OI / 次强非零 OI 的比值门槛
+  strength_median_mult: 3.0   # 候选参数（待历史校准）：Wall OI ≥ 此倍数 × 非零行权价 OI 中位数 → HIGH
+  note: "v1 默认值在 src/metrics.py WALL_QUALITY_V1；此处为正式登记与未来校准入口。分类：PRIMARY=距离内+Dominant+Strong；WEAK=距离内质量不足；REMOTE=距离外。"
+
 event_differential:
   version: event_diff_v1
   min_diff_pp: 5.0            # 事件差分低于此值不提示（经验默认，待校准）

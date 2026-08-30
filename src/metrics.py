@@ -16,6 +16,16 @@ from scipy.stats import norm
 
 from data_fetcher import RISK_FREE_RATE
 
+# Wall 质量分级 v1（候选参数，待历史校准；正式登记见 config/thresholds.yaml）
+#  - distance_cap_pct：距现价超过该值 → REMOTE（后台保留，不进主报告结构解读）
+#  - dominance_min：Wall OI / 次强非零 OI 的比值门槛
+#  - strength_median_mult：Wall OI ≥ 该倍数 × 非零行权价 OI 中位数 → Strength HIGH
+WALL_QUALITY_V1 = {
+    "distance_cap_pct": 10.0,
+    "dominance_min": 1.5,
+    "strength_median_mult": 3.0,
+}
+
 
 def _frame(contracts):
     df = pd.DataFrame(contracts)
@@ -342,6 +352,48 @@ def _find_flip(strikes, cum):
     return None
 
 
+def _classify_wall(oi_series, wall_strike, spot, params):
+    """Wall 质量分级 v1（候选参数，待历史校准）。
+
+    定义（对应"Candidate → 距离过滤 → Dominance → Strength → Publication"）：
+      - 距离过滤：|距现价| > distance_cap_pct → REMOTE（后台保留，不进主结构解读）
+      - Dominance：Wall OI / 次强非零 OI ≥ dominance_min → Dominant
+      - Strength：Wall OI ≥ strength_median_mult × 非零行权价 OI 中位数 → HIGH
+      - PRIMARY = 距离内 + Dominant + Strength HIGH
+      - WEAK    = 距离内但 Dominance 或 Strength 不足（弱结构参考）
+      - REMOTE  = 距离外（如 SPY 535 距现价 -43% 的彩票式远端档）
+    单侧无有效 OI（wall_oi ≤ 0）→ None（不存在 Wall）。
+    """
+    if oi_series is None or oi_series.empty or wall_strike is None or spot is None:
+        return None
+    wall_strike = float(wall_strike)
+    wall_oi = float(oi_series.loc[wall_strike])
+    if wall_oi <= 0:
+        return None
+    distance_pct = (wall_strike / spot - 1.0) * 100.0
+    nz = oi_series[oi_series > 0]
+    others = nz.drop(wall_strike) if wall_strike in nz.index else nz
+    dominance = wall_oi / float(others.max()) if not others.empty else None
+    median_nz = float(nz.median()) if not nz.empty else 0.0
+    strength = "HIGH" if wall_oi >= params["strength_median_mult"] * median_nz else "LOW"
+    dist_ok = abs(distance_pct) <= params["distance_cap_pct"]
+    dom_ok = dominance is not None and dominance >= params["dominance_min"]
+    if not dist_ok:
+        classification = "REMOTE"
+    elif dom_ok and strength == "HIGH":
+        classification = "PRIMARY"
+    else:
+        classification = "WEAK"
+    return {
+        "strike": wall_strike,
+        "oi": round(wall_oi, 0),
+        "distance_pct": round(distance_pct, 2),
+        "dominance": round(dominance, 2) if dominance is not None else None,
+        "strength": strength,
+        "classification": classification,
+    }
+
+
 def gamma_structure(df, spot, top_n=3):
     """
     按行权价聚合 Gamma 暴露（散户多头口径：Call 正、Put 负，×100×spot）。
@@ -370,8 +422,25 @@ def gamma_structure(df, spot, top_n=3):
 
     call_oi = g[g["type"] == "call"].groupby("strike")["open_interest"].sum()
     put_oi = g[g["type"] == "put"].groupby("strike")["open_interest"].sum()
-    call_wall = float(call_oi.idxmax()) if not call_oi.empty else None
-    put_wall = float(put_oi.idxmax()) if not put_oi.empty else None
+    call_wall_raw = float(call_oi.idxmax()) if not call_oi.empty else None
+    put_wall_raw = float(put_oi.idxmax()) if not put_oi.empty else None
+    walls_v1 = {
+        "call": _classify_wall(call_oi, call_wall_raw, spot, WALL_QUALITY_V1),
+        "put": _classify_wall(put_oi, put_wall_raw, spot, WALL_QUALITY_V1),
+    }
+    # 显示口径：REMOTE 不进报告（call_wall/put_wall 置 None），PRIMARY/WEAK 保留值并带分级
+    call_wall = (
+        walls_v1["call"]["strike"]
+        if walls_v1["call"] and walls_v1["call"]["classification"] != "REMOTE"
+        else None
+    )
+    put_wall = (
+        walls_v1["put"]["strike"]
+        if walls_v1["put"] and walls_v1["put"]["classification"] != "REMOTE"
+        else None
+    )
+    call_wall_class = walls_v1["call"]["classification"] if walls_v1["call"] else None
+    put_wall_class = walls_v1["put"]["classification"] if walls_v1["put"] else None
 
     top_gamma = []
     for k, v in by_strike.abs().sort_values(ascending=False).head(top_n).items():
@@ -385,6 +454,9 @@ def gamma_structure(df, spot, top_n=3):
         "gamma_flip": round(flip, 2) if flip is not None else None,
         "call_wall": call_wall,
         "put_wall": put_wall,
+        "call_wall_class": call_wall_class,
+        "put_wall_class": put_wall_class,
+        "walls_v1": walls_v1,
         "top_gamma": top_gamma,
         "net_vanna": round(float(g["vanna_expo"].sum()), 0),
         "net_charm": round(float(g["charm_expo"].sum()), 0),

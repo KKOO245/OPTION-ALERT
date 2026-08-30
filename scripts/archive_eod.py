@@ -82,6 +82,11 @@ def _connect() -> sqlite3.Connection:
           date TEXT, root TEXT, close REAL, open REAL, high REAL, low REAL,
           volume INTEGER, PRIMARY KEY (date, root)
         );
+        CREATE TABLE IF NOT EXISTS option_oi (
+          date TEXT, root TEXT, expiration TEXT, strike REAL, right TEXT,
+          open_interest REAL,
+          PRIMARY KEY (date, root, expiration, strike, right)
+        );
         CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT);
         """
     )
@@ -174,22 +179,61 @@ def _process_ticker(client, limiter: RateLimiter, t: str,
 
 
 def _fetch_and_store(client, limiter: RateLimiter, tickers: list[str],
-                     start: datetime.date, end: datetime.date) -> tuple[int, int, list[str]]:
-    """返回 (期权行数, 股票行数, 失败列表)。单个标的异常不影响其他标的。"""
+                     start: datetime.date, end: datetime.date) -> tuple[int, int, int, list[str]]:
+    """返回 (期权行数, 股票行数, OI 行数, 失败列表)。单个标的异常不影响其他标的。"""
     conn = _connect()
-    opt_n, stk_n = 0, 0
+    opt_n, stk_n, oi_n = 0, 0, 0
     fails: list[str] = []
     for t in tickers:
         try:
             n1, n2 = _process_ticker(client, limiter, t, start, end, conn)
             opt_n += n1
             stk_n += n2
+            oi_n += _fetch_oi(client, limiter, t, start, end, conn)
         except Exception as e:  # noqa: BLE001
             _log(f"{t} 处理异常，跳过（下次归档可补）: {e}")
             fails.append(f"{t}-异常")
     conn.commit()
     conn.close()
-    return opt_n, stk_n, fails
+    return opt_n, stk_n, oi_n, fails
+
+
+def _fetch_oi(client, limiter: RateLimiter, t: str,
+              start: datetime.date, end: datetime.date, conn: sqlite3.Connection) -> int:
+    """OI 历史（v1 最佳努力）：expiration='*' 是否可用需实测；失败静默跳过不中断归档。"""
+    method = getattr(client, "option_history_open_interest", None)
+    if method is None:
+        return 0
+    limiter.wait()
+    try:
+        df = method(symbol=t, expiration="*", start_date=start, end_date=end)
+    except Exception as e:  # noqa: BLE001
+        _log(f"{t} OI 拉取失败（实测项，跳过）: {e}")
+        return 0
+    if df is None or df.empty:
+        return 0
+    d = df.copy()
+    if "created" in d.columns:
+        d["date"] = _to_trading_date(d["created"]).dt.strftime("%Y-%m-%d")
+    elif "date" in d.columns:
+        d["date"] = pd.to_datetime(d["date"]).dt.strftime("%Y-%m-%d")
+    d["expiration"] = pd.to_datetime(d["expiration"]).dt.strftime("%Y-%m-%d")
+    d["root"] = d.get("root", d.get("symbol", t))
+    d["right"] = d["right"].astype(str).str.upper().str[0]
+    oi_col = "open_interest" if "open_interest" in d.columns else ("oi" if "oi" in d.columns else None)
+    if oi_col is None or "strike" not in d.columns:
+        _log(f"{t} OI 返回列不完整，跳过（列: {list(d.columns)}）")
+        return 0
+    rows = [
+        (r.date, r.root, r.expiration, float(r.strike), r.right, _f(getattr(r, oi_col)))
+        for r in d.itertuples(index=False)
+        if r.right in ("C", "P") and r.strike == r.strike
+    ]
+    conn.executemany(
+        "INSERT OR IGNORE INTO option_oi VALUES (?,?,?,?,?,?)", rows
+    )
+    _log(f"{t} OI {len(rows)} 行（实测项）")
+    return len(rows)
 
 
 def _merge_stock_eod_file(t: str, new_df: pd.DataFrame) -> None:
@@ -305,8 +349,8 @@ def main() -> None:
     if not args.backup_only:
         client = _make_client()
         limiter = RateLimiter(20)
-        opt_n, stk_n, fails = _fetch_and_store(client, limiter, tickers, start, end)
-        summary_parts.append(f"期权新增 {opt_n} 行 | 股票新增 {stk_n} 行")
+        opt_n, stk_n, oi_n, fails = _fetch_and_store(client, limiter, tickers, start, end)
+        summary_parts.append(f"期权新增 {opt_n} 行 | 股票新增 {stk_n} 行 | OI 新增 {oi_n} 行")
         if fails:
             summary_parts.append(f"失败: {', '.join(fails)}")
         _run_backfill(["prices"])

@@ -17,6 +17,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HISTORY_DIR = os.path.join(BASE_DIR, "data", "history")
 ANALYTICS_DIR = os.path.join(BASE_DIR, "data", "analytics")
 IV_HIST_DIR = os.path.join(BASE_DIR, "data", "iv_history")
+CLOSES_DIR = os.path.join(BASE_DIR, "data", "closes")
 
 ANALYTICS_COLUMNS = [
     "date", "session", "source", "price",
@@ -144,6 +145,50 @@ def load_iv_series(ticker):
     dates = [d for d, _ in items]
     ivs = [v for _, v in items]
     return dates, ivs
+
+
+def load_rv_series(ticker, lookback=20):
+    """从 data/closes 全历史计算每日已实现波动率（对数收益滚动 std × √252）。
+    返回 {date: rv}；窗口内收益不足 lookback 的天数不返回（不猜测）。
+    """
+    import math
+
+    path = os.path.join(CLOSES_DIR, f"{ticker}.csv")
+    if not os.path.exists(path):
+        return {}
+    try:
+        df = pd.read_csv(path)
+    except Exception:
+        return {}
+    if not {"date", "close"}.issubset(df.columns):
+        return {}
+    df = df.dropna(subset=["close"]).sort_values("date")
+    df["date"] = pd.to_datetime(df["date"]).dt.strftime("%Y-%m-%d")
+    # 对数收益（与回放引擎/学术口径一致）；简单收益在日频上差异为二阶小量，但口径统一更严谨
+    close = pd.Series(df["close"], dtype=float)
+    ret = (close / close.shift(1)).apply(math.log)
+    rv = ret.rolling(lookback).std() * math.sqrt(252)
+    out = {}
+    for d, v in zip(df["date"], rv):
+        if v is not None and v == v and v > 0:
+            out[str(d)] = float(v)
+    return out
+
+
+def load_rv_iv_aligned(ticker, lookback=20):
+    """合并 IV 历史与 RV 历史（按日期对齐），返回 (dates, ivs, rvs)。
+    pricing_proxy 的 iv_series/rv_series 必须逐日对应，故只取两者都有的日期。
+    """
+    dates, ivs = load_iv_series(ticker)
+    rv_map = load_rv_series(ticker, lookback)
+    out_d, out_i, out_r = [], [], []
+    for d, iv in zip(dates, ivs):
+        rv = rv_map.get(d)
+        if rv is not None:
+            out_d.append(d)
+            out_i.append(iv)
+            out_r.append(rv)
+    return out_d, out_i, out_r
 
 
 def load_session_value(ticker, session, field, date=None):
