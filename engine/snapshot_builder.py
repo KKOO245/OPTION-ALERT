@@ -25,6 +25,9 @@ from typing import Any, Dict, List, Optional
 
 SESSION_MAP = {"早报": "morning", "晚报": "evening", "morning": "morning", "evening": "evening"}
 SESS_RANK = {"morning": 0, "evening": 1}
+IV_HIST_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "iv_history"
+)
 
 
 def normalize_session(session: str) -> str:
@@ -99,6 +102,25 @@ def load_analytics_rows(path: str) -> List[Dict[str, Any]]:
 def _history_before(rows: List[Dict[str, Any]], today: str, session: str) -> List[Dict[str, Any]]:
     key = (today, SESS_RANK.get(session, 0))
     return [r for r in rows if (r.get("date", ""), SESS_RANK.get(r.get("session"), 0)) < key]
+
+
+def _iv_history_map(ticker: str, before_date: str) -> Dict[str, float]:
+    """data/iv_history 回填序列（ThetaData EOD 口径），只取 before_date 之前的日期。"""
+    out: Dict[str, float] = {}
+    path = os.path.join(IV_HIST_DIR, f"{ticker}.csv")
+    if not os.path.exists(path) or os.path.getsize(path) == 0:
+        return out
+    try:
+        with open(path, encoding="utf-8-sig", newline="") as f:
+            for raw in csv.DictReader(f):
+                d = str(raw.get("date", "") or "")
+                iv = _num(raw.get("atm_iv_near"))
+                if iv is None or d >= before_date:
+                    continue
+                out[d] = iv
+    except Exception as e:
+        print(f"[警告] 读取 {ticker} iv_history 失败: {e}")
+    return dict(sorted(out.items()))
 
 
 def _label_for_obs(n: int, prelim: int, developing: int, established: int) -> str:
@@ -260,7 +282,14 @@ def build_snapshot(
     gamma = gamma_sign(_num(net_gamma))
 
     cur_atm = _get(data, "atm_iv_near")
-    hist_iv = [r.get("atm_iv_near") for r in hist if r.get("atm_iv_near") is not None]
+    iv_map = _iv_history_map(ticker, today)
+    hist_iv = [
+        r.get("atm_iv_near")
+        for r in hist
+        if r.get("atm_iv_near") is not None
+        and str(r.get("date", "")) not in iv_map
+    ]
+    hist_iv = list(iv_map.values()) + hist_iv
     z = iv_zscore(_num(cur_atm), hist_iv)
     rank = iv_percentile(_num(cur_atm), hist_iv)
 

@@ -16,6 +16,7 @@ import pandas as pd
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HISTORY_DIR = os.path.join(BASE_DIR, "data", "history")
 ANALYTICS_DIR = os.path.join(BASE_DIR, "data", "analytics")
+IV_HIST_DIR = os.path.join(BASE_DIR, "data", "iv_history")
 
 ANALYTICS_COLUMNS = [
     "date", "session", "source", "price",
@@ -94,14 +95,55 @@ def load_analytics(ticker):
 
 
 def load_iv_history(ticker, min_obs=20):
-    """每个交易日取最后一次的 ATM IV 序列，用于 IV Rank"""
-    df = load_analytics(ticker)
-    if df.empty or "atm_iv_near" not in df.columns:
-        return []
-    df = df.dropna(subset=["atm_iv_near"])
-    df = df.sort_values(["date", "session"])
-    daily = df.groupby("date").last()["atm_iv_near"].tolist()
-    return daily if len(daily) >= min_obs else []
+    """每个交易日取最后一次的 ATM IV 序列，用于 IV Rank。
+    已接线：data/iv_history（历史回填，ThetaData EOD 口径）优先，
+    data/analytics（每日指标，CBOE 实时口径）补充回填截止日之后的新日期。"""
+    _dates, ivs = load_iv_series(ticker)
+    return ivs if len(ivs) >= min_obs else []
+
+
+def load_iv_series(ticker):
+    """合并后的每日 ATM IV 序列：
+    1) data/iv_history/{ticker}.csv —— ThetaData EOD 历史回填（2023-06 起），同日期优先
+    2) data/analytics/{ticker}.csv —— 每日指标，补回填截止日之后的新日期
+    返回 (dates, ivs) 两个按日期升序的列表；同一日期只保留一个值。
+    """
+    daily: dict = {}
+    p = os.path.join(IV_HIST_DIR, f"{ticker}.csv")
+    if os.path.exists(p) and os.path.getsize(p) > 0:
+        try:
+            df = pd.read_csv(p)
+            if "date" in df.columns and "atm_iv_near" in df.columns:
+                sub = df.dropna(subset=["atm_iv_near"])
+                for _, r in sub.iterrows():
+                    try:
+                        daily[str(r["date"])] = float(r["atm_iv_near"])
+                    except (TypeError, ValueError):
+                        continue
+        except Exception as e:
+            print(f"[警告] 读取 {ticker} iv_history 失败: {e}")
+    a = load_analytics(ticker)
+    if not a.empty and "atm_iv_near" in a.columns:
+        a = a.dropna(subset=["atm_iv_near"])
+        if "date" in a.columns and "session" in a.columns:
+            a = a.sort_values(["date", "session"])
+            for d, grp in a.groupby("date"):
+                ds = str(d)
+                if ds not in daily:  # iv_history 优先，同源长历史
+                    try:
+                        wd = pd.to_datetime(ds).weekday()
+                    except Exception:
+                        wd = 0  # 解析失败不拦截（保守保留）
+                    if wd >= 5:
+                        continue  # 周末行（手工/测试跑出来的）不进 IV 历史
+                    try:
+                        daily[ds] = float(grp["atm_iv_near"].iloc[-1])
+                    except (TypeError, ValueError):
+                        continue
+    items = sorted(daily.items())
+    dates = [d for d, _ in items]
+    ivs = [v for _, v in items]
+    return dates, ivs
 
 
 def load_session_value(ticker, session, field, date=None):
