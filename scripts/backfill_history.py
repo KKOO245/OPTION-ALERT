@@ -70,7 +70,13 @@ except AttributeError:  # numpy < 2.0 兜底
     np_erf = np.vectorize(_math_erf)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-RAW_DIR = REPO_ROOT / "data" / "raw" / "thetadata"
+_RAW_ENV = os.environ.get("THETADATA_RAW_DIR")
+if _RAW_ENV:
+    RAW_DIR = Path(_RAW_ENV)
+else:
+    _RAW_NEW = Path(r"D:\git\EXTERNAL DATA\OPTION-ALERT-RAW")
+    _RAW_LEGACY = REPO_ROOT / "data" / "raw" / "thetadata"
+    RAW_DIR = _RAW_NEW if _RAW_NEW.exists() else _RAW_LEGACY
 CLOSES_DIR = REPO_ROOT / "data" / "closes"
 IV_HIST_DIR = REPO_ROOT / "data" / "iv_history"
 TICKERS_FILE = REPO_ROOT / "config" / "tickers.txt"

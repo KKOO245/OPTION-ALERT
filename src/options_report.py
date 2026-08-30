@@ -29,7 +29,7 @@ from calendars import build_calendar_sections
 from discord_sender import send_discord_message
 from fear_greed import fetch_fear_greed, format_fear_greed
 from llm_analyst import generate_deep_analysis
-from reminders import evening_reminder_lines
+from reminders import evening_reminder_lines, morning_reminder_lines
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if BASE_DIR not in sys.path:
@@ -468,8 +468,10 @@ def main():
     )
     if session_name == "晚报":
         reminder_lines = evening_reminder_lines(now)
-        if reminder_lines:
-            report = report + "\n\n---\n\n" + "\n\n".join(reminder_lines)
+    else:
+        reminder_lines = morning_reminder_lines(now)
+    if reminder_lines:
+        report = report + "\n\n---\n\n" + "\n\n".join(reminder_lines)
 
     dry_run = os.environ.get("REPORT_DRY_RUN", "false").lower() == "true"
     webhook_url = os.environ.get("DISCORD_WEBHOOK_URL", "")

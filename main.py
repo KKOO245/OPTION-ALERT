@@ -43,7 +43,7 @@ from engine import yaml_mini
 from report.evening import render_evening
 from report.evening import ticker_evening
 from report.morning import calendar_block, market_block, render_morning, ticker_morning
-from src.reminders import evening_reminder_lines
+from src.reminders import evening_reminder_lines, morning_reminder_lines
 from validation.base_rate import conditional_setup_rate, freeze_partition, unconditional_base_rate
 from validation.confidence import format_rate
 from validation.data_sufficiency import label_for_episodes
@@ -620,6 +620,11 @@ def cmd_render_morning(args) -> int:
         prev_snapshot=prev,
         activity=_activity_from_analytics(data_root, ticker, "morning"),
         setup_status=_render_status_arg(status),
+        reminders=morning_reminder_lines(
+            datetime.fromisoformat(f"{date_str}T09:00:00-04:00")
+        )
+        if date_str
+        else [],
         market=_market_context("morning"),
         calendar=_calendar_lines(),
         event_dates=_macro_event_dates(),
@@ -838,6 +843,11 @@ def cmd_send_report(args) -> int:
             prev_snapshot=prev,
             activity=_activity_from_analytics(data_root, ticker, "morning"),
             setup_status=_render_status_arg(status),
+            reminders=morning_reminder_lines(
+                datetime.fromisoformat(f"{date_str}T09:00:00-04:00")
+            )
+            if date_str
+            else [],
             market=_market_context("morning"),
             calendar=_calendar_lines(),
             event_dates=event_dates,

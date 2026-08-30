@@ -582,11 +582,13 @@ def ticker_morning(
     stale_note = None
     if prev_snapshot:
         p = prev_snapshot.get("spot")
-        c = snapshot.get("spot")
+        day_open = snapshot.get("day_open")
+        c = day_open or snapshot.get("spot")
+        ref_label = "今开" if day_open else "今晨"
         chg = (c / p - 1.0) * 100 if (p and c) else None
         lines.append("📋 昨日晚报 → 今日晨报（只列关键项，低于阈值不单列）")
         lines.append(
-            f"{ticker}  昨收 {fmt(p, 2)} → 今晨 {fmt(c, 2)}"
+            f"{ticker}  昨收 {fmt(p, 2)} → {ref_label} {fmt(c, 2)}"
             + (f"（{chg:+.1f}%）" if chg is not None else "")
             + " | 较昨收变动（含盘初走势）"
             + (_day_range(snapshot) or "")
