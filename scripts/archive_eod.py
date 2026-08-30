@@ -204,11 +204,20 @@ def _fetch_oi(client, limiter: RateLimiter, t: str,
     method = getattr(client, "option_history_open_interest", None)
     if method is None:
         return 0
+    # 实测结论：免费档 PERMISSION_DENIED（需 Value 订阅）→ 记录一次后不再尝试
+    row = conn.execute("SELECT value FROM meta WHERE key='oi_unavailable'").fetchone()
+    if row:
+        return 0
     limiter.wait()
     try:
         df = method(symbol=t, expiration="*", start_date=start, end_date=end)
     except Exception as e:  # noqa: BLE001
-        _log(f"{t} OI 拉取失败（实测项，跳过）: {e}")
+        msg = str(e).lower()
+        if any(k in msg for k in ("permission", "subscription", "value subscription")):
+            conn.execute("INSERT OR REPLACE INTO meta(key,value) VALUES('oi_unavailable','1')")
+            _log(f"{t} OI 接口免费档不可用（已记录，后续归档不再尝试）: {e}")
+        else:
+            _log(f"{t} OI 拉取失败（实测项，跳过）: {e}")
         return 0
     if df is None or df.empty:
         return 0
