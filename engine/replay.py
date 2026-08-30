@@ -247,6 +247,16 @@ def run_replay(tickers: List[str], start: Optional[str] = None, end: Optional[st
     layers = layers or ["iv", "gamma"]
     out = out or (REPO_ROOT / "thesis" / "replay_episodes_v1.jsonl")
     out.parent.mkdir(parents=True, exist_ok=True)
+    # 幂等：跳过已存在的 (ticker, date, layer)，避免重复跑污染统计
+    existing: set = set()
+    if out.exists():
+        with open(out, encoding="utf-8") as f:
+            for line in f:
+                try:
+                    r = json.loads(line)
+                    existing.add((r["ticker"], r["date"], r["layer"]))
+                except Exception:  # noqa: BLE001
+                    continue
     total = 0
     stats: Dict[str, int] = {}
     with open(out, "a", encoding="utf-8") as fh:
@@ -256,10 +266,16 @@ def run_replay(tickers: List[str], start: Optional[str] = None, end: Optional[st
                 eps += _iv_layer(t, start, end)
             if "gamma" in layers:
                 eps += _gamma_layer(t, start, end)
-            stats[t] = len(eps)
+            new = 0
             for e in eps:
+                key = (e["ticker"], e["date"], e["layer"])
+                if key in existing:
+                    continue
                 fh.write(json.dumps(e, ensure_ascii=False) + "\n")
-            total += len(eps)
+                existing.add(key)
+                new += 1
+            stats[t] = new
+            total += new
     stats["_total"] = total
     stats["_out"] = str(out)
     return stats
