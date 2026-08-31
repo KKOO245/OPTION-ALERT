@@ -76,15 +76,28 @@ def main() -> int:
         return 0
 
     # 兼容单层列 / MultiIndex（yfinance 不同版本返回结构不同）
+    # 注意：MultiIndex 下必须先用 get_level_values 匹配，`"Close" in df.columns`
+    # 会对标量误判（实测 pandas 会匹配层级），导致拿到 DataFrame 按列迭代。
     close_series = None
-    if "Close" in df.columns:
-        close_series = df["Close"]
-    elif hasattr(df.columns, "get_level_values") and "Close" in df.columns.get_level_values(0):
-        c = df["Close"]
-        close_series = c.iloc[:, 0] if hasattr(c, "iloc") and c.ndim > 1 else c
+    if isinstance(df.columns, pd.MultiIndex):
+        l0 = set(df.columns.get_level_values(0))
+        for col in ("Close", "Adj Close", "Last"):
+            if col in l0:
+                c = df[col]
+                close_series = c.iloc[:, 0] if isinstance(c, pd.DataFrame) else c
+                break
+    else:
+        for col in ("Close", "Adj Close", "Last"):
+            if col in df.columns:
+                close_series = df[col]
+                break
     if close_series is None:
-        _log("返回列中没有 Close，跳过本次更新")
+        _log(f"返回列中没有 Close/Adj Close/Last；实际列: {list(df.columns)}")
         return 0
+    if isinstance(close_series, pd.DataFrame):
+        close_series = close_series.iloc[:, 0]  # 保险：确保是 Series（按行迭代）
+    close_series = pd.to_numeric(close_series, errors="coerce")
+    _log(f"Close 列提取 OK（{type(close_series).__name__}），样本: {close_series.dropna().tail(3).to_dict()}")
 
     new_rows: list[tuple[str, str]] = []
     start_iso = start.isoformat()
@@ -112,6 +125,12 @@ def main() -> int:
             seen.add(d)
             added += 1
     merged.sort()
+
+    if not new_rows and not existing:
+        _log(
+            "拉取返回 " + str(len(df)) + " 行但过滤后为 0（诊断）："
+            + df.tail(2).to_string().replace("\n", " | ")
+        )
 
     with open(OUT, "w", encoding="utf-8", newline="") as f:
         f.write("date,close\n")
