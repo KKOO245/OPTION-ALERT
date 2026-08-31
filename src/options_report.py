@@ -315,6 +315,11 @@ def main():
                 print(f"[警告] {ticker} 当日 OHLC 获取失败（高/低/开/收 保持原逻辑）: {e}")
                 ohlc = None
             contracts, chain_spot, source = fetcher.fetch_chain(ticker, max_days=FETCH_WINDOW_DAYS)
+            # 每日全量合约快照永久存档（早/晚报都存，同日以最后一次为准）
+            try:
+                storage.append_chain_history(ticker, contracts, date=now.date().isoformat())
+            except Exception as e:
+                print(f"[警告] {ticker} 链快照存档失败（不影响报告）: {e}")
             # 晚报：收盘价用常规时段 Close（4:00pm ET），避免盘后 last_price 污染"昨收/收盘"
             if is_afternoon and ohlc is not None and ohlc[3] is not None:
                 price = ohlc[3]

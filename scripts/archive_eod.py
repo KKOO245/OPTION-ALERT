@@ -6,9 +6,10 @@
   1) 拉取上次归档以来的 ThetaData EOD 全链 → 写入 SQLite 研究档案
      + 保存原始分块（供 IV 转换读取，同一存储）
   2) 刷新 yfinance 全历史价格 + 重算 data/iv_history（复用 backfill_history）
-  3) git 提交推送（先 pull --rebase 防冲突）
-  4) 备份：SQLite 拷贝到备份目录 + 摘要文件（保留最近 8 份）
-  5) 弹窗汇报结果（计划任务跑完可见）
+  3) 把每日合约快照（data/chain_history）并入 SQLite（chain_oi_daily 表）
+  4) git 提交推送（先 pull --rebase 防冲突）
+  5) 备份：SQLite 拷贝到备份目录 + 摘要文件（保留最近 8 份）
+  6) 弹窗汇报结果（计划任务跑完可见）
 
 用法：
   python scripts/archive_eod.py              # 正常归档
@@ -86,6 +87,11 @@ def _connect() -> sqlite3.Connection:
           date TEXT, root TEXT, expiration TEXT, strike REAL, right TEXT,
           open_interest REAL,
           PRIMARY KEY (date, root, expiration, strike, right)
+        );
+        CREATE TABLE IF NOT EXISTS chain_oi_daily (
+          date TEXT, root TEXT, contract_symbol TEXT,
+          open_interest REAL, volume REAL,
+          PRIMARY KEY (date, contract_symbol)
         );
         CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT);
         """
@@ -291,7 +297,7 @@ def _git_commit_push() -> str:
     today = datetime.date.today().isoformat()
     def _git(*args: str) -> subprocess.CompletedProcess:
         return subprocess.run(["git", *args], cwd=REPO_ROOT, capture_output=True, text=True)
-    _git("add", "data/iv_history", "data/closes")
+    _git("add", "data/iv_history", "data/closes", "data/oi_history")
     if _git("diff", "--cached", "--quiet").returncode == 0:
         return "无数据变化，跳过推送"
     if _git("commit", "-m", f"更新历史数据 {today}").returncode != 0:
@@ -303,6 +309,51 @@ def _git_commit_push() -> str:
     if push.returncode != 0:
         return f"git push 失败: {push.stderr.strip()[:200]}"
     return "已推送"
+
+
+def _git_pull() -> str:
+    """归档前先同步远端，确保 data/chain_history 是最新的。"""
+    pull = subprocess.run(
+        ["git", "pull", "--rebase"], cwd=REPO_ROOT, capture_output=True, text=True
+    )
+    if pull.returncode != 0:
+        return f"git pull --rebase 失败（继续，可能漏最新快照）: {pull.stderr.strip()[:200]}"
+    return "已同步远端"
+
+
+def _ingest_chain_history(conn: sqlite3.Connection, hist_dir: Path | None = None) -> int:
+    """把每日合约快照（data/chain_history）并入 SQLite，作为 OI 历史后台。
+
+    与 git 文件语义一致：同一日期同一合约以最后一次写入为准（INSERT OR REPLACE）。
+    """
+    hist_dir = hist_dir or (REPO_ROOT / "data" / "chain_history")
+    if not hist_dir.is_dir():
+        return 0
+    total = 0
+    for f in sorted(hist_dir.glob("*/*.csv.gz")):
+        try:
+            df = pd.read_csv(f, compression="gzip")
+        except Exception as e:  # noqa: BLE001
+            _log(f"chain_history 读取失败 {f}: {e}")
+            continue
+        if df.empty:
+            continue
+        ticker = f.parent.name.upper()
+        if "snapshot_date" in df.columns:
+            dates = df["snapshot_date"].astype(str).tolist()
+        else:
+            dates = [f.stem] * len(df)
+        rows = [
+            (d, ticker, str(r.contractSymbol), _f(r.openInterest), _f(r.volume))
+            for r, d in zip(df.itertuples(index=False), dates)
+        ]
+        conn.executemany(
+            "INSERT OR REPLACE INTO chain_oi_daily VALUES (?,?,?,?,?)", rows
+        )
+        total += len(rows)
+    if total:
+        conn.commit()
+    return total
 
 
 def _backup(summary: str) -> str:
@@ -356,10 +407,16 @@ def main() -> None:
 
     summary_parts: list[str] = []
     if not args.backup_only:
+        _log(_git_pull())
         client = _make_client()
         limiter = RateLimiter(20)
         opt_n, stk_n, oi_n, fails = _fetch_and_store(client, limiter, tickers, start, end)
-        summary_parts.append(f"期权新增 {opt_n} 行 | 股票新增 {stk_n} 行 | OI 新增 {oi_n} 行")
+        conn2 = _connect()
+        oi_snap = _ingest_chain_history(conn2)
+        conn2.close()
+        summary_parts.append(
+            f"期权新增 {opt_n} 行 | 股票新增 {stk_n} 行 | OI 新增 {oi_n} 行 | 快照OI并入 {oi_snap} 行"
+        )
         if fails:
             summary_parts.append(f"失败: {', '.join(fails)}")
         _run_backfill(["prices"])

@@ -18,6 +18,7 @@ HISTORY_DIR = os.path.join(BASE_DIR, "data", "history")
 ANALYTICS_DIR = os.path.join(BASE_DIR, "data", "analytics")
 IV_HIST_DIR = os.path.join(BASE_DIR, "data", "iv_history")
 CLOSES_DIR = os.path.join(BASE_DIR, "data", "closes")
+CHAIN_HISTORY_DIR = os.path.join(BASE_DIR, "data", "chain_history")
 
 ANALYTICS_COLUMNS = [
     "date", "session", "source", "price",
@@ -55,6 +56,26 @@ def save_snapshot(ticker, contracts):
         "snapshot_date": _today(),
     } for c in contracts]
     pd.DataFrame(rows).to_csv(path, index=False)
+
+
+def append_chain_history(ticker, contracts, date=None):
+    """把当天全量合约快照永久存档（data/chain_history/{ticker}/{date}.csv.gz）。
+
+    - 一天一个文件；同一日期再次写入（如晚报重跑/补跑）以最后一次为准。
+    - 对所有经过管线的 ticker 生效，包括手动测试、不在报告里的标的。
+    - 原始 gz 保留在 git；本地归档任务会再并入 SQLite（chain_oi_daily）。
+    """
+    d = date or _today()
+    tdir = os.path.join(CHAIN_HISTORY_DIR, ticker)
+    os.makedirs(tdir, exist_ok=True)
+    path = os.path.join(tdir, f"{d}.csv.gz")
+    rows = [{
+        "contractSymbol": c["contract_symbol"],
+        "openInterest": c.get("open_interest") or 0,
+        "volume": c.get("volume") or 0,
+        "snapshot_date": d,
+    } for c in contracts]
+    pd.DataFrame(rows).to_csv(path, index=False, compression="gzip")
 
 
 # ---------- 每日紧凑指标（长期积累） ----------

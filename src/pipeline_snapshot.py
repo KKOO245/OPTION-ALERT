@@ -42,6 +42,11 @@ def main() -> int:
 
     ticker = args.ticker.upper()
     contracts, spot, source = fetcher.fetch_chain(ticker)
+    # 手动测试的 ticker 同样按日存档（含不在报告里的标的）
+    try:
+        storage.append_chain_history(ticker, contracts)
+    except Exception as e:
+        print(f"[警告] {ticker} 链快照存档失败: {e}")
     ohlc = fetcher.fetch_ohlc_yfinance(ticker)
     if args.session in ("晚报", "evening") and ohlc is not None and ohlc[3] is not None:
         spot = ohlc[3]  # 晚报用常规时段收盘价，避免盘后价

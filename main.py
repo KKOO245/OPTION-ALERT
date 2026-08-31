@@ -153,8 +153,10 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--tickers", nargs="*", help="默认读 config/tickers.txt")
     sp.add_argument("--start", help="YYYY-MM-DD")
     sp.add_argument("--end", help="YYYY-MM-DD")
-    sp.add_argument("--layers", nargs="*", choices=["iv", "gamma"], help="默认 iv+gamma")
+    sp.add_argument("--layers", nargs="*", choices=["iv", "gamma", "oi"], help="默认 iv+gamma；oi=OI 结构层（SPY/QQQ/IWM）")
     sp.add_argument("--out", help="输出 JSONL 路径（默认 thesis/replay_episodes_v1.jsonl）")
+    sp.add_argument("--oi-history", action="store_true",
+                    help="同时导出逐日 OI 结构序列 data/oi_history/{TICKER}.csv（SPY/QQQ/IWM）")
 
     sp = sub.add_parser("send-report", help="渲染新格式报告并发送 Discord")
     sp.add_argument("--session", choices=["morning", "evening"], required=True)
@@ -1093,6 +1095,13 @@ def cmd_replay(args) -> int:
     )
     for t, n in stats.items():
         print(f"{t}: {n}")
+    if args.oi_history:
+        from engine.replay import write_oi_history
+
+        hist = write_oi_history(tickers, start=args.start, end=args.end)
+        print("--- OI 历史序列 ---")
+        for t, n in hist.items():
+            print(f"{t}: {n} 天 -> data/oi_history/{t}.csv")
     return 0
 
 
