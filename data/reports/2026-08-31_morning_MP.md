@@ -2,9 +2,9 @@
 
 📊 市场环境
 
-SPY $765.41 ｜ QQQ $714.99
-VIX 15.19 ↑5.3%（5D -4.2%） ｜ Vol Regime: NORMAL
-CNN 恐惧贪婪 49.9（neutral）
+SPY $765.92 ｜ QQQ $714.75
+VIX 15.16 ↑5.1%（5D -4.3%） ｜ Vol Regime: NORMAL
+CNN 恐惧贪婪 49.7（neutral）
 全市场 P/C OI（OCC 结算 08-28，2023-06 以来）: Equity 0.75（分位 12%） ｜ Index 0.94（分位 11%）
 
 ⇒ VIX ↑ = SPX 期权隐含的近 30 日预期波动率上升；不判方向，不进入 Direction Edge。
@@ -26,7 +26,7 @@ CNN 恐惧贪婪 49.9（neutral）
 ## MP
 
 📋 昨日晚报 → 今日晨报（只列关键项，低于阈值不单列）
-MP  昨收 56.13 → 今晨 55.22（-1.6%） | 较昨收变动（含盘初走势） ｜ 今日高 56.00 ｜ 低 54.94
+MP  昨收 56.13 → 今晨 55.26（-1.5%） | 较昨收变动（含盘初走势） ｜ 今日高 56.00 ｜ 低 54.94
 
 Options: P/C量 0.65 | OI比 0.78 | ATM IV 72.8% | Skew -5.4pp | Term 0.93 | ExpMove ±6.2%（近端） | Rank 58%
    ⇒ Put/Call Volume: 0.65×（Call 成交量高于 Put）→ 方向 Unknown
@@ -36,12 +36,12 @@ Options: P/C量 0.65 | OI比 0.78 | ATM IV 72.8% | Skew -5.4pp | Term 0.93 | Exp
    ExpMove 期限化（expmove_v1）: 09-04（4D）±6.2% ｜ 09-11（11D）±9.2% ｜ 09-18（18D）±11.8% ｜ 09-25（25D）±13.4%
    ⇒ IV–VIX Spread: +57.6pp*（*近月 ATM IV − VIX；期限未对齐，仅作相对波动率 Proxy，不直接代表期权定价贵/便宜）
 🔧 结构（未验证研究层：Mechanism Scenario A/B——OI 开仓方向不可观测）
-Gamma Regime: NEGATIVE（模型分类） | GEX(存量) -33,560 | GEX Change vs 上次快照 -837,720 | Flip: Primary Flip: 55.24（PRIMARY，全链重定价 + 覆盖达标）
+Gamma Regime: NEGATIVE（模型分类） | GEX(存量) 23,895 | GEX Change vs 上次快照 -780,265 | Flip: Primary Flip: 55.24（PRIMARY，全链重定价 + 覆盖达标）
 🔎 测量完整性: GEX 符号契约 gex_sign_v1（Model A: Call+ / Put−）｜ Gamma 口径 全链重定价 ｜ Effective GEX 覆盖: 100%（带内） ｜ IV 有效性: VALID 310 / LOW 41 / INVALID 139
    ⇒ 全链负Gamma，波动易被放大（模型层）
 结构观察区: Primary Flip 55.24（全链重定价，覆盖 100%）
-Put Wall 55（弱结构｜现价高于该位 0.4%） | Call Wall 60（弱结构｜现价低于该位 8.0%）
-最近结构参考: Flip 55（现价低于该位 0.0%）
+Put Wall 55（弱结构｜现价高于该位 0.5%） | Call Wall 60（弱结构｜现价低于该位 7.9%）
+最近结构参考: Flip 55（现价高于该位 0.0%）
 🧭 结构解读（全部依赖上方假设）
 • 支撑/压力参考：下方 55（Put Wall，弱结构）；上方 60（Call Wall，弱结构）。
 • Gamma 区域：切换参考 55（全链重定价，覆盖 100%）。
@@ -72,10 +72,10 @@ ATM:      C 1.80 / P 1.60
 ATM IV:   72.8%
 ΔOI Δ Exposure*: -27k shares
 Top ΔOI（行权价 ｜ ΔOI ｜ 最新价 ｜ 名义金额* ｜ 距现价）:
-P 55 ｜ +446 ｜ $1.60 ｜ 名义 $71.4k* ｜ -0.4%
-P 53 ｜ +221 ｜ $0.77 ｜ 名义 $17.0k* ｜ -4.0%
+P 55 ｜ +446 ｜ $1.60 ｜ 名义 $71.4k* ｜ -0.5%
+P 53 ｜ +221 ｜ $0.77 ｜ 名义 $17.0k* ｜ -4.1%
 C 58 ｜ +186 ｜ $0.74 ｜ 名义 $13.8k* ｜ +5.0%
-结构参考：58（+5.0%）上方 / 55（-0.4%）下方形成 OI 变化集中区（结构观察，非价格预测）
+结构参考：58（+5.0%）上方 / 55（-0.5%）下方形成 OI 变化集中区（结构观察，非价格预测）
 *模型估算/名义金额代理；买开/卖开方向不可观测（Scenario A/B）
 
    Top ΔOI: 52P +59 ｜ 50P +58
