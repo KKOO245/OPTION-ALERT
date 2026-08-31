@@ -2,8 +2,8 @@
 
 📊 市场环境
 
-SPY $765.66 ｜ QQQ $715.06
-VIX 15.22 ↑5.5%（5D -4.0%） ｜ Vol Regime: NORMAL
+SPY $765.41 ｜ QQQ $715.05
+VIX 15.19 ↑5.3%（5D -4.2%） ｜ Vol Regime: NORMAL
 CNN 恐惧贪婪 49.9（neutral）
 全市场 P/C OI（OCC 结算 08-28，2023-06 以来）: Equity 0.75（分位 12%） ｜ Index 0.94（分位 11%）
 
@@ -28,20 +28,20 @@ CNN 恐惧贪婪 49.9（neutral）
 ## TSLA
 
 📋 昨日晚报 → 今日晨报（只列关键项，低于阈值不单列）
-TSLA  昨收 348.75 → 今晨 364.80（+4.6%） | 较昨收变动（含盘初走势） ｜ 今日高 367.15 ｜ 低 347.15
+TSLA  昨收 348.75 → 今晨 364.90（+4.6%） | 较昨收变动（含盘初走势） ｜ 今日高 367.15 ｜ 低 347.15
 
-Options: P/C量 0.73 | OI比 0.50 | ATM IV 56.9% | Skew 0.5pp | Term 0.73 | ExpMove ±2.9%（近端） | Rank 64%
+Options: P/C量 0.73 | OI比 0.50 | ATM IV 57.0% | Skew 1.2pp | Term 0.73 | ExpMove ±3.0%（近端） | Rank 64%
    ⇒ Put/Call Volume: 0.73×（Call 成交量高于 Put）→ 方向 Unknown
    ⇒ Put/Call OI: 0.50×（存量 Call 仓位高于 Put）→ 存量 Call-dominant
    ⇒ 两者结构一致
    ⇒ 当日成交 vs 存量仓位：当日成交偏 Call，存量Call-dominant
-   ExpMove 期限化（expmove_v1）: 09-02（2D）±2.9% ｜ 09-04（4D）±4.2% ｜ 09-09（9D）±5.2% ｜ 09-11（11D）±5.8%
+   ExpMove 期限化（expmove_v1）: 09-02（2D）±3.0% ｜ 09-04（4D）±4.2% ｜ 09-09（9D）±5.1% ｜ 09-11（11D）±5.8%
 🔧 结构（未验证研究层：Mechanism Scenario A/B——OI 开仓方向不可观测）
-Gamma Regime: POSITIVE（模型分类） | GEX(存量) 136,331,882 | GEX Change N/A | Flip: Primary Flip: 340.49（PRIMARY，全链重定价 + 覆盖达标）
-🔎 测量完整性: GEX 符号契约 gex_sign_v1（Model A: Call+ / Put−）｜ Gamma 口径 全链重定价 ｜ Effective GEX 覆盖: 97%（带内） ｜ IV 有效性: VALID 1169 / LOW 217 / INVALID 808
-结构观察区: Primary Flip 340.49（全链重定价，覆盖 97%）
+Gamma Regime: POSITIVE（模型分类） | GEX(存量) 136,558,879 | GEX Change N/A | Flip: Primary Flip: 340.42（PRIMARY，全链重定价 + 覆盖达标）
+🔎 测量完整性: GEX 符号契约 gex_sign_v1（Model A: Call+ / Put−）｜ Gamma 口径 全链重定价 ｜ Effective GEX 覆盖: 97%（带内） ｜ IV 有效性: VALID 1190 / LOW 221 / INVALID 783
+结构观察区: Primary Flip 340.42（全链重定价，覆盖 97%）
 Put Wall 340（弱结构｜现价高于该位 7.3%） | Call Wall 400（弱结构｜现价低于该位 8.8%）
-最近结构参考: Flip 340（现价高于该位 7.1%）
+最近结构参考: Flip 340（现价高于该位 7.2%）
 🧭 结构解读（全部依赖上方假设）
 • 支撑/压力参考：下方 340（Put Wall，弱结构）；上方 400（Call Wall，弱结构）。
 • Gamma 区域：切换参考 340（全链重定价，覆盖 97%）。
@@ -68,38 +68,38 @@ Put Wall 340（弱结构｜现价高于该位 7.3%） | Call Wall 400（弱结�
 📆 09-02 Forward Structure
 OI:       C 36.8k / P 37.4k
 ΔOI:      C +16.6k / P +25.0k
-ATM:      C 5.09 / P 5.57
-ATM IV:   48.1%
-ΔOI Δ Exposure*: 619k shares
+ATM:      C 5.33 / P 5.50
+ATM IV:   48.0%
+ΔOI Δ Exposure*: 626k shares
 Top ΔOI（行权价 ｜ ΔOI ｜ 最新价 ｜ 名义金额* ｜ 距现价）:
 P 165 ｜ +7,000 ｜ $0.01 ｜ 名义 $7.0k* ｜ -54.8%
-C 400 ｜ +3,518 ｜ $0.16 ｜ 名义 $56.3k* ｜ +9.6%
-P 310 ｜ +3,007 ｜ $0.04 ｜ 名义 $12.0k* ｜ -15.0%
+C 400 ｜ +3,518 ｜ $0.15 ｜ 名义 $52.8k* ｜ +9.6%
+P 310 ｜ +3,007 ｜ $0.05 ｜ 名义 $15.0k* ｜ -15.0%
 结构参考：400（+9.6%）上方 / 165（-54.8%）下方形成 OI 变化集中区（结构观察，非价格预测）
 *模型估算/名义金额代理；买开/卖开方向不可观测（Scenario A/B）
 
 📆 09-04 Forward Structure
 OI:       C 148.1k / P 132.1k
 ΔOI:      C +46.3k / P +54.4k
-ATM:      C 7.40 / P 7.80
-ATM IV:   48.8%
+ATM:      C 7.60 / P 7.59
+ATM IV:   48.9%
 ΔOI Δ Exposure*: 1.7M shares
 Top ΔOI（行权价 ｜ ΔOI ｜ 最新价 ｜ 名义金额* ｜ 距现价）:
 P 130 ｜ +21,347 ｜ $0.01 ｜ 名义 $21.3k* ｜ -64.4%
 P 200 ｜ +5,775 ｜ $0.01 ｜ 名义 $5.8k* ｜ -45.2%
-C 360 ｜ +5,341 ｜ $10.17 ｜ 名义 $5.43M* ｜ -1.3%
+C 360 ｜ +5,341 ｜ $10.26 ｜ 名义 $5.48M* ｜ -1.3%
 结构参考：130（-64.4%）下方形成 OI 变化集中区（结构观察，非价格预测）
 *模型估算/名义金额代理；买开/卖开方向不可观测（Scenario A/B）
 
 📆 09-09 Forward Structure
 OI:       C 8.3k / P 2.9k
 ΔOI:      C +3.1k / P +1.0k
-ATM:      C 9.30 / P 9.50
+ATM:      C 9.34 / P 9.13
 ATM IV:   40.2%
-ΔOI Δ Exposure*: 112k shares
+ΔOI Δ Exposure*: 113k shares
 Top ΔOI（行权价 ｜ ΔOI ｜ 最新价 ｜ 名义金额* ｜ 距现价）:
-C 400 ｜ +680 ｜ $1.25 ｜ 名义 $85.0k* ｜ +9.6%
-C 380 ｜ +527 ｜ $4.00 ｜ 名义 $210.8k* ｜ +4.2%
+C 400 ｜ +680 ｜ $1.28 ｜ 名义 $87.0k* ｜ +9.6%
+C 380 ｜ +527 ｜ $4.15 ｜ 名义 $218.7k* ｜ +4.1%
 C 355 ｜ +334 ｜ $14.05 ｜ 名义 $469.3k* ｜ -2.7%
 结构参考：400（+9.6%）上方 / 355（-2.7%）下方形成 OI 变化集中区（结构观察，非价格预测）
 *模型估算/名义金额代理；买开/卖开方向不可观测（Scenario A/B）
@@ -107,9 +107,9 @@ C 355 ｜ +334 ｜ $14.05 ｜ 名义 $469.3k* ｜ -2.7%
 📆 09-11 Forward Structure
 OI:       C 60.3k / P 52.8k
 ΔOI:      C +6.9k / P +28.2k
-ATM:      C 10.70 / P 10.60
-ATM IV:   41.6%
-ΔOI Δ Exposure*: 158k shares
+ATM:      C 10.60 / P 10.57
+ATM IV:   41.7%
+ΔOI Δ Exposure*: 159k shares
 Top ΔOI（行权价 ｜ ΔOI ｜ 最新价 ｜ 名义金额* ｜ 距现价）:
 P 220 ｜ +13,581 ｜ $0.05 ｜ 名义 $67.9k* ｜ -39.7%
 P 180 ｜ +12,492 ｜ $0.03 ｜ 名义 $37.5k* ｜ -50.7%

@@ -2,8 +2,8 @@
 
 📊 市场环境
 
-SPY $765.66 ｜ QQQ $715.08
-VIX 15.22 ↑5.5%（5D -4.0%） ｜ Vol Regime: NORMAL
+SPY $765.41 ｜ QQQ $715.09
+VIX 15.19 ↑5.3%（5D -4.2%） ｜ Vol Regime: NORMAL
 CNN 恐惧贪婪 49.9（neutral）
 全市场 P/C OI（OCC 结算 08-28，2023-06 以来）: Equity 0.75（分位 12%） ｜ Index 0.94（分位 11%）
 
@@ -28,24 +28,24 @@ CNN 恐惧贪婪 49.9（neutral）
 ## QQQ
 
 📋 昨日晚报 → 今日晨报（只列关键项，低于阈值不单列）
-QQQ  昨收 716.43 → 今晨 714.60（-0.3%） | 较昨收变动（含盘初走势） ｜ 今日高 717.00 ｜ 低 713.16
+QQQ  昨收 716.43 → 今晨 714.57（-0.3%） | 较昨收变动（含盘初走势） ｜ 今日高 717.00 ｜ 低 713.16
 
-Options: P/C量 1.19 | OI比 0.91 | ATM IV 14.6% | Skew 1.5pp | Term 1.15 | ExpMove ±0.7%（近端） | Rank 27%
+Options: P/C量 1.19 | OI比 0.91 | ATM IV 14.6% | Skew 1.4pp | Term 1.16 | ExpMove ±0.7%（近端） | Rank 27%
    ⇒ Put/Call Volume: 1.19×（Put 与 Call 成交量接近）→ 方向 Unknown
    ⇒ Put/Call OI: 0.91×（两侧接近均衡）
    ⇒ 当日成交 vs 存量仓位：当日成交接近均衡，存量接近均衡
-   ⇒ 历史分位（15年 lambdaclass 全链口径）: GEX 45% ｜ P/C OI(近端) 3%
+   ⇒ 历史分位（15年 lambdaclass 全链口径）: GEX 36% ｜ P/C OI(近端) 3%
    ExpMove 期限化（expmove_v1）: 09-01（1D）±0.7% ｜ 09-02（2D）±0.9% ｜ 09-03（3D）±1.2% ｜ 09-04（4D）±1.4%
 🔧 结构（未验证研究层：Mechanism Scenario A/B——OI 开仓方向不可观测）
-Gamma Regime: NEGATIVE（模型分类） | GEX(存量) -99,127,796 | GEX Change vs 上次快照 -136,286,321 | Flip: Primary Flip: 715.81（PRIMARY，全链重定价 + 覆盖达标）
-🔎 测量完整性: GEX 符号契约 gex_sign_v1（Model A: Call+ / Put−）｜ Gamma 口径 全链重定价 ｜ Effective GEX 覆盖: 92%（带内） ｜ IV 有效性: VALID 3017 / LOW 589 / INVALID 2046
+Gamma Regime: NEGATIVE（模型分类） | GEX(存量) -212,235,158 | GEX Change vs 上次快照 -249,393,683 | Flip: Primary Flip: 717.13（PRIMARY，全链重定价 + 覆盖达标）
+🔎 测量完整性: GEX 符号契约 gex_sign_v1（Model A: Call+ / Put−）｜ Gamma 口径 全链重定价 ｜ Effective GEX 覆盖: 92%（带内） ｜ IV 有效性: VALID 2973 / LOW 588 / INVALID 2091
    ⇒ 全链负Gamma，波动易被放大（模型层）
-结构观察区: Primary Flip 715.81（全链重定价，覆盖 92%）
+结构观察区: Primary Flip 717.13（全链重定价，覆盖 92%）
 Put Wall 700（弱结构｜现价高于该位 2.1%） | Call Wall 750（弱结构｜现价低于该位 4.7%）
-最近结构参考: Flip 716（现价低于该位 0.2%）
+最近结构参考: Flip 717（现价低于该位 0.4%）
 🧭 结构解读（全部依赖上方假设）
 • 支撑/压力参考：下方 700（Put Wall，弱结构）；上方 750（Call Wall，弱结构）。
-• Gamma 区域：切换参考 716（全链重定价，覆盖 92%）。
+• Gamma 区域：切换参考 717（全链重定价，覆盖 92%）。
 • 做市商（条件机制）：若 Scenario A + 负 Gamma 成立，跌破关键位下方可能对应顺周期卖出压力增加；实际做市商对冲流量不可观测。Scenario B → 方向相反。不进入方向决策。
 • 失效参考：跌破关键位结构参考失效（结构性参考，非预测）。
 🔺 Activity（事实层，方向 Unknown）
@@ -69,9 +69,9 @@ Put Wall 700（弱结构｜现价高于该位 2.1%） | Call Wall 750（弱结�
 📆 09-01 Forward Structure
 OI:       C 52.8k / P 112.7k
 ΔOI:      C +20.0k / P +24.1k
-ATM:      C 2.07 / P 2.66
-ATM IV:   14.7%
-ΔOI Δ Exposure*: -122k shares
+ATM:      C 2.19 / P 2.53
+ATM IV:   14.6%
+ΔOI Δ Exposure*: -103k shares
 Top ΔOI（行权价 ｜ ΔOI ｜ 最新价 ｜ 名义金额* ｜ 距现价）:
 P 500 ｜ +9,999 ｜ $0.01 ｜ 名义 $10.0k* ｜ -30.0%
 C 725 ｜ +6,213 ｜ $0.09 ｜ 名义 $55.9k* ｜ +1.5%
@@ -82,39 +82,39 @@ P 525 ｜ +5,310 ｜ $0.01 ｜ 名义 $5.3k* ｜ -26.5%
 📆 09-02 Forward Structure
 OI:       C 22.7k / P 63.0k
 ΔOI:      C +6.8k / P +12.6k
-ATM:      C 3.17 / P 3.56
-ATM IV:   15.0%
-ΔOI Δ Exposure*: -169k shares
+ATM:      C 3.27 / P 3.42
+ATM IV:   14.9%
+ΔOI Δ Exposure*: -163k shares
 Top ΔOI（行权价 ｜ ΔOI ｜ 最新价 ｜ 名义金额* ｜ 距现价）:
-P 700 ｜ +4,535 ｜ $0.38 ｜ 名义 $172.3k* ｜ -2.0%
+P 700 ｜ +4,535 ｜ $0.36 ｜ 名义 $163.3k* ｜ -2.0%
 P 690 ｜ +2,015 ｜ $0.11 ｜ 名义 $22.2k* ｜ -3.4%
-C 730 ｜ +1,394 ｜ $0.06 ｜ 名义 $8.4k* ｜ +2.2%
+C 730 ｜ +1,394 ｜ $0.08 ｜ 名义 $11.2k* ｜ +2.2%
 结构参考：730（+2.2%）上方 / 700（-2.0%）下方形成 OI 变化集中区（结构观察，非价格预测）
 *模型估算/名义金额代理；买开/卖开方向不可观测（Scenario A/B）
 
 📆 09-03 Forward Structure
 OI:       C 20.6k / P 40.8k
 ΔOI:      C +5.3k / P +14.3k
-ATM:      C 4.05 / P 4.22
-ATM IV:   15.6%
-ΔOI Δ Exposure*: 45k shares
+ATM:      C 4.03 / P 4.24
+ATM IV:   15.5%
+ΔOI Δ Exposure*: 49k shares
 Top ΔOI（行权价 ｜ ΔOI ｜ 最新价 ｜ 名义金额* ｜ 距现价）:
 P 655 ｜ +6,066 ｜ $0.04 ｜ 名义 $24.3k* ｜ -8.3%
 P 660 ｜ +5,503 ｜ $0.05 ｜ 名义 $27.5k* ｜ -7.6%
-C 720 ｜ +2,701 ｜ $1.89 ｜ 名义 $510.5k* ｜ +0.8%
+C 720 ｜ +2,701 ｜ $1.95 ｜ 名义 $526.7k* ｜ +0.8%
 结构参考：720（+0.8%）上方 / 655（-8.3%）下方形成 OI 变化集中区（结构观察，非价格预测）
 *模型估算/名义金额代理；买开/卖开方向不可观测（Scenario A/B）
 
 📆 09-04 Forward Structure
 OI:       C 166.3k / P 189.2k
 ΔOI:      C +23.2k / P +26.6k
-ATM:      C 4.95 / P 5.13
-ATM IV:   16.4%
-ΔOI Δ Exposure*: 20k shares
+ATM:      C 5.05 / P 4.96
+ATM IV:   16.3%
+ΔOI Δ Exposure*: 37k shares
 Top ΔOI（行权价 ｜ ΔOI ｜ 最新价 ｜ 名义金额* ｜ 距现价）:
-C 722 ｜ +3,171 ｜ $2.00 ｜ 名义 $634.2k* ｜ +1.0%
-P 710 ｜ +1,743 ｜ $3.14 ｜ 名义 $547.3k* ｜ -0.6%
-C 725 ｜ +1,684 ｜ $1.23 ｜ 名义 $207.1k* ｜ +1.5%
+C 722 ｜ +3,171 ｜ $2.06 ｜ 名义 $653.2k* ｜ +1.0%
+P 710 ｜ +1,743 ｜ $3.07 ｜ 名义 $535.1k* ｜ -0.6%
+C 725 ｜ +1,684 ｜ $1.28 ｜ 名义 $215.6k* ｜ +1.5%
 结构参考：722（+1.0%）上方 / 710（-0.6%）下方形成 OI 变化集中区（结构观察，非价格预测）
 *模型估算/名义金额代理；买开/卖开方向不可观测（Scenario A/B）
 
