@@ -38,6 +38,100 @@ def _distance(spot: float, level: Optional[float]) -> Optional[float]:
     return (spot / level - 1.0) * 100.0
 
 
+def _pct_rank(value: Any, series: Any) -> Optional[float]:
+    """百分位：序列中小于等于 value 的比例 ×100；value/序列缺失返回 None。"""
+    if value is None or series is None:
+        return None
+    try:
+        v = float(value)
+        vals = [float(x) for x in series if x is not None and x == x]
+    except (TypeError, ValueError):
+        return None
+    if not vals:
+        return None
+    return sum(1 for x in vals if x <= v) / len(vals) * 100.0
+
+
+def _load_oi_history(ticker: str) -> Optional[Any]:
+    """加载 15 年 OI 结构历史（lambdaclass 口径）；缺失/损坏返回 None，不阻塞报告。"""
+    try:
+        import pandas as pd
+        from pathlib import Path
+
+        p = Path(__file__).resolve().parent.parent / "data" / "oi_history" / f"{ticker}.csv"
+        if not p.exists():
+            return None
+        df = pd.read_csv(p)
+        return df if not df.empty else None
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _oi_percentile_line(snapshot: Dict[str, Any]) -> Optional[str]:
+    """SPY/QQQ 的 15 年 OI 历史分位（lambdaclass 全链口径）：净 GEX + 近端 P/C OI。
+
+    - GEX 为带符号美元口径，分位反映"当前 GEX 相对 2008-2025 分布的位置"；
+    - 近端 P/C OI 与报告 OI比 同口径（≤7D）；
+    - 快照缺失对应字段（如旧版无 p3.gex）时只显示有数据的那部分，不编造。
+    """
+    ticker = (snapshot.get("ticker") or "").upper()
+    if ticker not in ("SPY", "QQQ"):
+        return None
+    df = _load_oi_history(ticker)
+    if df is None:
+        return None
+    p3 = snapshot.get("p3") or {}
+    gex = (p3.get("gex") or {}).get("net_gex")
+    pc = (snapshot.get("momentum") or {}).get("pc_oi_ratio")
+    gex_pct = _pct_rank(gex, df.get("net_gex")) if "net_gex" in df.columns else None
+    pc_pct = _pct_rank(pc, df.get("pcr_oi_near")) if "pcr_oi_near" in df.columns else None
+    parts = []
+    if gex_pct is not None:
+        parts.append(f"GEX {gex_pct:.0f}%")
+    if pc_pct is not None:
+        parts.append(f"P/C OI(近端) {pc_pct:.0f}%")
+    if not parts:
+        return None
+    return "   ⇒ 历史分位（15年 lambdaclass 全链口径）: " + " ｜ ".join(parts)
+
+
+def _occ_macro_line() -> Optional[str]:
+    """全市场 P/C OI（OCC 结算口径，前一交易日）及 2023-06 以来历史分位。"""
+    try:
+        import pandas as pd
+        from pathlib import Path
+
+        p = Path(__file__).resolve().parent.parent / "data" / "oi_history" / "OCC_DAILY.csv"
+        if not p.exists():
+            return None
+        df = pd.read_csv(p)
+        if df.empty or "equity_pcr_oi" not in df.columns:
+            return None
+        df = df.dropna(subset=["equity_pcr_oi"]).reset_index(drop=True)
+        if df.empty:
+            return None
+        last = df.iloc[-1]
+        date = str(last["date"])[5:]  # YYYY-MM-DD → MM-DD
+        eq = float(last["equity_pcr_oi"])
+        eq_pct = _pct_rank(eq, df["equity_pcr_oi"])
+        parts = [
+            f"Equity {eq:.2f}（分位 {eq_pct:.0f}%）"
+            if eq_pct is not None else f"Equity {eq:.2f}"
+        ]
+        if "index_pcr_oi" in df.columns:
+            idx = last.get("index_pcr_oi")
+            if idx is not None and idx == idx:
+                idx = float(idx)
+                idx_pct = _pct_rank(idx, df["index_pcr_oi"])
+                parts.append(
+                    f"Index {idx:.2f}（分位 {idx_pct:.0f}%）"
+                    if idx_pct is not None else f"Index {idx:.2f}"
+                )
+        return f"全市场 P/C OI（OCC 结算 {date}，2023-06 以来）: " + " ｜ ".join(parts)
+    except Exception:  # noqa: BLE001
+        return None
+
+
 def _options_block(snapshot: Dict[str, Any]) -> List[str]:
     m = snapshot.get("momentum") or {}
     rank = m.get("iv_rank")
@@ -61,6 +155,9 @@ def _options_block(snapshot: Dict[str, Any]) -> List[str]:
     lines = [line]
     for a in options_annotation(m.get("pc_ratio"), m.get("pc_oi_ratio")):
         lines.append("   ⇒ " + a)
+    hist = _oi_percentile_line(snapshot)
+    if hist:
+        lines.append(hist)
     # ExpMove 期限化（expmove_v1）：逐结算日独立计算，杜绝单值混用期限
     exp_parts = []
     for e in exps:
@@ -361,6 +458,9 @@ def market_block(market: Optional[Dict[str, Any]]) -> List[str]:
         fg_rating = market.get("fg_rating")
         if fg is not None:
             lines.append(f"CNN 恐惧贪婪 {fg}{'（' + str(fg_rating) + '）' if fg_rating else ''}")
+        occ_line = _occ_macro_line()
+        if occ_line:
+            lines.append(occ_line)
         lines.append("")
         lines.append("⇒ VIX ↑ = SPX 期权隐含的近 30 日预期波动率上升；不判方向，不进入 Direction Edge。")
         if label == "INSUFFICIENT_DATA":
@@ -376,7 +476,13 @@ def market_block(market: Optional[Dict[str, Any]]) -> List[str]:
     fg_rating = market.get("fg_rating")
     if fg is not None:
         m.append(f"CNN 恐惧贪婪 {fg}{'（' + str(fg_rating) + '）' if fg_rating else ''}")
-    return ["市场背景： " + " ｜ ".join(m), ""] if m else []
+    out = ["市场背景： " + " ｜ ".join(m)] if m else []
+    occ_line = _occ_macro_line()
+    if occ_line:
+        out.append(occ_line)
+    if out:
+        out.append("")
+    return out
 
 
 def calendar_block(calendar: Optional[List[str]]) -> List[str]:
