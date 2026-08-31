@@ -29,16 +29,22 @@ def bs_vanna(S: float, K: float, T: float, sigma: float, r: float = RISK_FREE_RA
         return None
     d2 = d1 - sigma * math.sqrt(T)
     phi = math.exp(-0.5 * d1 * d1) / math.sqrt(2.0 * math.pi)
-    return phi * d2 / sigma
+    # 标准 BS vanna = ∂Δ/∂σ = −φ(d1)·d2/σ（与 src.metrics.vanna_charm 同口径；
+    # 旧实现漏了负号，导致 p3 层 net_vanna 与 metrics/oi_history 符号相反）
+    return -phi * d2 / sigma
 
 
 def bs_charm(S: float, K: float, T: float, sigma: float, r: float = RISK_FREE_RATE) -> Optional[float]:
     d1 = _d1(S, K, T, sigma, r)
     if d1 is None:
         return None
-    d2 = d1 - sigma * math.sqrt(T)
     phi = math.exp(-0.5 * d1 * d1) / math.sqrt(2.0 * math.pi)
-    return -phi * (d2 / (2.0 * T) - r * d1 / (sigma * math.sqrt(T)))
+    # 标准 BS charm = ∂Δ/∂τ = φ(d1)·[(r+σ²/2)/(2σ√τ) − ln(S/K)/(2σ·τ^1.5)]
+    # （与 src.metrics.vanna_charm 同口径；旧实现用了非标准公式）
+    return phi * (
+        (r + sigma * sigma / 2.0) / (2.0 * sigma * math.sqrt(T))
+        - math.log(S / K) / (2.0 * sigma * T ** 1.5)
+    )
 
 
 def _dte(contract: Dict[str, Any], as_of: Optional[date]) -> Optional[int]:

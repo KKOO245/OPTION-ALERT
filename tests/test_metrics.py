@@ -80,6 +80,23 @@ def test_skew_25():
     assert skew is not None and abs(skew - 10.0) < 1e-6
 
 
+def test_skew_25_interpolation():
+    """skew_v2：|Δ|=0.25 线性插值（不再宽带平均）。"""
+    import pandas as pd
+
+    df = pd.DataFrame(
+        [
+            {"strike": 90.0, "type": "call", "delta": 0.20, "iv": 0.30, "dte": 10, "expiration": "2026-09-11"},
+            {"strike": 95.0, "type": "call", "delta": 0.30, "iv": 0.50, "dte": 10, "expiration": "2026-09-11"},
+            {"strike": 105.0, "type": "put", "delta": -0.30, "iv": 0.60, "dte": 10, "expiration": "2026-09-11"},
+            {"strike": 110.0, "type": "put", "delta": -0.20, "iv": 0.40, "dte": 10, "expiration": "2026-09-11"},
+        ]
+    )
+    skew = m.iv_skew_25(df)
+    # call 25Δ = 0.30+(0.50-0.30)*(0.05/0.10) = 0.40；put 25Δ = 0.40+(0.60-0.40)*(0.05/0.10) = 0.50
+    assert skew is not None and abs(skew - 10.0) < 1e-6
+
+
 def test_unusual_activity_filters():
     cs = _contracts()
     df = m._frame(cs)

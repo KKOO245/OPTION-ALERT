@@ -8,8 +8,9 @@
   B. Gamma 层（仅 SPY/QQQ/IWM）：lambdaclass parquet（2008-2025，含 OI/IV/Greeks）
      - 条件：Gamma 符号、|现货/Flip−1|≤0.5%、Call/Put Wall 邻近≤1%
      - 结果：同上（closes 用 data/closes，IWM 缺则跳过）
-  C. OI 结构层（仅 SPY/QQQ/IWM）：与 live 同口径（metrics.gamma_structure）
-     - 特征：Net GEX、Flip、Wall 质量分级（PRIMARY/WEAK/REMOTE）、
+  C. OI 结构层（仅 SPY/QQQ/IWM）：与 live 同口径（metrics.gamma_structure +
+     regime_map primary_rule）
+     - 特征：Net GEX、Flip（raw + 符号解析 primary_flip）、Wall 质量分级（PRIMARY/WEAK/REMOTE）、
        P/C OI 比（全链 + 近端≤7D）、Net Vanna/Charm
      - 条件：同上；并导出逐日序列 data/oi_history/{TICKER}.csv
 
@@ -232,6 +233,24 @@ def _gamma_day_features(grp: pd.DataFrame, spot: float) -> Optional[Dict[str, An
     cum = by_strike.cumsum()
     net_gex = float(cum.iloc[-1]) if len(cum) else None
     flip = _find_flip(by_strike.index.values, cum.values)
+    # 符号解析最近穿越（与 live regime_map primary_rule 同口径）：
+    #   正 GEX → 现价下方最近零交叉；负 GEX → 现价上方最近零交叉。
+    # oi_history/回放的 NEAR_FLIP 必须用这个 primary_flip，才能与报告对齐。
+    strikes_v = by_strike.index.values
+    cum_v = cum.values
+    crossings: List[float] = []
+    for i in range(len(strikes_v) - 1):
+        if cum_v[i] * cum_v[i + 1] < 0:
+            frac = -cum_v[i] / (cum_v[i + 1] - cum_v[i])
+            crossings.append(float(strikes_v[i] + (strikes_v[i + 1] - strikes_v[i]) * frac))
+    primary_flip = None
+    if crossings and net_gex is not None:
+        if net_gex > 0:
+            below = [f for f in crossings if f < spot]
+            primary_flip = max(below) if below else None
+        elif net_gex < 0:
+            above = [f for f in crossings if f > spot]
+            primary_flip = min(above) if above else None
     call_oi = g[g["type"] == "call"].groupby("strike")["open_interest"].sum()
     put_oi = g[g["type"] == "put"].groupby("strike")["open_interest"].sum()
     call_wall_raw = float(call_oi.idxmax()) if not call_oi.empty else None
@@ -253,6 +272,7 @@ def _gamma_day_features(grp: pd.DataFrame, spot: float) -> Optional[Dict[str, An
         "spot": round(spot, 2),
         "net_gex": round(net_gex, 0) if net_gex is not None else None,
         "flip": round(flip, 2) if flip is not None else None,
+        "primary_flip": round(primary_flip, 2) if primary_flip is not None else None,
         "call_wall": call_wall,
         "put_wall": put_wall,
         "call_wall_class": call_q["classification"] if call_q else None,
@@ -344,7 +364,7 @@ def _oi_layer(ticker: str, start: Optional[str], end: Optional[str]) -> List[Dic
         conditions: List[str] = []
         gamma_sign = "POSITIVE" if (feats["net_gex"] or 0) >= 0 else "NEGATIVE"
         conditions.append(f"GAMMA_{gamma_sign}")
-        flip = feats["flip"]
+        flip = feats["primary_flip"] or feats["flip"]
         if flip and spot > 0 and abs(spot / flip - 1.0) <= 0.005:
             conditions.append("NEAR_FLIP")
         # 只对通过质量分级的 Wall（PRIMARY/WEAK）判邻近，REMOTE 不算
@@ -369,8 +389,8 @@ def write_oi_history(tickers: List[str], start: Optional[str] = None,
                      end: Optional[str] = None) -> Dict[str, int]:
     """导出逐日 OI 结构序列：data/oi_history/{TICKER}.csv（全量重建，确定性）。
 
-    列：date, spot, net_gex, gamma_flip, call_wall, put_wall, call_wall_class,
-        put_wall_class, pcr_oi_all, pcr_oi_near, net_vanna, net_charm
+    列：date, spot, net_gex, flip, primary_flip, call_wall, put_wall,
+        call_wall_class, put_wall_class, pcr_oi_all, pcr_oi_near, net_vanna, net_charm
     """
     OI_HISTORY_DIR.mkdir(parents=True, exist_ok=True)
     stats: Dict[str, int] = {}

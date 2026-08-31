@@ -242,9 +242,21 @@ def fetch_option_volumes_yfinance(ticker, expirations):
                     continue
                 vol = row.get("volume")
                 last = row.get("lastPrice")
+                # NaN 防御：yfinance 常对无成交合约返回 NaN；NaN 不是 None，
+                # 直接 int(nan) 会抛 ValueError 拖垮整个补量
+                try:
+                    vol_f = float(vol)
+                    vol_i = int(vol_f) if math.isfinite(vol_f) else 0
+                except (TypeError, ValueError):
+                    vol_i = 0
+                try:
+                    last_f = float(last)
+                    last_f = last_f if math.isfinite(last_f) else None
+                except (TypeError, ValueError):
+                    last_f = None
                 out[str(sym)] = {
-                    "volume": int(vol) if vol is not None else 0,
-                    "last": float(last) if last is not None else None,
+                    "volume": vol_i,
+                    "last": last_f,
                 }
     except Exception as e:
         print(f"[警告] yfinance 补量失败（保持 N/A）: {e}")

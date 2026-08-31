@@ -21,6 +21,33 @@ def test_bs_vanna_charm_finite_and_signed():
     assert 0 < abs(v) < 1.0 and 0 < abs(ch) < 1.0
 
 
+def test_bs_vanna_charm_standard_formula():
+    """回归：必须与标准 Black-Scholes 公式（= src.metrics.vanna_charm 口径）一致。"""
+    import math
+
+    def pdf(x):
+        return math.exp(-0.5 * x * x) / math.sqrt(2.0 * math.pi)
+
+    def std_vanna(S, K, T, sigma, r=0.05):
+        d1 = (math.log(S / K) + (r + sigma * sigma / 2.0) * T) / (sigma * math.sqrt(T))
+        d2 = d1 - sigma * math.sqrt(T)
+        return -pdf(d1) * d2 / sigma
+
+    def std_charm(S, K, T, sigma, r=0.05):
+        d1 = (math.log(S / K) + (r + sigma * sigma / 2.0) * T) / (sigma * math.sqrt(T))
+        return pdf(d1) * (
+            (r + sigma * sigma / 2.0) / (2.0 * sigma * math.sqrt(T))
+            - math.log(S / K) / (2.0 * sigma * T ** 1.5)
+        )
+
+    for S, K, T, sig in [(100, 100, 30 / 365, 0.3), (100, 110, 10 / 365, 0.35), (500, 480, 30 / 365, 0.5)]:
+        assert abs(bs_vanna(S, K, T, sig) - std_vanna(S, K, T, sig)) < 1e-12
+        assert abs(bs_charm(S, K, T, sig) - std_charm(S, K, T, sig)) < 1e-12
+    # ATM（S=K, r>0）标准 vanna 为负、charm 为正（符号契约）
+    assert bs_vanna(100.0, 100.0, 30 / 365.0, 0.3) < 0
+    assert bs_charm(100.0, 100.0, 30 / 365.0, 0.3) > 0
+
+
 def test_second_order_aggregate_gates():
     as_of = datetime.date(2026, 8, 24)
     contracts = [

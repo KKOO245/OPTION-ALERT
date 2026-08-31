@@ -25,9 +25,13 @@ def _num(v):
 def realized_vol(closes: Optional[List[float]], window: int, min_obs: int = 5) -> Optional[float]:
     """最近 N 个交易日收盘价的年化实现波动（对数收益标准差 × √252）。
     需要 window+1 个收盘价（window 个收益）；不足返回 None。
+
+    （修复）守卫必须用 window+1 而不是 min_obs+1：
+    数据量在 [min_obs+1, window] 之间时，range(len-window, len) 起点为负，
+    会触发 IndexError（或负索引环绕算出错误结果），从而拖垮整个 p3 采集。
     """
     vals = [c for c in closes or [] if c is not None and c > 0]
-    if len(vals) < min_obs + 1:
+    if len(vals) < max(window + 1, min_obs + 1):
         return None
     rets = [math.log(vals[i] / vals[i - 1]) for i in range(len(vals) - window, len(vals))]
     if len(rets) < 2:

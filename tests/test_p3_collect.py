@@ -13,6 +13,17 @@ def test_realized_vol_window_and_missing():
     assert realized_vol([100.0, 100.1], 5, min_obs=5) is None  # 观测不足
 
 
+def test_realized_vol_no_index_error_on_short_history():
+    """回归：数据量在 [min_obs+1, window] 之间时，必须返回 None 而不是越界。"""
+    prices = [100.0 + i for i in range(7)]  # 7 个收盘价 < window+1(21)
+    assert realized_vol(prices, 20, min_obs=5) is None
+    prices10 = [100.0 + i for i in range(10)]
+    assert realized_vol(prices10, 20, min_obs=5) is None
+    prices21 = [100.0 + i for i in range(21)]
+    rv = realized_vol(prices21, 20, min_obs=5)
+    assert rv is not None and rv >= 0
+
+
 def test_daily_closes_evening_priority():
     rows = [
         {"date": "2026-08-25", "session": "morning", "price": 210.0},

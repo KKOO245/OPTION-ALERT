@@ -117,18 +117,56 @@ def max_pain(df, expirations):
 
 
 def iv_skew_25(df):
-    """25Δ 看跌 IV − 25Δ 看涨 IV（百分点）；负值=市场更怕大跌"""
-    calls = df[(df["type"] == "call") & (df["delta"].notna())
-               & (df["delta"] >= 0.20) & (df["delta"] <= 0.35)]
-    puts = df[(df["type"] == "put") & (df["delta"].notna())
-              & (df["delta"] <= -0.20) & (df["delta"] >= -0.35)]
-    call_ivs = calls["iv"].dropna()
-    call_ivs = call_ivs[(call_ivs > 0) & (call_ivs < 3)]
-    put_ivs = puts["iv"].dropna()
-    put_ivs = put_ivs[(put_ivs > 0) & (put_ivs < 3)]
-    if call_ivs.empty or put_ivs.empty:
+    """25Δ 看跌 IV − 25Δ 看涨 IV（百分点）；负值=市场更怕大跌。
+
+    v2（skew_v2）：最近期限 + |Δ|=0.25 线性插值（不再用 0.20-0.35 宽带平均，
+    避免跨期限/带内平均把期限结构与偏度混在一起）；近端数据不足时回退调用方
+    传入的窗口（live 为 ≤35D）。
+    """
+
+    def interp_iv_at_delta(rows, target):
+        rows = rows.dropna(subset=["delta", "iv"])
+        rows = rows[(rows["iv"] > 0) & (rows["iv"] < 3)]
+        if rows.empty:
+            return None
+        g = rows.assign(ad=rows["delta"].abs()).groupby("ad")["iv"].mean().sort_index()
+        xs = g.index.values
+        ys = g.values
+        # 目标恰在格点上（或单点）
+        i = np.argmin(np.abs(xs - target))
+        if abs(xs[i] - target) < 1e-9:
+            return float(ys[i])
+        if len(xs) < 2:
+            return None
+        if target <= xs[0]:
+            return float(ys[0])
+        if target >= xs[-1]:
+            return float(ys[-1])
+        j = int(np.searchsorted(xs, target))
+        x0, x1 = xs[j - 1], xs[j]
+        y0, y1 = ys[j - 1], ys[j]
+        if x1 == x0:
+            return float(y0)
+        return float(y0 + (y1 - y0) * (target - x0) / (x1 - x0))
+
+    calls = df[df["type"] == "call"]
+    puts = df[df["type"] == "put"]
+    # 优先最近期限（与 atm/expmove 同口径）
+    if "expiration" in df.columns and not df.empty:
+        dtes = df.groupby("expiration")["dte"].min()
+        if not dtes.empty:
+            near_exp = dtes.idxmin()
+            near = df[df["expiration"] == near_exp]
+            c_iv = interp_iv_at_delta(near[near["type"] == "call"], 0.25)
+            p_iv = interp_iv_at_delta(near[near["type"] == "put"], 0.25)
+            if c_iv is not None and p_iv is not None:
+                return (p_iv - c_iv) * 100.0
+    # 回退：调用方传入的窗口（live 为 ≤35D）
+    c_iv = interp_iv_at_delta(calls, 0.25)
+    p_iv = interp_iv_at_delta(puts, 0.25)
+    if c_iv is None or p_iv is None:
         return None
-    return (float(put_ivs.mean()) - float(call_ivs.mean())) * 100.0
+    return (p_iv - c_iv) * 100.0
 
 
 def oi_concentration(df, spot, band=0.05, top_n=3):
