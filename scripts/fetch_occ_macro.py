@@ -4,16 +4,20 @@
 
 输出：data/oi_history/OCC_DAILY.csv
 列：date, equity_call_oi, equity_put_oi, equity_pcr_oi,
-    index_call_oi, index_put_oi, index_pcr_oi,
-    occ_call_oi, occ_put_oi, occ_total_oi
+    index_call_oi, index_put_oi, index_pcr_oi, occ_total_oi
 
 端点：https://marketdata.theocc.com/daily-open-interest?reportDate=MM/DD/YYYY&action=download&format=csv
-说明：这是"按资产类别"的汇总表（不是逐合约），用于晨报宏观情绪参考线。
-     断点续传：已存在输出文件时从最后日期之后继续。
+说明（实测 2026-08-28 文件）：
+  - 每份文件是"当月至今"的整月序列（一次下载 = 一个月），按每月最后工作日拉一次即可；
+  - 列布局：Date, Equity(C/P/T), Index/Other(C/P/T), Debt(C/P/T), Futures(T), OCC Total(T)
+    —— OCC Total 是单一总数，没有 Call/Put 拆分；
+  - 这是"按资产类别"的汇总表（不是逐合约），用于晨报宏观情绪参考线。
+  - 断点续传：已存在输出文件时跳过已收录日期。
 
 用法：
-  python scripts/fetch_occ_macro.py                    # 2023-06-01 → 昨天
+  python scripts/fetch_occ_macro.py                    # 2023-06 → 昨天
   python scripts/fetch_occ_macro.py --start 2021-01-01 # 自定义起点
+  python scripts/fetch_occ_macro.py --probe 2026-08-28 # 诊断单日
 """
 
 from __future__ import annotations
@@ -23,7 +27,6 @@ import csv
 import datetime
 import gzip
 import io
-import os
 import sys
 import time
 import urllib.request
@@ -44,8 +47,7 @@ HEADERS = {
 }
 COLUMNS = [
     "date", "equity_call_oi", "equity_put_oi", "equity_pcr_oi",
-    "index_call_oi", "index_put_oi", "index_pcr_oi",
-    "occ_call_oi", "occ_put_oi", "occ_total_oi",
+    "index_call_oi", "index_put_oi", "index_pcr_oi", "occ_total_oi",
 ]
 
 
@@ -53,23 +55,33 @@ def _log(msg: str) -> None:
     print(f"[occ] {msg}", flush=True)
 
 
-def _business_days(start: datetime.date, end: datetime.date):
-    d = start
-    while d <= end:
-        if d.weekday() < 5:
+def _last_business_day(year: int, month: int) -> datetime.date:
+    last = datetime.date(year, month + 1, 1) - datetime.timedelta(days=1) if month < 12 \
+        else datetime.date(year + 1, 1, 1) - datetime.timedelta(days=1)
+    while last.weekday() >= 5:
+        last -= datetime.timedelta(days=1)
+    return last
+
+
+def _monthly_dates(start: datetime.date, end: datetime.date):
+    y, m = start.year, start.month
+    while (y, m) <= (end.year, end.month):
+        d = min(end, _last_business_day(y, m))
+        if d >= start:
             yield d
-        d += datetime.timedelta(days=1)
+        m += 1
+        if m == 13:
+            y, m = y + 1, 1
 
 
-def _fetch(date: datetime.date) -> str | None:
+def _fetch(date: datetime.date) -> str:
     url = f"{URL}?reportDate={date.month:02d}/{date.day:02d}/{date.year}&action=download&format=csv"
     req = urllib.request.Request(url, headers=HEADERS)
     last_err: Exception | None = None
-    for attempt in range(2):
+    for attempt in range(3):
         try:
             with urllib.request.urlopen(req, timeout=30) as resp:
                 raw = resp.read()
-            # 兜底解压：个别情况即使要求 identity 仍返回 gzip
             if raw[:2] == b"\x1f\x8b":
                 raw = gzip.decompress(raw)
             for enc in ("utf-8-sig", "utf-8", "latin-1"):
@@ -85,10 +97,10 @@ def _fetch(date: datetime.date) -> str | None:
 
 
 def _parse(text: str) -> list[list[str]] | None:
-    """从 OCC 汇总 CSV 提取 Equity/Index/OCC Total 的 Call/Put/Total 行。
+    """OCC 汇总 CSV → [[date, eq_c, eq_p, idx_c, idx_p, occ_total], ...]
 
-    返回 [[date, eq_c, eq_p, eq_t, idx_c, idx_p, idx_t, occ_c, occ_p, occ_t], ...]
-    解析失败返回 None。
+    真实列布局（实测）：Date, Equity(C/P/T), Index/Other(C/P/T), Debt(C/P/T),
+    Futures(T), OCC Total(T)。返回 None 表示解析失败。
     """
     rows = list(csv.reader(io.StringIO(text)))
     header_idx = None
@@ -105,47 +117,50 @@ def _parse(text: str) -> list[list[str]] | None:
         if not cells or not cells[0]:
             continue
         first = cells[0].strip().strip('"')
-        # 子表头行（Calls,Puts,Total）或非日期行 → 跳过
         try:
-            datetime.datetime.strptime(first, "%m/%d/%Y")
+            dt = datetime.datetime.strptime(first, "%m/%d/%Y")
         except ValueError:
             try:
-                datetime.datetime.strptime(first, "%Y-%m-%d")
+                dt = datetime.datetime.strptime(first, "%Y-%m-%d")
             except ValueError:
                 continue
-        if len(cells) < 15:
+        if len(cells) < 12:
             continue
 
         def num(s: str) -> float:
             return float(s.replace(",", "").strip() or 0.0)
 
-        eq_c, eq_p, eq_t = num(cells[1]), num(cells[2]), num(cells[3])
-        idx_c, idx_p, idx_t = num(cells[4]), num(cells[5]), num(cells[6])
-        occ_c, occ_p, occ_t = num(cells[13]), num(cells[14]), num(cells[15])
+        eq_c, eq_p = num(cells[1]), num(cells[2])
+        idx_c, idx_p = num(cells[4]), num(cells[5])
+        occ_t = num(cells[11])
         out.append(
             [
-                first,
+                dt.strftime("%Y-%m-%d"),
                 f"{eq_c:.0f}", f"{eq_p:.0f}",
                 f"{eq_p / eq_c:.4f}" if eq_c > 0 else "",
                 f"{idx_c:.0f}", f"{idx_p:.0f}",
                 f"{idx_p / idx_c:.4f}" if idx_c > 0 else "",
-                f"{occ_c:.0f}", f"{occ_p:.0f}", f"{occ_t:.0f}",
+                f"{occ_t:.0f}",
             ]
         )
     return out or None
 
 
 def _probe(date: datetime.date) -> None:
-    """拉一天并打印原始内容与解析结果，用于诊断格式/编码问题。"""
     try:
         raw_text = _fetch(date)
     except Exception as e:  # noqa: BLE001
         _log(f"下载失败: {e}")
         return
-    _log(f"日期 {date} 原始内容（前 500 字符）:")
-    _log(repr(raw_text[:500]))
+    _log(f"日期 {date} 原始内容（前 400 字符）:")
+    _log(repr(raw_text[:400]))
     parsed = _parse(raw_text)
-    _log(f"解析结果: {parsed[0] if parsed else 'None'}")
+    if parsed:
+        _log(f"解析成功，本月 {len(parsed)} 个工作日；样例:")
+        for r in parsed[:2] + parsed[-2:]:
+            _log("  " + str(r))
+    else:
+        _log("解析结果: None")
 
 
 def main() -> int:
@@ -170,7 +185,6 @@ def main() -> int:
         _probe(datetime.date.fromisoformat(args.probe))
         return 0
 
-    # 断点续传
     seen: set[str] = set()
     if out.exists() and out.stat().st_size > 0:
         with open(out, encoding="utf-8") as f:
@@ -182,12 +196,9 @@ def main() -> int:
                     seen.add(d)
         _log(f"输出已存在，续传（已收录 {len(seen)} 天）")
 
-    ok = skip = fail = 0
+    ok = fail = 0
     new_rows: list[list[str]] = []
-    for d in _business_days(start, end):
-        key = d.strftime("%m/%d/%Y")
-        if key in seen:
-            continue
+    for d in _monthly_dates(start, end):
         try:
             text = _fetch(d)
         except Exception as e:  # noqa: BLE001
@@ -196,18 +207,15 @@ def main() -> int:
             continue
         parsed = _parse(text)
         if not parsed:
-            skip += 1  # 节假日/无数据日
-            if skip <= 3:
-                _log(f"{d} 解析为空（前 200 字符: {text[:200]!r}）")
+            _log(f"{d} 解析为空（前 200 字符: {text[:200]!r}）")
             continue
-        row = parsed[0]
-        if row[0] != key:
-            row = [key] + row[1:]
-        new_rows.append(row)
-        seen.add(key)
-        ok += 1
-        if ok % 50 == 0:
-            _log(f"已拉取 {ok} 天（最近 {row[0]}）...")
+        for row in parsed:
+            if row[0] in seen:
+                continue
+            seen.add(row[0])
+            new_rows.append(row)
+            ok += 1
+        _log(f"{d:%Y-%m} 月文件 → 新增 {ok} 天（本月共 {len(parsed)} 个工作日）")
         time.sleep(args.sleep)
 
     if new_rows:
@@ -218,9 +226,20 @@ def main() -> int:
             for r in new_rows:
                 w.writerow(r)
         _log(f"新增 {len(new_rows)} 天 → {out}")
-    _log(f"完成：成功 {ok} | 跳过（无数据日）{skip} | 失败 {fail} | 累计 {len(seen)} 天")
-    if ok and new_rows:
-        _log("样例（首/尾）：")
+    # OCC 月度文件内部是倒序（新日期在前）→ 结束时按日期升序重排整份文件
+    if out.exists() and out.stat().st_size > 0:
+        with open(out, encoding="utf-8") as f:
+            all_rows = list(csv.reader(f))
+        if all_rows and all_rows[0][0] == "date":
+            header, body = all_rows[0], all_rows[1:]
+            body.sort(key=lambda r: r[0])
+            with open(out, "w", encoding="utf-8", newline="") as f:
+                w = csv.writer(f)
+                w.writerow(header)
+                w.writerows(body)
+    _log(f"完成：新增 {ok} | 失败 {fail} | 累计 {len(seen)} 天")
+    if new_rows:
+        _log("样例（首/尾）:")
         with open(out, encoding="utf-8") as f:
             lines = f.read().splitlines()
         for line in lines[:2] + lines[-2:]:
