@@ -2,9 +2,9 @@
 
 📊 市场环境
 
-SPY $766.17 ｜ QQQ $713.43
-VIX 15.33 ↑6.2%（5D -3.3%） ｜ Vol Regime: NORMAL
-CNN 恐惧贪婪 50.1（neutral）
+SPY $765.66 ｜ QQQ $715.04
+VIX 15.22 ↑5.5%（5D -4.0%） ｜ Vol Regime: NORMAL
+CNN 恐惧贪婪 49.9（neutral）
 全市场 P/C OI（OCC 结算 08-28，2023-06 以来）: Equity 0.75（分位 12%） ｜ Index 0.94（分位 11%）
 
 ⇒ VIX ↑ = SPX 期权隐含的近 30 日预期波动率上升；不判方向，不进入 Direction Edge。
@@ -26,19 +26,19 @@ CNN 恐惧贪婪 50.1（neutral）
 ## CCO
 
 📋 昨日晚报 → 今日晨报（只列关键项，低于阈值不单列）
-CCO  昨收 2.34 → 今晨 2.35（+0.2%） | 较昨收变动（含盘初走势） ｜ 今日高 2.35 ｜ 低 2.34
+CCO  昨收 2.34 → 今晨 2.38（+1.5%） | 较昨收变动（含盘初走势） ｜ 今日高 2.38 ｜ 低 2.34
 
-Options: P/C量 N/A | OI比 0.28 | ATM IV 62.1% | Skew N/A | Term N/A | ExpMove ±16.2%（近端） | Rank 9%
+Options: P/C量 N/A | OI比 0.28 | ATM IV 62.1% | Skew -11.8pp | Term N/A | ExpMove ±16.0%（近端） | Rank 9%
    ⇒ Put/Call Volume: 数据不足 → 方向 Unknown
    ⇒ Put/Call OI: 0.28×（存量 Call 仓位高于 Put）→ 存量 Call-dominant
-   ExpMove 期限化（expmove_v1）: 09-18（18D）±16.2%
+   ExpMove 期限化（expmove_v1）: 09-18（18D）±16.0%
 🔧 结构（未验证研究层：Mechanism Scenario A/B——OI 开仓方向不可观测）
-Gamma Regime: POSITIVE（模型分类） | GEX(存量) N/A | GEX Change N/A | Flip: Candidates 2.21 ｜ Primary: N/A（CONDITIONAL）
-🔎 测量完整性: GEX 符号契约 gex_sign_v1（Model A: Call+ / Put−）｜ Gamma 口径 全链重定价 ｜ Effective GEX 覆盖: 38%（带内） ｜ IV 有效性: VALID 0 / LOW 3 / INVALID 11
-结构观察区: ≈2（全链重定价，覆盖 38%，CONDITIONAL）
-最近结构参考: Flip 2（现价高于该位 6.1%）
+Gamma Regime: POSITIVE（模型分类） | GEX(存量) 27,630 | GEX Change vs 上次快照 5,238 | Flip: Candidates 2.21 ｜ Primary: N/A（CONDITIONAL）
+🔎 测量完整性: GEX 符号契约 gex_sign_v1（Model A: Call+ / Put−）｜ Gamma 口径 全链重定价 ｜ Effective GEX 覆盖: 待盘点 ｜ IV 有效性: VALID 0 / LOW 3 / INVALID 11
+结构观察区: ≈2（全链重定价，覆盖待盘点，CONDITIONAL）
+最近结构参考: Flip 2（现价高于该位 7.5%）
 🧭 结构解读（全部依赖上方假设）
-• Gamma 区域：切换参考 2（全链重定价，覆盖 38%）。
+• Gamma 区域：切换参考 2（全链重定价，覆盖待盘点）。
 • 做市商（条件机制）：若 Scenario A + 负 Gamma 成立，跌破关键位下方可能对应顺周期卖出压力增加；实际做市商对冲流量不可观测。Scenario B → 方向相反。不进入方向决策。
 • 失效参考：跌破关键位结构参考失效（结构性参考，非预测）。
 🔺 Activity（事实层，方向 Unknown）
