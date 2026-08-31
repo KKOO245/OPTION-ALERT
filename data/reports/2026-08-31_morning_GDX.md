@@ -2,7 +2,7 @@
 
 📊 市场环境
 
-SPY $765.38 ｜ QQQ $714.57
+SPY $765.88 ｜ QQQ $713.45
 VIX 15.33 ↑6.2%（5D -3.3%） ｜ Vol Regime: NORMAL
 CNN 恐惧贪婪 50.1（neutral）
 全市场 P/C OI（OCC 结算 08-28，2023-06 以来）: Equity 0.75（分位 12%） ｜ Index 0.94（分位 11%）
@@ -47,15 +47,15 @@ Gamma Regime: NEGATIVE（模型分类） | GEX(存量) N/A | GEX Change N/A | Fl
 • 做市商（条件机制）：若 Scenario A + 负 Gamma 成立，跌破关键位下方可能对应顺周期卖出压力增加；实际做市商对冲流量不可观测。Scenario B → 方向相反。不进入方向决策。
 • 失效参考：跌破关键位结构参考失效（结构性参考，非预测）。
 🔺 Activity（事实层，方向 Unknown）
-09-04 106.0C — Vol 1,053 | 最新价 $0.21 | OI 314→18030 (ΔOI +17716张) | ΔOI/Volume 1682.4% | Magnitude: HIGH | 完整度: HIGH
+09-04 106.0C — Vol 1,053 | 最新价 $0.21 | OI 314→18030 (ΔOI +17716张) | ΔOI/Volume N/A（量数据不完整） | Magnitude: HIGH | 完整度: HIGH
    ⇒ 大额净增17716张（+5642.0% vs前日OI），连续性待观察（方向未知）
-09-04 102.0C — Vol 303 | 最新价 $0.64 | OI 298→17627 (ΔOI +17329张) | ΔOI/Volume 5719.1% | Magnitude: HIGH | 完整度: HIGH
+09-04 102.0C — Vol 303 | 最新价 $0.64 | OI 298→17627 (ΔOI +17329张) | ΔOI/Volume N/A（量数据不完整） | Magnitude: HIGH | 完整度: HIGH
    ⇒ 大额净增17329张（+5815.1% vs前日OI），连续性待观察（方向未知）
-09-04 105.0C — Vol 3,210 | 最新价 $0.33 | OI 613→13484 (ΔOI +12871张) | ΔOI/Volume 401.0% | Magnitude: HIGH | 完整度: HIGH
+09-04 105.0C — Vol 3,210 | 最新价 $0.33 | OI 613→13484 (ΔOI +12871张) | ΔOI/Volume N/A（量数据不完整） | Magnitude: HIGH | 完整度: HIGH
    ⇒ 大额净增12871张（+2099.7% vs前日OI），连续性待观察（方向未知）
-09-04 101.0C — Vol 170 | 最新价 $0.92 | OI 191→10802 (ΔOI +10611张) | ΔOI/Volume 6241.8% | Magnitude: HIGH | 完整度: HIGH
+09-04 101.0C — Vol 170 | 最新价 $0.92 | OI 191→10802 (ΔOI +10611张) | ΔOI/Volume N/A（量数据不完整） | Magnitude: HIGH | 完整度: HIGH
    ⇒ 大额净增10611张（+5555.5% vs前日OI），连续性待观察（方向未知）
-09-04 104.0C — Vol 500 | 最新价 $0.35 | OI 1020→8147 (ΔOI +7127张) | ΔOI/Volume 1425.4% | Magnitude: HIGH | 完整度: HIGH
+09-04 104.0C — Vol 500 | 最新价 $0.35 | OI 1020→8147 (ΔOI +7127张) | ΔOI/Volume N/A（量数据不完整） | Magnitude: HIGH | 完整度: HIGH
    ⇒ 大额净增7127张（+698.7% vs前日OI），连续性待观察（方向未知）
 📆 Forward Expiration Structure
 

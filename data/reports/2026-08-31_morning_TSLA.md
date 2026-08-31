@@ -2,7 +2,7 @@
 
 📊 市场环境
 
-SPY $765.58 ｜ QQQ $714.41
+SPY $766.17 ｜ QQQ $713.42
 VIX 15.33 ↑6.2%（5D -3.3%） ｜ Vol Regime: NORMAL
 CNN 恐惧贪婪 50.1（neutral）
 全市场 P/C OI（OCC 结算 08-28，2023-06 以来）: Equity 0.75（分位 12%） ｜ Index 0.94（分位 11%）
@@ -30,7 +30,7 @@ CNN 恐惧贪婪 50.1（neutral）
 📋 昨日晚报 → 今日晨报（只列关键项，低于阈值不单列）
 TSLA  昨收 348.75 → 今晨 360.46（+3.4%） | 较昨收变动（含盘初走势） ｜ 今日高 363.04 ｜ 低 347.15
 
-Options: P/C量 0.45 | OI比 0.50 | ATM IV 72.1% | Skew -0.0pp | Term 0.58 | ExpMove ±1.6%（近端） | Rank 85%
+Options: P/C量 0.45 | OI比 0.50 | ATM IV 72.1% | Skew -0.0pp | Term 0.58 | ExpMove ±3.1%（近端） | Rank 85%
    ⇒ Put/Call Volume: 0.45×（Call 成交量高于 Put）→ 方向 Unknown
    ⇒ Put/Call OI: 0.50×（存量 Call 仓位高于 Put）→ 存量 Call-dominant
    ⇒ 两者结构一致
@@ -49,13 +49,13 @@ Put Wall 340（弱结构｜现价高于该位 6.0%）
 • 做市商（条件机制）：若 Scenario A + 负 Gamma 成立，跌破关键位下方可能对应顺周期卖出压力增加；实际做市商对冲流量不可观测。Scenario B → 方向相反。不进入方向决策。
 • 失效参考：跌破关键位结构参考失效（结构性参考，非预测）。
 🔺 Activity（事实层，方向 Unknown）
-09-04 130.0P — Vol 1 | 最新价 $0.01 | OI 1000→22347 (ΔOI +21347张) | ΔOI/Volume 2134700.0% | Magnitude: HIGH | 完整度: HIGH
+09-04 130.0P — Vol 1 | 最新价 $0.01 | OI 1000→22347 (ΔOI +21347张) | ΔOI/Volume N/A（量数据不完整） | Magnitude: HIGH | 完整度: HIGH
    ⇒ 大额净增21347张（+2134.7% vs前日OI），连续性待观察（方向未知）
-09-11 220.0P — Vol 0 | 最新价 $0.08 | OI 606→14187 (ΔOI +13581张) | ΔOI/Volume N/A | Magnitude: HIGH | 完整度: HIGH
+09-11 220.0P — Vol 0 | 最新价 $0.08 | OI 606→14187 (ΔOI +13581张) | ΔOI/Volume N/A（量数据不完整） | Magnitude: HIGH | 完整度: HIGH
    ⇒ 大额净增13581张（+2241.1% vs前日OI），连续性待观察（方向未知）
-09-11 180.0P — Vol 0 | 最新价 $0.05 | OI 16→12508 (ΔOI +12492张) | ΔOI/Volume N/A | Magnitude: HIGH | 完整度: HIGH
+09-11 180.0P — Vol 0 | 最新价 $0.05 | OI 16→12508 (ΔOI +12492张) | ΔOI/Volume N/A（量数据不完整） | Magnitude: HIGH | 完整度: HIGH
    ⇒ 大额净增12492张（+78075.0% vs前日OI），连续性待观察（方向未知）
-09-02 165.0P — Vol 0 | 最新价 $0.01 | OI 22→7022 (ΔOI +7000张) | ΔOI/Volume N/A | Magnitude: HIGH | 完整度: HIGH
+09-02 165.0P — Vol 0 | 最新价 $0.01 | OI 22→7022 (ΔOI +7000张) | ΔOI/Volume N/A（量数据不完整） | Magnitude: HIGH | 完整度: HIGH
    ⇒ 大额净增7000张（+31818.2% vs前日OI），连续性待观察（方向未知）
 08-31 347.5P — Vol 20,657 | 最新价 $0.16 | OI 1189→7145 (ΔOI +5956张) | ΔOI/Volume 28.8% | Magnitude: HIGH | 完整度: HIGH
    ⇒ 大额净增5956张（+500.9% vs前日OI），连续性待观察（方向未知）

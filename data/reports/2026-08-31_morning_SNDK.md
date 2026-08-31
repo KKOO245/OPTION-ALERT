@@ -2,7 +2,7 @@
 
 📊 市场环境
 
-SPY $765.58 ｜ QQQ $714.41
+SPY $766.17 ｜ QQQ $713.43
 VIX 15.33 ↑6.2%（5D -3.3%） ｜ Vol Regime: NORMAL
 CNN 恐惧贪婪 50.1（neutral）
 全市场 P/C OI（OCC 结算 08-28，2023-06 以来）: Equity 0.75（分位 12%） ｜ Index 0.94（分位 11%）
@@ -28,7 +28,7 @@ CNN 恐惧贪婪 50.1（neutral）
 📋 昨日晚报 → 今日晨报（只列关键项，低于阈值不单列）
 SNDK  昨收 1,484.98 → 今晨 1,528.00（+2.9%） | 较昨收变动（含盘初走势） ｜ 今日高 1540.93 ｜ 低 1484.00
 
-Options: P/C量 0.49 | OI比 1.17 | ATM IV 75.9% | Skew -2.7pp | Term 0.92 | ExpMove ±6.6%（近端） | Rank 28%
+Options: P/C量 0.49 | OI比 1.17 | ATM IV 75.9% | Skew -2.7pp | Term 0.92 | ExpMove ±6.5%（近端） | Rank 28%
    ⇒ Put/Call Volume: 0.49×（Call 成交量高于 Put）→ 方向 Unknown
    ⇒ Put/Call OI: 1.17×（两侧接近均衡）
    ⇒ 当日成交 vs 存量仓位：当日成交偏 Call，存量接近均衡
@@ -45,15 +45,15 @@ Call Wall 1,500（弱结构｜现价高于该位 1.9%）
 • 做市商（条件机制）：若 Scenario A + 负 Gamma 成立，跌破关键位下方可能对应顺周期卖出压力增加；实际做市商对冲流量不可观测。Scenario B → 方向相反。不进入方向决策。
 • 失效参考：跌破关键位结构参考失效（结构性参考，非预测）。
 🔺 Activity（事实层，方向 Unknown）
-09-04 800.0P — Vol 0 | 最新价 $0.03 | OI 267→3003 (ΔOI +2736张) | ΔOI/Volume N/A | Magnitude: HIGH | 完整度: HIGH
+09-04 800.0P — Vol 0 | 最新价 $0.03 | OI 267→3003 (ΔOI +2736张) | ΔOI/Volume N/A（量数据不完整） | Magnitude: HIGH | 完整度: HIGH
    ⇒ 大额净增2736张（+1024.7% vs前日OI），连续性待观察（方向未知）
-09-18 900.0C — Vol 0 | 最新价 $600.90 | OI 260→2190 (ΔOI +1930张) | ΔOI/Volume N/A | Magnitude: HIGH | 完整度: HIGH
+09-18 900.0C — Vol 0 | 最新价 $600.90 | OI 260→2190 (ΔOI +1930张) | ΔOI/Volume N/A（量数据不完整） | Magnitude: HIGH | 完整度: HIGH
    ⇒ 大额净增1930张（+742.3% vs前日OI），连续性待观察（方向未知）
-09-04 1450.0P — Vol 455 | 最新价 $20.40 | OI 416→1599 (ΔOI +1183张) | ΔOI/Volume 260.0% | Magnitude: HIGH | 完整度: HIGH
+09-04 1450.0P — Vol 455 | 最新价 $20.40 | OI 416→1599 (ΔOI +1183张) | ΔOI/Volume N/A（量数据不完整） | Magnitude: HIGH | 完整度: HIGH
    ⇒ 大额净增1183张（+284.4% vs前日OI），连续性待观察（方向未知）
-09-04 1270.0P — Vol 76 | 最新价 $1.05 | OI 122→1294 (ΔOI +1172张) | ΔOI/Volume 1542.1% | Magnitude: HIGH | 完整度: HIGH
+09-04 1270.0P — Vol 76 | 最新价 $1.05 | OI 122→1294 (ΔOI +1172张) | ΔOI/Volume N/A（量数据不完整） | Magnitude: HIGH | 完整度: HIGH
    ⇒ 大额净增1172张（+960.7% vs前日OI），连续性待观察（方向未知）
-09-04 1715.0C — Vol 19 | 最新价 $6.24 | OI 25→1169 (ΔOI +1144张) | ΔOI/Volume 6021.1% | Magnitude: HIGH | 完整度: HIGH
+09-04 1715.0C — Vol 19 | 最新价 $6.24 | OI 25→1169 (ΔOI +1144张) | ΔOI/Volume N/A（量数据不完整） | Magnitude: HIGH | 完整度: HIGH
    ⇒ 大额净增1144张（+4576.0% vs前日OI），连续性待观察（方向未知）
 📆 Forward Expiration Structure
 

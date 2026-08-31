@@ -2,7 +2,7 @@
 
 📊 市场环境
 
-SPY $765.38 ｜ QQQ $714.54
+SPY $765.88 ｜ QQQ $713.50
 VIX 15.33 ↑6.2%（5D -3.3%） ｜ Vol Regime: NORMAL
 CNN 恐惧贪婪 50.1（neutral）
 全市场 P/C OI（OCC 结算 08-28，2023-06 以来）: Equity 0.75（分位 12%） ｜ Index 0.94（分位 11%）
@@ -30,7 +30,7 @@ CNN 恐惧贪婪 50.1（neutral）
 📋 昨日晚报 → 今日晨报（只列关键项，低于阈值不单列）
 SOXX  昨收 508.62 → 今晨 511.08（+0.5%） | 较昨收变动（含盘初走势） ｜ 今日高 514.33 ｜ 低 508.66
 
-Options: P/C量 0.87 | OI比 0.77 | ATM IV 32.7% | Skew 1.5pp | Term 1.16 | ExpMove ±3.6%（近端） | Rank 48%
+Options: P/C量 0.87 | OI比 0.77 | ATM IV 32.7% | Skew 1.5pp | Term 1.16 | ExpMove ±3.8%（近端） | Rank 48%
    ⇒ Put/Call Volume: 0.87×（Put 与 Call 成交量接近）→ 方向 Unknown
    ⇒ Put/Call OI: 0.77×（存量 Call 仓位高于 Put）→ 存量 Call-dominant
    ⇒ 当日成交 vs 存量仓位：当日成交接近均衡，存量Call-dominant

@@ -2,7 +2,7 @@
 
 📊 市场环境
 
-SPY $765.58 ｜ QQQ $714.42
+SPY $766.17 ｜ QQQ $713.45
 VIX 15.33 ↑6.2%（5D -3.3%） ｜ Vol Regime: NORMAL
 CNN 恐惧贪婪 50.1（neutral）
 全市场 P/C OI（OCC 结算 08-28，2023-06 以来）: Equity 0.75（分位 12%） ｜ Index 0.94（分位 11%）
@@ -28,7 +28,7 @@ CNN 恐惧贪婪 50.1（neutral）
 📋 昨日晚报 → 今日晨报（只列关键项，低于阈值不单列）
 USAR  昨收 17.99 → 今晨 18.09（+0.5%） | 较昨收变动（含盘初走势） ｜ 今日高 18.19 ｜ 低 17.68
 
-Options: P/C量 0.83 | OI比 0.29 | ATM IV 76.3% | Skew -3.1pp | Term 1.12 | ExpMove ±8.4%（近端） | Rank 2%
+Options: P/C量 0.83 | OI比 0.29 | ATM IV 76.3% | Skew -3.1pp | Term 1.12 | ExpMove ±9.2%（近端） | Rank 2%
    ⇒ Put/Call Volume: 0.83×（Put 与 Call 成交量接近）→ 方向 Unknown
    ⇒ Put/Call OI: 0.29×（存量 Call 仓位高于 Put）→ 存量 Call-dominant
    ⇒ 当日成交 vs 存量仓位：当日成交接近均衡，存量Call-dominant

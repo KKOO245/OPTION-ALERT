@@ -2,7 +2,7 @@
 
 📊 市场环境
 
-SPY $765.58 ｜ QQQ $714.38
+SPY $766.17 ｜ QQQ $713.42
 VIX 15.33 ↑6.2%（5D -3.3%） ｜ Vol Regime: NORMAL
 CNN 恐惧贪婪 50.1（neutral）
 全市场 P/C OI（OCC 结算 08-28，2023-06 以来）: Equity 0.75（分位 12%） ｜ Index 0.94（分位 11%）
@@ -30,7 +30,7 @@ CNN 恐惧贪婪 50.1（neutral）
 📋 昨日晚报 → 今日晨报（只列关键项，低于阈值不单列）
 XBI  昨收 162.38 → 今晨 160.46（-1.2%） | 较昨收变动（含盘初走势） ｜ 今日高 161.69 ｜ 低 159.62
 
-Options: P/C量 2.81 | OI比 2.10 | ATM IV 31.7% | Skew -2.1pp | Term 1.02 | ExpMove ±3.7%（近端） | Rank 43%
+Options: P/C量 2.81 | OI比 2.10 | ATM IV 31.7% | Skew -2.1pp | Term 1.02 | ExpMove ±3.3%（近端） | Rank 43%
    ⇒ Put/Call Volume: 2.81×（Put 成交量高于 Call）→ 方向 Unknown
    ⇒ Put/Call OI: 2.10×（存量 Put 仓位高于 Call）→ 存量 Put-dominant
    ⇒ 两者结构一致
