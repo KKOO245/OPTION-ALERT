@@ -36,6 +36,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 TICKERS_FILE = os.path.join(BASE_DIR, "config", "tickers.txt")
+ARCHIVE_FILE = os.path.join(BASE_DIR, "config", "archive_universe.txt")
 
 FETCH_WINDOW_DAYS = 40    # 抓取期权链的窗口（覆盖到月度到期日）
 ANOMALY_WINDOW_DAYS = 35  # "一个月以内"异动扫描窗口
@@ -130,6 +131,20 @@ def load_tickers():
     if len(tickers) > 20:
         print(f"[警告] ticker 数量 {len(tickers)} 超过 20 个上限：仓库体积与抓取频率会显著上升，请精简 config/tickers.txt")
     return tickers
+
+
+def load_archive_universe():
+    """存档名单（archive_universe.txt）：只抓全字段链存档，不进报告/指标/快照。"""
+    out = []
+    if not os.path.exists(ARCHIVE_FILE):
+        return out
+    with open(ARCHIVE_FILE, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            out.append(line.upper())
+    return out
 
 
 # ---------- 市场背景（SPY + VIX） ----------
@@ -334,11 +349,6 @@ def main():
                     print(f"[警告] {ticker} 当日 OHLC 获取失败（重试后仍失败，今开缺失回退今晨）: {e2}")
                     ohlc = None
             contracts, chain_spot, source = fetcher.fetch_chain(ticker, max_days=FETCH_WINDOW_DAYS)
-            # 每日全量合约快照永久存档（早/晚报都存，同日以最后一次为准）
-            try:
-                storage.append_chain_history(ticker, contracts, date=now.date().isoformat())
-            except Exception as e:
-                print(f"[警告] {ticker} 链快照存档失败（不影响报告）: {e}")
             # 晚报：收盘价用常规时段 Close（4:00pm ET），避免盘后 last_price 污染"昨收/收盘"
             if is_afternoon and ohlc is not None and ohlc[3] is not None:
                 price = ohlc[3]
@@ -360,6 +370,12 @@ def main():
                 _fill_activity_volumes(ticker, contracts, m, fetcher)
             except Exception as e:
                 print(f"[警告] yfinance 补量失败（保持 N/A）: {e}")
+            # 每日全量合约快照【全字段】永久存档（早/晚报都存，同日以最后一次为准）。
+            # 必须在 _fill_activity_volumes 之后：yfinance 补到的量/最新价也要进存档。
+            try:
+                storage.append_chain_history(ticker, contracts, date=now.date().isoformat())
+            except Exception as e:
+                print(f"[警告] {ticker} 链快照存档失败（不影响报告）: {e}")
             try:
                 # 方案 A：把当天真实快照写入引擎（供 detect/事件库使用）
                 from engine.snapshot_builder import build_snapshot, load_analytics_rows
@@ -538,6 +554,22 @@ def main():
         except Exception as e:
             print(f"[错误] 处理 {ticker} 时异常，已跳过该 ticker: {e}")
             ticker_sections.append(f"## {ticker}\n⚠️ 本次处理该 ticker 时异常，已跳过：{e}")
+
+    # 存档名单（archive_universe.txt）：只抓全字段链存档，不进报告/指标/快照。
+    # 即使报告标的全部失败也照常尝试存档（各自独立容错，互不影响）。
+    try:
+        report_tickers = {t.upper() for t in tickers}
+        for t in load_archive_universe():
+            if t in report_tickers:
+                continue  # 已在报告名单，主循环已存档
+            try:
+                contracts, _, _ = fetcher.fetch_chain(t, max_days=FETCH_WINDOW_DAYS)
+                storage.append_chain_history(t, contracts, date=now.date().isoformat())
+                print(f"[存档] {t}: {len(contracts)} 条全字段链已存档", flush=True)
+            except Exception as e:
+                print(f"[警告] 存档 {t} 抓取失败（跳过，下次重试）: {e}", flush=True)
+    except Exception as e:
+        print(f"[警告] 存档名单处理异常（不影响报告）: {e}", flush=True)
 
     if not any_data_ok:
         print(f"「{session_name}」本次所有 ticker 都未能获取到有效数据，跳过发送，留给下一次重试。")

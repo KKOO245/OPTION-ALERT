@@ -58,23 +58,50 @@ def save_snapshot(ticker, contracts):
     pd.DataFrame(rows).to_csv(path, index=False)
 
 
+# 全字段链存档列（键：输出列名 → 合约 dict 键；缺省值兜底）
+CHAIN_FULL_FIELDS = [
+    ("contractSymbol", "contract_symbol", None),
+    ("strike", "strike", None),
+    ("expiration", "expiration", None),
+    ("right", "type", None),
+    ("openInterest", "open_interest", 0),
+    ("volume", "volume", 0),
+    ("bid", "bid", None),
+    ("ask", "ask", None),
+    ("last", "last", None),
+    ("mid", "mid", None),
+    ("iv", "iv", None),
+    ("delta", "delta", None),
+    ("gamma", "gamma", None),
+    ("theta", "theta", None),
+    ("vega", "vega", None),
+    ("rho", "rho", None),
+    ("dte", "dte", None),
+]
+
+
 def append_chain_history(ticker, contracts, date=None):
-    """把当天全量合约快照永久存档（data/chain_history/{ticker}/{date}.csv.gz）。
+    """把当天全量合约快照【全字段】永久存档（data/chain_history/{ticker}/{date}.csv.gz）。
 
     - 一天一个文件；同一日期再次写入（如晚报重跑/补跑）以最后一次为准。
-    - 对所有经过管线的 ticker 生效，包括手动测试、不在报告里的标的。
-    - 原始 gz 保留在 git；本地归档任务会再并入 SQLite（chain_oi_daily）。
+    - 字段：contractSymbol, strike, expiration, right, openInterest, volume,
+      bid, ask, last, mid, iv, delta, gamma, theta, vega, rho, dte, snapshot_date。
+    - 对所有经过管线的 ticker 生效，包括存档名单、手动测试、不在报告里的标的。
+    - 原始 gz 保留在 git；本地归档任务会再并入 SQLite（chain_oi_daily + chain_full_daily）。
     """
     d = date or _today()
     tdir = os.path.join(CHAIN_HISTORY_DIR, ticker)
     os.makedirs(tdir, exist_ok=True)
     path = os.path.join(tdir, f"{d}.csv.gz")
-    rows = [{
-        "contractSymbol": c["contract_symbol"],
-        "openInterest": c.get("open_interest") or 0,
-        "volume": c.get("volume") or 0,
-        "snapshot_date": d,
-    } for c in contracts]
+    rows = []
+    for c in contracts:
+        row = {"snapshot_date": d}
+        for out_k, src_k, default in CHAIN_FULL_FIELDS:
+            v = c.get(src_k)
+            if v is None:
+                v = default
+            row[out_k] = v
+        rows.append(row)
     pd.DataFrame(rows).to_csv(path, index=False, compression="gzip")
 
 

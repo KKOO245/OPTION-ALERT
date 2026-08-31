@@ -93,6 +93,14 @@ def _connect() -> sqlite3.Connection:
           open_interest REAL, volume REAL,
           PRIMARY KEY (date, contract_symbol)
         );
+        CREATE TABLE IF NOT EXISTS chain_full_daily (
+          date TEXT, root TEXT, contract_symbol TEXT,
+          strike REAL, expiration TEXT, right TEXT,
+          open_interest REAL, volume REAL,
+          bid REAL, ask REAL, last REAL, mid REAL,
+          iv REAL, delta REAL, gamma REAL, theta REAL, vega REAL, rho REAL, dte REAL,
+          PRIMARY KEY (date, contract_symbol)
+        );
         CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT);
         """
     )
@@ -321,15 +329,18 @@ def _git_pull() -> str:
     return "已同步远端"
 
 
-def _ingest_chain_history(conn: sqlite3.Connection, hist_dir: Path | None = None) -> int:
+def _ingest_chain_history(conn: sqlite3.Connection, hist_dir: Path | None = None) -> tuple[int, int]:
     """把每日合约快照（data/chain_history）并入 SQLite，作为 OI 历史后台。
 
     与 git 文件语义一致：同一日期同一合约以最后一次写入为准（INSERT OR REPLACE）。
+    全字段文件（含 strike/expiration/iv/greeks）→ 同时并入 chain_full_daily；
+    旧版 4 字段文件 → 只并入 chain_oi_daily。
     """
     hist_dir = hist_dir or (REPO_ROOT / "data" / "chain_history")
     if not hist_dir.is_dir():
         return 0
     total = 0
+    full_total = 0
     for f in sorted(hist_dir.glob("*/*.csv.gz")):
         try:
             df = pd.read_csv(f, compression="gzip")
@@ -351,9 +362,40 @@ def _ingest_chain_history(conn: sqlite3.Connection, hist_dir: Path | None = None
             "INSERT OR REPLACE INTO chain_oi_daily VALUES (?,?,?,?,?)", rows
         )
         total += len(rows)
+        # 全字段：新格式文件才有 strike/expiration/iv 等列
+        if {"strike", "expiration", "right", "iv"}.issubset(df.columns):
+            full_rows = []
+            for r, d in zip(df.itertuples(index=False), dates):
+                full_rows.append(
+                    (
+                        d, ticker, str(r.contractSymbol),
+                        _f(getattr(r, "strike", None)),
+                        str(getattr(r, "expiration", "") or ""),
+                        str(getattr(r, "right", "") or ""),
+                        _f(getattr(r, "openInterest", None)),
+                        _f(getattr(r, "volume", None)),
+                        _f(getattr(r, "bid", None)),
+                        _f(getattr(r, "ask", None)),
+                        _f(getattr(r, "last", None)),
+                        _f(getattr(r, "mid", None)),
+                        _f(getattr(r, "iv", None)),
+                        _f(getattr(r, "delta", None)),
+                        _f(getattr(r, "gamma", None)),
+                        _f(getattr(r, "theta", None)),
+                        _f(getattr(r, "vega", None)),
+                        _f(getattr(r, "rho", None)),
+                        _f(getattr(r, "dte", None)),
+                    )
+                )
+            conn.executemany(
+                "INSERT OR REPLACE INTO chain_full_daily "
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                full_rows,
+            )
+            full_total += len(full_rows)
     if total:
         conn.commit()
-    return total
+    return total, full_total
 
 
 def _backup(summary: str) -> str:
@@ -412,10 +454,11 @@ def main() -> None:
         limiter = RateLimiter(20)
         opt_n, stk_n, oi_n, fails = _fetch_and_store(client, limiter, tickers, start, end)
         conn2 = _connect()
-        oi_snap = _ingest_chain_history(conn2)
+        oi_snap, full_snap = _ingest_chain_history(conn2)
         conn2.close()
         summary_parts.append(
-            f"期权新增 {opt_n} 行 | 股票新增 {stk_n} 行 | OI 新增 {oi_n} 行 | 快照OI并入 {oi_snap} 行"
+            f"期权新增 {opt_n} 行 | 股票新增 {stk_n} 行 | OI 新增 {oi_n} 行 | "
+            f"快照OI并入 {oi_snap} 行 | 全字段链并入 {full_snap} 行"
         )
         if fails:
             summary_parts.append(f"失败: {', '.join(fails)}")
