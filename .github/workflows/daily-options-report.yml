@@ -87,6 +87,10 @@ jobs:
         if: steps.timecheck.outputs.run_needed == 'true'
         run: pip install -r requirements.txt
 
+      - name: 刷新 VIX 历史（后台自动维护）
+        if: steps.timecheck.outputs.run_needed == 'true'
+        run: python scripts/fetch_vix_history.py
+
       - name: 运行期权报告脚本(非目标时段/今天已发送过会自动跳过，不发送)
         if: steps.timecheck.outputs.run_needed == 'true'
         env:
@@ -187,6 +191,6 @@ jobs:
         run: |
           git config user.name "options-report-bot"
           git config user.email "options-report-bot@users.noreply.github.com"
-          git add data/history data/analytics data/reports data/iv_history data/closes data/chain_history data/oi_history analytics state thesis episodes
+          git add data/history data/analytics data/reports data/iv_history data/closes data/chain_history data/oi_history data/vix_history analytics state thesis episodes
           git diff --cached --quiet || git commit -m "更新期权数据快照 $(date -u +'%Y-%m-%d %H:%M')"
           git push

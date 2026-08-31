@@ -67,6 +67,26 @@ wall_quality_v1:
   strength_median_mult: 3.0   # 候选参数（待历史校准）：Wall OI ≥ 此倍数 × 非零行权价 OI 中位数 → HIGH
   note: "v1 默认值在 src/metrics.py WALL_QUALITY_V1；此处为正式登记与未来校准入口。分类：PRIMARY=距离内+Dominant+Strong；WEAK=距离内质量不足；REMOTE=距离外。"
 
+flip_stability_v1:
+  version: flip_stability_v1
+  rule_freeze_date: "2026-08-31"
+  lookback: 5
+  min_obs: 3
+  high_range_pct: 0.5        # 候选参数：5D primary_flip 区间跨度（%中位）≤0.5% → 高稳定
+  medium_range_pct: 1.5      # 候选参数：≤1.5% → 中稳定；>1.5% → 低稳定（待历史校准）
+  note: "flip_context_v1 仅进 p3 研究层，不进报告/评分；阈值均为候选，不冻结为真理。"
+
+analog_v1:
+  version: analog_v1
+  rule_freeze_date: "2026-08-31"
+  min_n: 20
+  margin_ratio: 0.15          # 候选参数：OOS 条件中位 ≥ 基率中位 × (1+margin) 才算"波动偏高"
+  vol_low_pct: 25.0
+  vol_high_pct: 75.0
+  pcr_bottom_pct: 20.0
+  pcr_top_pct: 80.0
+  note: "analog_v1 候选参数，不冻结。VALIDATED_HIGHER_VOL 仅表示样本外复现'该状态后波动偏高'，非方向信号，不进日报。"
+
 event_differential:
   version: event_diff_v1
   min_diff_pp: 5.0            # 事件差分低于此值不提示（经验默认，待校准）

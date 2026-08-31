@@ -305,6 +305,19 @@ def main():
         event_dates = macro_event_dates(now)
     except Exception as e:
         print(f"[警告] 宏观日历获取失败（P3 事件覆盖将缺失）: {e}")
+    # P1-C：财报日历预取（只查白名单 ∩ 监控标的；事件污染标记用，一次运行一次）
+    earnings_by_ticker: dict = {}
+    try:
+        from src.calendars import _week_range, fetch_earnings_calendar, load_earnings_watchlist
+
+        ws, we = _week_range(now)
+        tickers_set = {t.upper() for t in tickers}
+        watchlist = [(s, n) for s, n in load_earnings_watchlist() if s.upper() in tickers_set]
+        if watchlist:
+            for e in fetch_earnings_calendar(watchlist, ws, we):
+                earnings_by_ticker.setdefault(e["ticker"].upper(), []).append(e["date"].isoformat())
+    except Exception as e:
+        print(f"[警告] 财报日历预取失败（事件污染标记缺财报层）: {e}")
 
     for ticker in tickers:
         try:
@@ -448,6 +461,49 @@ def main():
                         p3 = full_p3
                 except Exception as e:
                     print(f"[警告] {ticker} P3 收集失败（p3 保留核心 GEX/覆盖）: {e}")
+                # P1 flip_context：历史距离分位 + 近端稳定性（只进 p3 研究层，不进报告/评分）
+                try:
+                    from src.flip_context import build_flip_context
+
+                    fc = build_flip_context(
+                        ticker, spot, (full_chain or {}).get("primary_flip"),
+                        now.date(), BASE_DIR, os.path.join(BASE_DIR, "analytics", "daily"),
+                    )
+                    if fc is not None:
+                        if p3 is None:
+                            p3 = {"schema_version": "p3_collect_v1", "coverage": coverage}
+                        p3["flip_context"] = fc
+                except Exception as e:
+                    print(f"[警告] {ticker} flip_context 构建失败（不影响报告）: {e}")
+                # P1-C 事件污染标记：未来 5 个自然日内宏观【高】事件 / 财报（白名单）
+                try:
+                    flag_parts: list[str] = []
+                    today = now.date()
+                    horizon = today + datetime.timedelta(days=5)
+                    for ev in event_dates or []:
+                        try:
+                            ed = datetime.date.fromisoformat(str(ev.get("date"))[:10])
+                        except (TypeError, ValueError):
+                            continue
+                        if today < ed <= horizon:
+                            flag_parts.append("MACRO")
+                            break
+                    for d in earnings_by_ticker.get(ticker.upper(), []):
+                        try:
+                            ed = datetime.date.fromisoformat(d)
+                        except (TypeError, ValueError):
+                            continue
+                        if today < ed <= horizon:
+                            flag_parts.append("EARNINGS")
+                            break
+                    if p3 is not None:
+                        p3["event_flag"] = {
+                            "flags": flag_parts or ["CLEAN"],
+                            "window_days": 5,
+                            "note": "未来5个自然日内宏观【高】事件/财报(白名单) → IV/RV 不直接可比",
+                        }
+                except Exception as e:
+                    print(f"[警告] {ticker} event_flag 构建失败（不影响报告）: {e}")
                 snap = build_snapshot(
                     ticker, session_name, m, spot,
                     now.isoformat(timespec="seconds"),

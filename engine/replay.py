@@ -213,6 +213,16 @@ def _gamma_day_features(grp: pd.DataFrame, spot: float) -> Optional[Dict[str, An
     if g.empty:
         return None
     g["dte"] = g["dte"].clip(lower=1)
+    # ATM IV：dte≥1 中 |strike/spot−1| 最小的行权价，取该行权价 call/put IV 均值
+    atm_iv = None
+    if spot and spot > 0:
+        scope_iv = g[g["dte"] >= 1] if (g["dte"] >= 1).any() else g
+        if not scope_iv.empty:
+            k = scope_iv.loc[(scope_iv["strike"] - spot).abs().idxmin(), "strike"]
+            sub = scope_iv[scope_iv["strike"] == k]["iv"].dropna()
+            sub = sub[(sub > 0) & (sub < 3)]
+            if not sub.empty:
+                atm_iv = float(sub.mean())
     t = g["dte"] / 365.0
     sign = np.where(g["type"] == "call", 1.0, -1.0)
     g["gex"] = g["gamma"].values * g["open_interest"].values * 100.0 * spot * sign
@@ -271,6 +281,7 @@ def _gamma_day_features(grp: pd.DataFrame, spot: float) -> Optional[Dict[str, An
     return {
         "spot": round(spot, 2),
         "net_gex": round(net_gex, 0) if net_gex is not None else None,
+        "atm_iv": round(atm_iv, 4) if atm_iv is not None else None,
         "flip": round(flip, 2) if flip is not None else None,
         "primary_flip": round(primary_flip, 2) if primary_flip is not None else None,
         "call_wall": call_wall,
@@ -346,6 +357,7 @@ def _oi_layer(ticker: str, start: Optional[str], end: Optional[str]) -> List[Dic
     close_by_date = {c["date"]: c["close"] for c in closes}
     df["date"] = pd.to_datetime(df["date"]).dt.strftime("%Y-%m-%d")
     episodes: List[Dict[str, Any]] = []
+    iv_running: List[float] = []
     for d, grp in df.groupby("date"):
         if start and d < start:
             continue
@@ -361,6 +373,15 @@ def _oi_layer(ticker: str, start: Optional[str], end: Optional[str]) -> List[Dic
         feats = _gamma_day_features(grp, spot)
         if feats is None:
             continue
+        # 扩张口径 IV 百分位（只用截至 T 的 ATM IV，无未来泄漏）
+        av = feats.get("atm_iv")
+        if av is not None:
+            iv_running.append(av)
+            feats["iv_pct"] = round(
+                sum(1 for x in iv_running if x <= av) / len(iv_running) * 100.0, 1
+            )
+        else:
+            feats["iv_pct"] = None
         conditions: List[str] = []
         gamma_sign = "POSITIVE" if (feats["net_gex"] or 0) >= 0 else "NEGATIVE"
         conditions.append(f"GAMMA_{gamma_sign}")
@@ -389,7 +410,7 @@ def write_oi_history(tickers: List[str], start: Optional[str] = None,
                      end: Optional[str] = None) -> Dict[str, int]:
     """导出逐日 OI 结构序列：data/oi_history/{TICKER}.csv（全量重建，确定性）。
 
-    列：date, spot, net_gex, flip, primary_flip, call_wall, put_wall,
+    列：date, spot, net_gex, atm_iv, iv_pct, flip, primary_flip, call_wall, put_wall,
         call_wall_class, put_wall_class, pcr_oi_all, pcr_oi_near, net_vanna, net_charm
     """
     OI_HISTORY_DIR.mkdir(parents=True, exist_ok=True)
@@ -405,6 +426,7 @@ def write_oi_history(tickers: List[str], start: Optional[str] = None,
         close_by_date = {c["date"]: c["close"] for c in closes}
         df["date"] = pd.to_datetime(df["date"]).dt.strftime("%Y-%m-%d")
         rows: List[Dict[str, Any]] = []
+        iv_running: List[float] = []
         for d, grp in df.groupby("date"):
             if start and d < start:
                 continue
@@ -415,6 +437,14 @@ def write_oi_history(tickers: List[str], start: Optional[str] = None,
             feats = _gamma_day_features(grp, close_by_date[d])
             if feats is None:
                 continue
+            av = feats.get("atm_iv")
+            if av is not None:
+                iv_running.append(av)
+                feats["iv_pct"] = round(
+                    sum(1 for x in iv_running if x <= av) / len(iv_running) * 100.0, 1
+                )
+            else:
+                feats["iv_pct"] = None
             rows.append({"date": d, **feats})
         if rows:
             out = OI_HISTORY_DIR / f"{t}.csv"

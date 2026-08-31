@@ -19,6 +19,8 @@ MODULES = [
     "test_schema",
     "test_hash",
     "test_metrics",
+    "test_flip_context",
+    "test_analog",
     "test_snapshot",
     "test_setup_detector",
     "test_thesis_logger",

@@ -158,6 +158,12 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--oi-history", action="store_true",
                     help="同时导出逐日 OI 结构序列 data/oi_history/{TICKER}.csv（SPY/QQQ/IWM）")
 
+    sp = sub.add_parser("analog", help="P2 历史相似状态引擎：分层匹配 + OOS 验证（研究层，不进日报）")
+    sp.add_argument("--tickers", nargs="*", help="默认 SPY QQQ（有 oi 层 episode 的标的）")
+    sp.add_argument("--freeze", default="2023-06-01", help="OOS 冻结日期 YYYY-MM-DD")
+    sp.add_argument("--horizons", nargs="*", type=int, default=[1, 3, 5])
+    sp.add_argument("--out", help="输出 JSONL（默认 thesis/analog_validation.jsonl）")
+
     sp = sub.add_parser("send-report", help="渲染新格式报告并发送 Discord")
     sp.add_argument("--session", choices=["morning", "evening"], required=True)
     sp.add_argument("--ticker", required=True)
@@ -1105,6 +1111,23 @@ def cmd_replay(args) -> int:
     return 0
 
 
+def cmd_analog(args) -> int:
+    from engine.analog import run_analog
+
+    tickers = [t.upper() for t in args.tickers] if args.tickers else ["SPY", "QQQ"]
+    repo = Path(__file__).resolve().parent
+    stats = run_analog(
+        repo / "thesis" / "replay_episodes_v1.jsonl",
+        repo,
+        tickers,
+        args.freeze,
+        args.horizons,
+        Path(args.out) if args.out else repo / "thesis" / "analog_validation.jsonl",
+    )
+    print(f"analog: {stats}")
+    return 0
+
+
 def main() -> int:
     _ensure_utf8()
     args = build_parser().parse_args()
@@ -1125,6 +1148,7 @@ def main() -> int:
         "send-report-all": cmd_send_report_all,
         "audit": cmd_audit,
         "replay": cmd_replay,
+        "analog": cmd_analog,
     }[args.command](args)
 
 
