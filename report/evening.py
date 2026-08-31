@@ -74,7 +74,7 @@ def ticker_evening(
         spread = _vix_spread_line(snapshot)
         if spread:
             lines.append(spread)
-    lines += _structure_block(snapshot, gex=gex, gex_change=gex_change)
+    lines += _structure_block(snapshot, gex=gex, gex_change=gex_change, prev_snapshot=morning)
     lines += _structure_interpretation(snapshot)
     lines += _activity_block(activity)
     lines += _forward_block(snapshot)

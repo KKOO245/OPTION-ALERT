@@ -86,6 +86,20 @@ def test_delta_computed_without_volume():
     assert m["magnitude"] == "HIGH"  # r2=2180%、r3=7348
 
 
+def test_r1_none_when_volume_incomplete():
+    # |ΔOI| 不可能超过当日成交量：OI +14003 但成交量仅 8 → 量数据不完整
+    m = event_magnitude(8, 225, 14228)
+    assert m["r1"] is None
+    assert m["delta_oi"] == 14003
+    # 量缺失不影响发现：由 r2（ΔOI/前日OI）与 r3（绝对张数）支撑 HIGH
+    assert m["magnitude"] == "HIGH"
+    lines = event_card("QQQ260930P00687000", 8, 225, 14228, has_prev_vol=False)
+    assert "ΔOI/Volume N/A（量数据不完整）" in lines[0]
+    # 正常情形不受影响
+    ok = event_magnitude(2000, 100, 700)
+    assert ok["r1"] == 30.0
+
+
 def test_low_magnitude_without_volume_no_crash():
     a = event_annotation(None, 5000, 5016, "LOW", "LOW")  # r1=None → 低等级
     assert "量数据缺失" in a

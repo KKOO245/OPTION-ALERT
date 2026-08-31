@@ -143,8 +143,17 @@ def _options_block(snapshot: Dict[str, Any]) -> List[str]:
     expmove_txt = f"±{fmt(expmove, 1)}%" if expmove is not None else "N/A"
     fwd = snapshot.get("forward") or {}
     exps = fwd.get("expirations") or []
-    if expmove is not None and exps:
-        expmove_txt = f"±{fmt(expmove, 1)}%（近端）"
+    if exps:
+        # 与 ExpMove 期限化行同源：用最近期限的期限化值，避免"近端"双口径打架
+        ev0 = exps[0].get("expmove_pct")
+        if ev0 is None:
+            cp, pp = exps[0].get("atm_call_price"), exps[0].get("atm_put_price")
+            if cp is not None and pp is not None and snapshot.get("spot"):
+                ev0 = round((float(cp) + float(pp)) / float(snapshot["spot"]) * 100.0, 2)
+        if ev0 is not None:
+            expmove_txt = f"±{ev0:.1f}%（近端）"
+        elif expmove is not None:
+            expmove_txt = f"±{fmt(expmove, 1)}%"
     skew = m.get("skew")
     skew_txt = f"{fmt(skew, 1)}pp" if skew is not None else "N/A"
     line = (
@@ -180,9 +189,23 @@ def fmt_pct_safe(v: Any) -> str:
     return f"{v * 100:.1f}%"
 
 
-def _structure_block(snapshot: Dict[str, Any], gex: Optional[float] = None, gex_change: Optional[float] = None) -> List[str]:
+def _structure_block(
+    snapshot: Dict[str, Any],
+    gex: Optional[float] = None,
+    gex_change: Optional[float] = None,
+    prev_snapshot: Optional[Dict[str, Any]] = None,
+) -> List[str]:
     loc = snapshot.get("location") or {}
     spot = snapshot.get("spot")
+    # GEX 数值优先用调用方传入；未传时从快照 p3.gex 兜底（全链重定价结果）
+    p3g = ((snapshot.get("p3") or {}).get("gex") or {})
+    if gex is None:
+        gex = p3g.get("net_gex")
+    # GEX Change vs 上次快照：前快照也有 p3.gex 时计算
+    if gex_change is None and gex is not None and prev_snapshot is not None:
+        prev_gex = ((prev_snapshot.get("p3") or {}).get("gex") or {}).get("net_gex")
+        if prev_gex is not None:
+            gex_change = gex - prev_gex
     lines = ["🔧 结构（未验证研究层：Mechanism Scenario A/B——OI 开仓方向不可观测）"]
     gamma = (snapshot.get("regime") or {}).get("gamma", "UNKNOWN")
     gex_txt = f"GEX(存量) {fmt(gex, 0)}" if gex is not None else "GEX(存量) N/A"
@@ -724,7 +747,7 @@ def ticker_morning(
         spread = _vix_spread_line(snapshot)
         if spread:
             lines.append(spread)
-    lines += _structure_block(snapshot, gex=gex, gex_change=gex_change)
+    lines += _structure_block(snapshot, gex=gex, gex_change=gex_change, prev_snapshot=prev_snapshot)
     lines += _structure_interpretation(snapshot)
     lines += _activity_block(activity, stale_note=stale_note)
     lines += _forward_block(snapshot)

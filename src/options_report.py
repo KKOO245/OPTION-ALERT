@@ -19,6 +19,7 @@ import datetime
 import json
 import os
 import sys
+import time
 from zoneinfo import ZoneInfo
 
 import data_fetcher as fetcher
@@ -312,8 +313,13 @@ def main():
             try:
                 ohlc = fetcher.fetch_ohlc_yfinance(ticker)
             except Exception as e:
-                print(f"[警告] {ticker} 当日 OHLC 获取失败（高/低/开/收 保持原逻辑）: {e}")
-                ohlc = None
+                # 一次重试：减少瞬时失败导致"今晨/今开"与高/低缺失
+                try:
+                    time.sleep(1.0)
+                    ohlc = fetcher.fetch_ohlc_yfinance(ticker)
+                except Exception as e2:
+                    print(f"[警告] {ticker} 当日 OHLC 获取失败（重试后仍失败，今开缺失回退今晨）: {e2}")
+                    ohlc = None
             contracts, chain_spot, source = fetcher.fetch_chain(ticker, max_days=FETCH_WINDOW_DAYS)
             # 每日全量合约快照永久存档（早/晚报都存，同日以最后一次为准）
             try:
@@ -360,15 +366,13 @@ def main():
                     )
                 except Exception as e:
                     print(f"[警告] forward structure 构建失败（快照将缺失该层）: {e}")
-                # P1：全链重定价 + 覆盖审计；P3：研究采集字段（只进 JSON，不进报告/评分）
+                # P1：全链重定价 + 覆盖审计（核心层）；P3：研究采集字段（只进 JSON）
                 full_chain = None
                 coverage = None
                 p3 = None
                 try:
                     from engine.coverage import coverage_audit
-                    from engine.p3_collect import collect_p3
                     from engine.regime_map import regime_map
-                    from engine.second_order import second_order_aggregate
 
                     full_chain = regime_map(contracts, spot, as_of=now.date())
                     qg = thresholds.get("quality_gate") or {}
@@ -376,6 +380,28 @@ def main():
                         contracts, spot,
                         band_pct=float(qg.get("flip_search_band_pct", 15.0)),
                     )
+                except Exception as e:
+                    print(f"[警告] {ticker} P1 全链重定价失败（快照保留旧结构层）: {e}")
+                # 核心 p3（GEX + 覆盖）：P1 成功即保留，不因次要层失败而整体丢失
+                if full_chain is not None:
+                    net_gex = full_chain.get("net_gex_at_spot")
+                    p3 = {
+                        "schema_version": "p3_collect_v1",
+                        "gex": {
+                            "net_gex": net_gex,
+                            "abs_gex": abs(net_gex) if net_gex is not None else None,
+                            "n_used": full_chain.get("n_contracts_used"),
+                            "n_skipped": full_chain.get("n_contracts_skipped"),
+                            "spot_zone": full_chain.get("spot_zone"),
+                        },
+                        "coverage": coverage,
+                    }
+                # P3 扩展层（second_order / iv_rv / event_overlap / confluence）：
+                # 失败只丢扩展层，核心 GEX/覆盖保留
+                try:
+                    from engine.p3_collect import collect_p3
+                    from engine.second_order import second_order_aggregate
+
                     sess_rank = {"morning": 0, "evening": 1}.get(session_name, 0)
                     today_key = now.date().isoformat()
                     prev_atm = None
@@ -388,16 +414,20 @@ def main():
                     if m.get("atm_iv_near") is not None and prev_atm is not None:
                         iv_move_pp = (float(m["atm_iv_near"]) - float(prev_atm)) * 100.0
                     pc = thresholds.get("p3_collect") or {}
-                    so = second_order_aggregate(
-                        contracts, spot, as_of=now.date(),
-                        iv_move_pp=iv_move_pp,
-                        vanna_gate_vol_pp=float(pc.get("vanna_gate_vol_pp", 0.5)),
-                        charm_gate_max_dte=int(pc.get("charm_gate_max_dte", 5)),
-                    )
+                    so = None
+                    try:
+                        so = second_order_aggregate(
+                            contracts, spot, as_of=now.date(),
+                            iv_move_pp=iv_move_pp,
+                            vanna_gate_vol_pp=float(pc.get("vanna_gate_vol_pp", 0.5)),
+                            charm_gate_max_dte=int(pc.get("charm_gate_max_dte", 5)),
+                        )
+                    except Exception as e:
+                        print(f"[警告] {ticker} second_order 计算失败（p3 保留核心 GEX/覆盖）: {e}")
                     fwd_exps = ((forward or {}).get("expirations")) if forward else None
                     struct = m.get("structure") or {}
                     conc = m.get("oi_concentration")
-                    p3 = collect_p3(
+                    full_p3 = collect_p3(
                         regime_result=full_chain,
                         coverage=coverage,
                         second_order=so,
@@ -414,8 +444,10 @@ def main():
                         rv_min_obs=int(pc.get("ivrv_min_obs", 5)),
                         confluence_band_pct=float(pc.get("confluence_band_pct", 2.0)),
                     )
+                    if full_p3 is not None:
+                        p3 = full_p3
                 except Exception as e:
-                    print(f"[警告] {ticker} P1/P3 计算失败（快照保留旧结构层）: {e}")
+                    print(f"[警告] {ticker} P3 收集失败（p3 保留核心 GEX/覆盖）: {e}")
                 snap = build_snapshot(
                     ticker, session_name, m, spot,
                     now.isoformat(timespec="seconds"),

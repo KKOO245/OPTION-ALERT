@@ -89,7 +89,10 @@ def event_magnitude(
         return {"r1": None, "r2": None, "r3": None, "score": 0, "magnitude": "LOW", "delta_oi": None}
     delta = float(oi_now) - float(oi_prev or 0)
     ad = abs(delta)
-    r1 = (ad / vol * 100.0) if vol else None
+    # 成交量不完整判定：单笔成交最多使 OI 变化 ±1，故 |ΔOI| 不可能超过当日成交量；
+    # 超过即成交量数据缺失/不完整 → r1 置 None，避免 ΔOI/Volume 出现荒谬比例
+    vol_complete = vol is not None and vol > 0 and ad <= vol
+    r1 = (ad / vol * 100.0) if vol_complete else None
     r2 = (ad / float(oi_prev) * 100.0) if oi_prev else None
     score = 0
     score += 1 if r1 is not None and r1 >= r1_lo else 0
@@ -155,7 +158,12 @@ def event_card(
     complete = completeness(vol is not None, has_prev_vol, oi_prev is not None, oi_now is not None)
     delta_txt = f"ΔOI {m['delta_oi']:+d}张" if m["delta_oi"] is not None else "ΔOI N/A"
     oi_txt = f"OI {int(oi_prev)}→{int(oi_now)}" if (oi_prev is not None and oi_now is not None) else "OI N/A"
-    r1_txt = f"ΔOI/Volume {m['r1']:.1f}%" if m["r1"] is not None else "ΔOI/Volume N/A"
+    if m["r1"] is not None:
+        r1_txt = f"ΔOI/Volume {m['r1']:.1f}%"
+    elif vol is not None and m["delta_oi"] is not None and abs(m["delta_oi"]) > vol:
+        r1_txt = "ΔOI/Volume N/A（量数据不完整）"
+    else:
+        r1_txt = "ΔOI/Volume N/A"
     vol_txt = f"Vol {int(vol):,}" if vol is not None else "Vol N/A"
     if vol_source == "yfinance" and vol is not None:
         vol_txt += "（Yahoo补）"

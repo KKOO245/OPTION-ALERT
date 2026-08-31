@@ -106,6 +106,41 @@ def test_structure_block_gamma_gex_semantics_and_flip_status():
     assert "测量完整性" in text and "gex_sign_v1" in text
     assert "最近结构参考" in text
 
+
+def test_structure_block_gex_from_p3():
+    snap = load_fixture("snapshot_morning_soxx.json")
+    snap["p3"] = {
+        "schema_version": "p3_collect_v1",
+        "gex": {"net_gex": -123456789.0, "abs_gex": 123456789.0,
+                "n_used": 100, "n_skipped": 10, "spot_zone": "NEGATIVE"},
+        "coverage": {"effective_gex_coverage_pct": 95.0},
+    }
+    text = ticker_morning(snap)
+    assert "GEX(存量) -123,456,789" in text
+
+
+def test_structure_block_gex_change_vs_prev_snapshot():
+    snap = load_fixture("snapshot_morning_soxx.json")
+    snap["p3"] = {"gex": {"net_gex": 1000.0}}
+    prev = load_fixture("snapshot_morning_soxx.json")
+    prev["p3"] = {"gex": {"net_gex": 800.0}}
+    text = ticker_morning(snap, prev_snapshot=prev)
+    assert "GEX Change vs 上次快照 200" in text
+
+
+def test_options_line_expmove_matches_nearest_expiry():
+    snap = load_fixture("snapshot_morning_soxx.json")
+    snap["forward"] = {"expirations": [
+        _fwd_exp("2026-08-28", 2, 1000, 500, "LOW", atm_iv=0.94,
+                 atm_call_price=6.23, atm_put_price=5.93),
+    ]}
+    snap["forward"]["expirations"][0]["expmove_pct"] = round((6.23 + 5.93) / 497.2 * 100.0, 2)
+    text = ticker_morning(snap)
+    # Options 行 ExpMove 与 ExpMove 期限化行同源（最近期限 ±2.5%）
+    assert "ExpMove ±2.5%（近端）" in text
+    assert "ExpMove 期限化（expmove_v1）" in text
+    assert "08-28（2D）±2.5%" in text
+
     snap2 = load_fixture("snapshot_morning_soxx.json")
     snap2["location"]["flip_levels"] = None
     snap2["location"]["flip_candidates"] = None
