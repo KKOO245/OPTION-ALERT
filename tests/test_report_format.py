@@ -5,6 +5,7 @@ from report.morning import (
     _forward_block,
     _is_low_relevance,
     _relevant_top,
+    _structure_interpretation,
     _trading_gap,
     calendar_block,
     market_block,
@@ -380,6 +381,8 @@ def test_forward_block_l1_quiet():
     assert "📆 Forward Expiration Structure" in text
     assert "08-28  C +2.1k / P +0.3k ｜ Activity LOW ｜ 4D" in text
     assert "Activity MEDIUM △" in text
+    # 最近到期日（08-28，LOW）也强制完整展开；非最近 LOW 不展开
+    assert "08-28 Forward Structure" in text
     assert "09-18 Forward Structure" not in text
     assert "Significant Forward Positioning" not in text
 
@@ -428,11 +431,34 @@ def test_forward_block_medium_compact_top():
          "notional": None, "distance_pct": 0.5, "volume": 300, "magnitude": "MEDIUM"},
     ]
     snap = {"forward": {"expirations": [
+        _fwd_exp("2026-08-28", 4, 800, 200, "LOW"),
         _fwd_exp("2026-09-04", 11, 3100, 2100, "MEDIUM", top_delta_oi=top),
     ]}}
     text = "\n".join(_forward_block(snap))
-    assert "   Top ΔOI: 700C +1,800 ｜ 690P +900" in text
+    # MEDIUM 非最近到期日：一行紧凑 Top ΔOI，且带日期标签（不再是无主孤儿行）
+    assert "09-04（MEDIUM △）Top ΔOI: 700C +1,800 ｜ 690P +900" in text
     assert "09-04 Forward Structure" not in text
+    # 最近到期日（08-28，LOW）强制完整展开
+    assert "08-28 Forward Structure" in text
+
+
+def test_forward_block_nearest_expands_even_if_low():
+    """最近到期日无论 Activity 级别都渲染完整块；其余 LOW 不展开。"""
+    snap = {"forward": {"expirations": [
+        _fwd_exp("2026-08-28", 4, 2100, 300, "LOW"),
+        _fwd_exp("2026-09-04", 11, 3100, 2100, "LOW"),
+    ]}}
+    text = "\n".join(_forward_block(snap))
+    assert "08-28 Forward Structure" in text
+    assert "09-04 Forward Structure" not in text
+
+
+def test_structure_interpretation_shows_max_pain():
+    """Max Pain 接线：快照 context.max_pain 进入结构解读（仅结算参考，不参与方向）。"""
+    snap = load_fixture("snapshot_morning_soxx.json")
+    snap["context"]["max_pain"] = 500.0
+    joined = "\n".join(_structure_interpretation(snap))
+    assert "500（MaxPain，仅结算参考）" in joined
 
 
 def test_low_relevance_and_rule_no_good_data_kill():

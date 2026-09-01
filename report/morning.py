@@ -780,12 +780,12 @@ def _fwd_structure_ref(top: List[Dict[str, Any]]) -> Optional[str]:
 
 
 def _fwd_medium_top(e: Dict[str, Any]) -> Optional[str]:
-    """Medium 结算日一行紧凑 Top ΔOI（跨两侧 |ΔOI| 排序，取前 2）。"""
+    """Medium 结算日一行紧凑 Top ΔOI（跨两侧 |ΔOI| 排序，取前 2；带日期标签防孤儿行）。"""
     top = _relevant_top(e.get("top_delta_oi") or [])[:2]
     if not top:
         return None
     parts = [f"{int(t['strike'])}{t['type'][0].upper()} {t['delta_oi']:+,}" for t in top]
-    return "   Top ΔOI: " + " ｜ ".join(parts)
+    return f"{e['expiration'][5:]}（MEDIUM △）Top ΔOI: " + " ｜ ".join(parts)
 
 
 def _fwd_l3(e: Dict[str, Any], sig: Dict[str, Any]) -> List[str]:
@@ -806,7 +806,8 @@ def _fwd_l3(e: Dict[str, Any], sig: Dict[str, Any]) -> List[str]:
 
 
 def _forward_block(snapshot: Dict[str, Any]) -> List[str]:
-    """Forward Expiration Structure（独立观察层）：L1 固定 4 行，L2 仅 High 展开，L3 极端。"""
+    """Forward Expiration Structure（独立观察层）：L1 固定 4 行；最近到期日强制完整展开，
+    其余期限 L2 仅 High 展开、Medium 一行紧凑 Top ΔOI，L3 极端（当前不渲染）。"""
     fwd = snapshot.get("forward")
     if not isinstance(fwd, dict) or not fwd.get("expirations"):
         return []
@@ -832,8 +833,11 @@ def _forward_block(snapshot: Dict[str, Any]) -> List[str]:
                 line += "（新行权价 " + " / ".join(new_txt) + "）"
         lines.append(line)
     lines.append("")
-    for e in fwd["expirations"]:
-        if e.get("activity") == "HIGH":
+    exps = fwd["expirations"]
+    nearest_dte = min((e.get("dte") for e in exps if e.get("dte") is not None), default=None)
+    for e in exps:
+        is_nearest = nearest_dte is not None and e.get("dte") == nearest_dte
+        if is_nearest or e.get("activity") == "HIGH":
             lines += _fwd_l2(e, snapshot)
         elif e.get("activity") == "MEDIUM":
             compact = _fwd_medium_top(e)

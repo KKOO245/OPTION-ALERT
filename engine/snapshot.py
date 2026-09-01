@@ -42,7 +42,7 @@ GROUPS: Dict[str, List[str]] = {
     "forward": ["expirations"],
     "context": [
         "spy_return", "qqq_return", "sector_relative", "vix", "vol_environment",
-        "day_high", "day_low", "day_open", "notes",
+        "day_high", "day_low", "day_open", "max_pain", "max_pain_monthly", "notes",
     ],
     "data_quality": ["market_data", "options_structure", "flow", "dealer_mechanism"],
 }

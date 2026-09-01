@@ -65,6 +65,8 @@ def test_full_metrics_mode():
         "day_high": 501.8,
         "day_low": 496.4,
         "day_open": 500.0,
+        "max_pain_near": 505.0,
+        "max_pain_monthly": 520.0,
         "atm_iv_near": 0.52,
         "term_ratio": 0.82,
         "iv_skew_25": 4.0,
@@ -97,6 +99,8 @@ def test_full_metrics_mode():
     assert snap["context"]["day_high"] == 501.8
     assert snap["context"]["day_low"] == 496.4
     assert snap["context"]["day_open"] == 500.0
+    assert snap["context"]["max_pain"] == 505.0
+    assert snap["context"]["max_pain_monthly"] == 520.0
     assert snap["forward"]["expirations"][0]["expiration"] == "2026-09-18"
 
 

@@ -522,6 +522,8 @@ def build_snapshot(
             _num(_get(data, "day_high")),
             _num(_get(data, "day_low")),
             _num(_get(data, "day_open")),
+            _num(_get(data, "max_pain_near")),
+            _num(_get(data, "max_pain_monthly")),
         ),
         "data_quality": grades,
         "data_sufficiency": tags,
@@ -534,8 +536,11 @@ def _build_context(
     day_high: Optional[float] = None,
     day_low: Optional[float] = None,
     day_open: Optional[float] = None,
+    max_pain: Optional[float] = None,
+    max_pain_monthly: Optional[float] = None,
 ) -> Dict[str, Any]:
-    """组装快照 context；vol_environment 来自市场层（所有 ticker 同一份）。"""
+    """组装快照 context；vol_environment 来自市场层（所有 ticker 同一份）。
+    max_pain 来自当日链上 Max Pain 计算（近月/月度），供报告结构解读引用。"""
     ctx = {
         "spy_return": _num(_get(context, "spy_return")),
         "qqq_return": _num(_get(context, "qqq_return")),
@@ -545,6 +550,8 @@ def _build_context(
         "day_high": day_high,
         "day_low": day_low,
         "day_open": day_open,
+        "max_pain": max_pain,
+        "max_pain_monthly": max_pain_monthly,
         "notes": _get(context, "notes"),
     }
     if isinstance(vol_environment, dict):
