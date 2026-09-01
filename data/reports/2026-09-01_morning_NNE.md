@@ -2,9 +2,9 @@
 
 📊 市场环境
 
-SPY $763.39 ｜ QQQ $709.26
+SPY $762.01 ｜ QQQ $707.64
 VIX 15.71 ↑5.3%（5D +1.7%） ｜ Vol Regime: NORMAL
-CNN 恐惧贪婪 46.4（neutral）
+CNN 恐惧贪婪 44.6（fear）
 全市场 P/C OI（OCC 结算 08-28，2023-06 以来）: Equity 0.75（分位 12%） ｜ Index 0.94（分位 11%）
 
 ⇒ VIX ↑ = SPX 期权隐含的近 30 日预期波动率上升；不判方向，不进入 Direction Edge。
@@ -95,9 +95,9 @@ P 18 ｜ +54 ｜ $0.81 ｜ 名义 $4.4k* ｜ +3.0%
 *模型估算/名义金额代理；买开/卖开方向不可观测（Scenario A/B）
 量化解读： 存量 Call 重｜ATM IV 76.6%｜历史 Rank 7%（近端代理）｜期限正常（远月高于近端）｜净 delta 敞口 正 463 股（方向不可观测）——方向不可观测，观察点，非方向信号
 
-   Top ΔOI: 16P +39
+09-18（MEDIUM △）Top ΔOI: 16P +39
 
-   Top ΔOI: 19C +7
+09-25（MEDIUM △）Top ΔOI: 19C +7
 
 数据质量: 行情 A ｜ 期权结构 A ｜ 流向 C ｜ 做市商机制 C —— Flow 相关层（Activity 连续性、做市商机制解读）置信度受限。
 Setup: 今日无 Setup 触发（机械检查全部 Setup）

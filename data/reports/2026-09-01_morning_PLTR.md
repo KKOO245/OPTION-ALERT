@@ -2,9 +2,9 @@
 
 📊 市场环境
 
-SPY $763.39 ｜ QQQ $709.24
+SPY $762.01 ｜ QQQ $707.64
 VIX 15.71 ↑5.3%（5D +1.7%） ｜ Vol Regime: NORMAL
-CNN 恐惧贪婪 46.4（neutral）
+CNN 恐惧贪婪 44.6（fear）
 全市场 P/C OI（OCC 结算 08-28，2023-06 以来）: Equity 0.75（分位 12%） ｜ Index 0.94（分位 11%）
 
 ⇒ VIX ↑ = SPX 期权隐含的近 30 日预期波动率上升；不判方向，不进入 Direction Edge。
@@ -46,6 +46,14 @@ Call Wall 190（弱结构｜现价低于该位 3.3%）
 09-11  C N/A / P N/A ｜ Activity LOW ｜ 10D（新上架）
 09-18  C N/A / P N/A ｜ Activity LOW ｜ 17D（新上架）
 09-25  C N/A / P N/A ｜ Activity LOW ｜ 24D（新上架）
+
+📆 09-04 Forward Structure
+存量OI:      C 144.4k / P 118.9k
+今日变化ΔOI: C N/A / P N/A
+平值价格ATM:  C 2.93 / P 4.20
+隐含波动率 ATM IV:  51.8%
+*模型估算/名义金额代理；买开/卖开方向不可观测（Scenario A/B）
+量化解读： 存量 Call 重｜ATM IV 51.8%｜期限倒挂（近端 IV > 远月）——方向不可观测，观察点，非方向信号
 
 📅 事件差分（观察，非因果）: 09-04（3D）ATM IV 51.8% vs 09-11 44.0%（差 +7.7pp）——覆盖 职位空缺(JOLTS) Job Openings、ISM 制造业 PMI 等
    符合'覆盖事件的期权溢价更高'（美联储 IFDP 1376 实证；单日截面，需连续多日确认）
