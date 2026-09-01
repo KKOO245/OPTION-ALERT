@@ -25,7 +25,55 @@ from report.morning import (
 )
 
 
-def _scorecard(morning: Optional[Dict[str, Any]], evening: Dict[str, Any], key_level_status: Optional[str]) -> List[str]:
+def _target_line(setup_status: Optional[Dict[str, Any]], today) -> str:
+    """晚报 Target 行：显示正在等待验证的具体假设（指标/方向/阈值/期限）与评估日。"""
+    pt = (setup_status or {}).get("primary_target") or {}
+    metric = pt.get("metric")
+    if not metric:
+        return "Target 状态: 无待验证 Target"
+    direction = pt.get("direction")
+    threshold = pt.get("threshold")
+    horizon = pt.get("horizon")
+    METRIC_ZH = {
+        "3D_close_return": "3D 收盘涨跌",
+        "5D_close_return": "5D 收盘涨跌",
+        "1D_close_return": "1D 收盘涨跌",
+    }
+    m_txt = METRIC_ZH.get(metric, metric)
+    spec = f"{m_txt} {direction} {threshold}"
+    if horizon:
+        spec += f"（{horizon}）"
+    # 评估日 ≈ 触发日 + horizon 工作日（Mon-Fri，节假日不计入，与 outcome 口径一致）
+    h = None
+    hs = str(horizon or "").rstrip("Dd")
+    if hs.isdigit():
+        h = int(hs)
+    end = None
+    if h:
+        try:
+            from datetime import date, timedelta
+
+            d = date.fromisoformat(str(today)[:10])
+            steps = 0
+            while steps < h:
+                d += timedelta(days=1)
+                if d.weekday() < 5:
+                    steps += 1
+            end = d
+        except (TypeError, ValueError):
+            end = None
+    date_txt = (
+        f"（评估日 ≈ {end.isoformat()}，窗口结束前不做对错判定）"
+        if end else "（评估日待定，窗口结束前不做对错判定）"
+    )
+    return (
+        f"Target 等待验证: {spec} — PENDING{date_txt}"
+    )
+
+
+def _scorecard(morning: Optional[Dict[str, Any]], evening: Dict[str, Any],
+               key_level_status: Optional[str],
+               setup_status: Optional[Dict[str, Any]] = None) -> List[str]:
     ticker = evening.get("ticker", "?")
     lines = ["📋 Thesis Scorecard（今开/晨间条件 vs 收盘实况，只打事实勾）"]
     if morning is None:
@@ -50,7 +98,7 @@ def _scorecard(morning: Optional[Dict[str, Any]], evening: Dict[str, Any], key_l
             )
     if key_level_status:
         lines.append(f"关键位状态: {key_level_status}——纯事实")
-    lines.append("Target 状态: PENDING（evaluation date …）——窗口结束前禁止'预测正确'类措辞")
+    lines.append(_target_line(setup_status, (evening.get("created_at") or "")[:10] or None))
     lines.append("")
     return lines
 
@@ -68,7 +116,7 @@ def ticker_evening(
     """单个标的的晚报区块（Scorecard + 明细，不含标题/市场/日历/提醒）。"""
     ticker = snapshot.get("ticker", "?")
     lines: List[str] = [ticker_heading(ticker)]
-    lines += _scorecard(morning, snapshot, key_level_status)
+    lines += _scorecard(morning, snapshot, key_level_status, setup_status)
     lines += _options_block(snapshot)
     if setup_status:
         spread = _vix_spread_line(snapshot)
@@ -76,7 +124,7 @@ def ticker_evening(
             lines.append(spread)
     lines += _structure_block(snapshot, gex=gex, gex_change=gex_change, prev_snapshot=morning)
     lines += _structure_interpretation(snapshot)
-    lines += _activity_block(activity)
+    lines += _activity_block(activity, snapshot=snapshot)
     lines += _forward_block(snapshot)
     lines += _event_differential_lines(snapshot, event_dates)
     dq_line = _data_quality_line(snapshot)
@@ -102,7 +150,8 @@ def render_evening(
     event_dates: Optional[List[Dict[str, Any]]] = None,
 ) -> str:
     date = snapshot.get("created_at", "")[:10]
-    lines = [f"# 期权晚报 {date}", ""]
+    hm = (snapshot.get("created_at") or "")[11:16]
+    lines = [f"# 期权晚报 {date}" + (f"（快照 {hm} ET）" if hm else ""), ""]
     if market:
         snap_ve = (snapshot.get("context") or {}).get("vol_environment")
         if isinstance(snap_ve, dict):

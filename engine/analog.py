@@ -315,6 +315,12 @@ def oos_validate(combined: List[Dict[str, Any]], state: Dict[str, Any],
 def run_analog(episodes_path, root, tickers, freeze_date, horizons,
                out_path, states=None) -> Dict[str, int]:
     episodes = load_episodes(episodes_path)
+    # 接线 live episodes：每日实盘快照转 episode（build_live_episodes.py 生成）
+    live_path = Path(episodes_path).parent / "live_episodes.jsonl"
+    if live_path.exists():
+        live = load_episodes(live_path)
+        if live:
+            episodes = episodes + live
     combined = build_combined(episodes, root)
     params = _load_params(root)
     min_n = int(params["min_n"])

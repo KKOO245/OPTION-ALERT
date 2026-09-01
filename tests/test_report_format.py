@@ -41,7 +41,8 @@ def test_render_evening_template():
     snap = load_fixture("snapshot_evening_soxx.json")
     text = render_evening(snap)
     assert "Thesis Scorecard" in text
-    assert "PENDING" in text
+    # 无 Setup 触发时诚实显示"无待验证 Target"（不再用占位 PENDING 文案）
+    assert "Target" in text
     assert "数据溯源" in text
 
 

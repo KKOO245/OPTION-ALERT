@@ -87,6 +87,28 @@ analog_v1:
   pcr_top_pct: 80.0
   note: "analog_v1 候选参数，不冻结。VALIDATED_HIGHER_VOL 仅表示样本外复现'该状态后波动偏高'，非方向信号，不进日报。"
 
+quant_summary_v1:
+  version: quant_summary_v1
+  rule_freeze_date: "2026-08-31"
+  rank_low_pct: 25.0          # IV Rank ≤25 → 期权偏便宜；≥75 → 偏贵
+  rank_high_pct: 75.0
+  term_inverted: 0.9          # Term <0.9 → 期限倒挂（近月恐慌特征）
+  term_steep: 1.15
+  skew_low_pp: 2.0            # Skew ≤2pp → 保护溢价薄；≥6pp → 下跌担忧重
+  skew_high_pp: 6.0
+  pcr_oi_crowded_low: 0.85    # 存量 OI 比 ≤0.85 → Call 拥挤（绝对水平代理）
+  pcr_vol_put_bias: 1.15      # 当日 P/C 量 ≥1.15 → 成交偏 Put
+  gex_pct_low: 25.0           # GEX 15年分位 ≤25 → 异常偏负；≥75 → 异常偏正
+  gex_pct_high: 75.0
+  pcr_pct_crowded_low: 10.0   # P/C OI 15年分位 ≤10 → 极端 Call 重；≥90 → Put 偏重
+  pcr_pct_crowded_high: 90.0
+  premium_real: 1.0           # 事件 last >$1 → 实质成本保护
+  premium_lottery: 0.05       # 事件 last ≤$0.05 → 彩票/名义
+  dist_near_pct: 5.0
+  dist_far_pct: 10.0
+  notional_low_k: 50.0        # Top ΔOI 名义 <50k → 低相关性（彩票）
+  note: "quant_summary_v1 候选参数，不冻结。综合解读为纯规则合成、可溯源、不输出方向；数据缺失即省略该条。"
+
 event_differential:
   version: event_diff_v1
   min_diff_pp: 5.0            # 事件差分低于此值不提示（经验默认，待校准）

@@ -160,8 +160,9 @@ def build_forward_structure(
             atm_strike = min(crs, key=lambda c: abs(c["strike"] - float(spot)))["strike"]
             atm_call = next((c for c in calls if abs(c["strike"] - atm_strike) < 1e-6), None)
             atm_put = next((c for c in puts if abs(c["strike"] - atm_strike) < 1e-6), None)
-            atm_call_price = atm_call["last"] if atm_call else None
-            atm_put_price = atm_put["last"] if atm_put else None
+            # ExpMove v2：优先 bid/ask mid（更稳），缺失回退 last
+            atm_call_price = (atm_call.get("mid") if atm_call else None) or (atm_call.get("last") if atm_call else None)
+            atm_put_price = (atm_put.get("mid") if atm_put else None) or (atm_put.get("last") if atm_put else None)
             ivs = [c["iv"] for c in (atm_call, atm_put) if c and c["iv"] is not None]
             atm_iv = round(sum(ivs) / len(ivs), 4) if ivs else None
         # ExpMove 期限化（expmove_v1）：ATM 跨式价 ÷ 现价 × 100，逐期限独立
@@ -179,12 +180,32 @@ def build_forward_structure(
                 continue
             dist = (c["strike"] / float(spot) - 1.0) * 100.0 if spot else None
             mag = event_magnitude(c["volume"], prev_oi[c["symbol"]], c["oi"], act_t)
+            notional = (d * c["last"] * 100.0) if c["last"] is not None else None
+            # Top ΔOI 经济相关性：名义 < 阈值 或 距现价 > 远端阈值 → LOW（彩票/低信息价值）
+            rel_low_k, rel_far_pct = 50.0, 10.0
+            try:
+                from engine.yaml_mini import load
+
+                qs = (load(Path(DEFAULT_CONFIG_ROOT) / THRESHOLDS_FILE) or {}).get("quant_summary_v1") or {}
+                rel_low_k = float(qs.get("notional_low_k", 50.0))
+                rel_far_pct = float(qs.get("dist_far_pct", 10.0))
+            except Exception:  # noqa: BLE001
+                pass
+            relevance = "OK"
+            lottery_price = c["last"] is not None and c["last"] > 0 and c["last"] <= 0.05
+            low_notional_far = (
+                notional is not None and abs(notional) < rel_low_k * 1000.0
+                and dist is not None and abs(dist) > rel_far_pct
+            )
+            if lottery_price or low_notional_far:
+                relevance = "LOW"
             top.append({
                 "strike": c["strike"],
                 "type": c["type"],
                 "delta_oi": int(d),
                 "last_price": c["last"],
-                "notional": (d * c["last"] * 100.0) if c["last"] is not None else None,
+                "notional": notional,
+                "relevance": relevance,
                 "distance_pct": round(dist, 1) if dist is not None else None,
                 "volume": c["volume"],
                 "magnitude": mag["magnitude"],

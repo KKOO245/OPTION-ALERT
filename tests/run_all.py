@@ -21,6 +21,8 @@ MODULES = [
     "test_metrics",
     "test_flip_context",
     "test_analog",
+    "test_quant_summary",
+    "test_live_episodes",
     "test_snapshot",
     "test_setup_detector",
     "test_thesis_logger",

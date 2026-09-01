@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from engine.annotations import event_card, options_annotation
@@ -162,11 +163,27 @@ def _options_block(snapshot: Dict[str, Any]) -> List[str]:
         f"Term {fmt(m.get('term_ratio'), 2)} | ExpMove {expmove_txt} | Rank {rank_txt}"
     )
     lines = [line]
+    # 量化视角综合解读（Options 行后）：纯规则、可溯源、不输出方向
+    try:
+        from src.quant_summary import hist_quant_line, options_quant
+
+        _root = Path(__file__).resolve().parent.parent
+        q = options_quant(m)
+        if q:
+            lines.append(q)
+    except Exception:  # noqa: BLE001
+        pass
     for a in options_annotation(m.get("pc_ratio"), m.get("pc_oi_ratio")):
         lines.append("   ⇒ " + a)
     hist = _oi_percentile_line(snapshot)
     if hist:
         lines.append(hist)
+    try:
+        hq = hist_quant_line(snapshot, _root)
+        if hq:
+            lines.append(hq)
+    except Exception:  # noqa: BLE001
+        pass
     # ExpMove 期限化（expmove_v1）：逐结算日独立计算，杜绝单值混用期限
     exp_parts = []
     for e in exps:
@@ -293,6 +310,16 @@ def _structure_block(
     if cands and spot is not None:
         name, lvl = min(cands, key=lambda x: abs(spot / float(x[1]) - 1.0))
         lines.append(f"最近结构参考: {name} {lvl:.0f}（{_dist_label(spot, lvl)}）")
+    # 量化视角（结构区块底部）：GEX 程度 × 日内变化 × 相对 Flip
+    try:
+        from src.quant_summary import gex_quant_line
+
+        _root = Path(__file__).resolve().parent.parent
+        gq = gex_quant_line(snapshot, prev_snapshot, _root)
+        if gq:
+            lines.append(gq)
+    except Exception:  # noqa: BLE001
+        pass
     return [l for l in lines if l]
 
 
@@ -380,7 +407,11 @@ def _setup_block(setup_status: Optional[Dict[str, Any]], vol_env: Optional[Dict[
     return lines
 
 
-def _activity_block(events: Optional[List[Dict[str, Any]]], stale_note: Optional[str] = None) -> List[str]:
+def _activity_block(
+    events: Optional[List[Dict[str, Any]]],
+    stale_note: Optional[str] = None,
+    snapshot: Optional[Dict[str, Any]] = None,
+) -> List[str]:
     lines = ["🔺 Activity（事实层，方向 Unknown）"]
     if stale_note:
         lines.append(f"- ⚠️ {stale_note}")
@@ -405,6 +436,15 @@ def _activity_block(events: Optional[List[Dict[str, Any]]], stale_note: Optional
                 vol_source=ev.get("volume_source"),
             )
         )
+    # 量化视角（Activity 底部）：事件模式汇总/分层/尾部对冲特征
+    try:
+        from src.quant_summary import activity_quant
+
+        aq = activity_quant(events, (snapshot or {}).get("spot"))
+        if aq:
+            lines.append(aq)
+    except Exception:  # noqa: BLE001
+        pass
     return lines
 
 
@@ -611,9 +651,10 @@ def _fwd_l2(e: Dict[str, Any]) -> List[str]:
         for t in top:
             dist_txt = f"{t['distance_pct']:+.1f}%" if t.get("distance_pct") is not None else "N/A"
             last_txt = f"${fmt(t['last_price'], 2)}" if t.get("last_price") is not None else "N/A"
+            rel_mark = "（低相关性/彩票）" if t.get("relevance") == "LOW" else ""
             lines.append(
                 f"{t['type'][0].upper()} {int(t['strike'])} ｜ {t['delta_oi']:+,} ｜ "
-                f"{last_txt} ｜ 名义 {_fwd_money(t.get('notional'))}* ｜ {dist_txt}"
+                f"{last_txt} ｜ 名义 {_fwd_money(t.get('notional'))}* ｜ {dist_txt}{rel_mark}"
             )
     ref = _fwd_structure_ref(top)
     if ref:
@@ -720,6 +761,9 @@ def ticker_morning(
     if prev_snapshot:
         p = prev_snapshot.get("spot")
         day_open = snapshot.get("day_open")
+        if day_open is None:
+            # 实际数据在 context.day_open（build_snapshot 落点）；顶层兜底
+            day_open = ((snapshot.get("context") or {}).get("day_open"))
         c = day_open or snapshot.get("spot")
         ref_label = "今开" if day_open else "今晨"
         chg = (c / p - 1.0) * 100 if (p and c) else None
@@ -749,7 +793,7 @@ def ticker_morning(
             lines.append(spread)
     lines += _structure_block(snapshot, gex=gex, gex_change=gex_change, prev_snapshot=prev_snapshot)
     lines += _structure_interpretation(snapshot)
-    lines += _activity_block(activity, stale_note=stale_note)
+    lines += _activity_block(activity, stale_note=stale_note, snapshot=snapshot)
     lines += _forward_block(snapshot)
     lines += _event_differential_lines(snapshot, event_dates)
     dq_line = _data_quality_line(snapshot)
@@ -774,7 +818,8 @@ def render_morning(
     event_dates: Optional[List[Dict[str, Any]]] = None,
 ) -> str:
     date = snapshot.get("created_at", "")[:10]
-    lines = [f"# 期权晨报 {date}", ""]
+    hm = (snapshot.get("created_at") or "")[11:16]
+    lines = [f"# 期权晨报 {date}" + (f"（快照 {hm} ET）" if hm else ""), ""]
     if market:
         snap_ve = (snapshot.get("context") or {}).get("vol_environment")
         if isinstance(snap_ve, dict):
