@@ -651,7 +651,30 @@ def _fwd_l2(e: Dict[str, Any]) -> List[str]:
         for t in top:
             dist_txt = f"{t['distance_pct']:+.1f}%" if t.get("distance_pct") is not None else "N/A"
             last_txt = f"${fmt(t['last_price'], 2)}" if t.get("last_price") is not None else "N/A"
-            rel_mark = "（低相关性/彩票）" if t.get("relevance") == "LOW" else ""
+            # 相关性标记：优先用快照已存字段；旧快照缺字段时按行内数据现算（同一阈值）
+            rel_mark = ""
+            try:
+                from engine.yaml_mini import load
+
+                qs = (load(Path(__file__).resolve().parent.parent / "config" / "thresholds.yaml")
+                      or {}).get("quant_summary_v1") or {}
+                low_k = float(qs.get("notional_low_k", 50.0))
+                far_pct = float(qs.get("dist_far_pct", 10.0))
+                try:
+                    last_f = float(t["last_price"]) if t.get("last_price") is not None else None
+                except (TypeError, ValueError):
+                    last_f = None
+                lottery = last_f is not None and last_f > 0 and last_f <= 0.05
+                low_far = (
+                    t.get("notional") is not None
+                    and abs(float(t["notional"])) < low_k * 1000.0
+                    and t.get("distance_pct") is not None
+                    and abs(float(t["distance_pct"])) > far_pct
+                )
+                if t.get("relevance") == "LOW" or lottery or low_far:
+                    rel_mark = "（低相关性/彩票）"
+            except Exception:  # noqa: BLE001
+                pass
             lines.append(
                 f"{t['type'][0].upper()} {int(t['strike'])} ｜ {t['delta_oi']:+,} ｜ "
                 f"{last_txt} ｜ 名义 {_fwd_money(t.get('notional'))}* ｜ {dist_txt}{rel_mark}"
