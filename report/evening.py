@@ -30,7 +30,7 @@ def _target_line(setup_status: Optional[Dict[str, Any]], today) -> str:
     pt = (setup_status or {}).get("primary_target") or {}
     metric = pt.get("metric")
     if not metric:
-        return "Target 状态: 无待验证 Target"
+        return "Target 状态: 无待验证 Target（今日无 Setup 触发）"
     direction = pt.get("direction")
     threshold = pt.get("threshold")
     horizon = pt.get("horizon")

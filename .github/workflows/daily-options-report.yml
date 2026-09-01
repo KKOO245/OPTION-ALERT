@@ -91,6 +91,10 @@ jobs:
         if: steps.timecheck.outputs.run_needed == 'true'
         run: python scripts/fetch_vix_history.py
 
+      - name: 刷新每日收盘价（后台自动维护，live episodes/IV-RV 依赖）
+        if: steps.timecheck.outputs.run_needed == 'true'
+        run: python scripts/update_closes_daily.py
+
       - name: 运行期权报告脚本(非目标时段/今天已发送过会自动跳过，不发送)
         if: steps.timecheck.outputs.run_needed == 'true'
         env:

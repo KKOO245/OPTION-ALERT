@@ -3,6 +3,8 @@ from report.format import code_block, table, ticker_heading
 from report.evening import render_evening, ticker_evening
 from report.morning import (
     _forward_block,
+    _is_low_relevance,
+    _relevant_top,
     _trading_gap,
     calendar_block,
     market_block,
@@ -403,10 +405,10 @@ def test_forward_block_l2_l3():
     ]}}
     text = "\n".join(_forward_block(snap))
     assert "09-18 Forward Structure" in text
-    assert "OI:       C 42.8k / P 31.6k" in text
-    assert "ΔOI:      C +5.4k / P +0.8k" in text
-    assert "ATM:      C 5.84 / P 14.12" in text
-    assert "ATM IV:   38.8%" in text
+    assert "存量OI:      C 42.8k / P 31.6k" in text
+    assert "今日变化ΔOI: C +5.4k / P +0.8k" in text
+    assert "平值价格ATM:  C 5.84 / P 14.12" in text
+    assert "隐含波动率 ATM IV:  38.8%" in text
     assert "ΔOI Δ Exposure*: 1.2M shares" in text
     assert "C 575 ｜ +7,348 ｜ $0.87 ｜ 名义 $639.3k* ｜ +11.5%" in text
     assert "结构参考" in text and "形成 OI 变化集中区" in text
@@ -433,6 +435,26 @@ def test_forward_block_medium_compact_top():
     assert "09-04 Forward Structure" not in text
 
 
+def test_low_relevance_and_rule_no_good_data_kill():
+    """彩票判据（AND）：名义<$50k 且 距现价>10% 才算彩票——绝不误杀近月好数据。"""
+    near_cheap = {"strike": 3.0, "type": "call", "delta_oi": 5000, "last_price": 0.10,
+                  "notional": 5000 * 0.10 * 100.0, "distance_pct": 2.0}
+    far_cheap = {"strike": 100.0, "type": "put", "delta_oi": 9999, "last_price": 0.01,
+                 "notional": 9999 * 0.01 * 100.0, "distance_pct": -30.0}
+    far_big = {"strike": 100.0, "type": "put", "delta_oi": 100000, "last_price": 0.03,
+               "notional": 100000 * 0.03 * 100.0, "distance_pct": -30.0}
+    # 近月便宜（标的便宜，不是彩票）→ 保留
+    assert _is_low_relevance(near_cheap) is False
+    # 远端便宜（真彩票）→ 过滤
+    assert _is_low_relevance(far_cheap) is True
+    # 远端但大额累计（$30万）→ 保留（不误杀）
+    assert _is_low_relevance(far_big) is False
+    # _relevant_top 过滤行为一致
+    top = [near_cheap, far_cheap, far_big]
+    kept = _relevant_top(top)
+    assert len(kept) == 2 and all(t is not far_cheap for t in kept)
+
+
 def test_forward_block_new_strike_annotation():
     snap = {"forward": {"expirations": [
         _fwd_exp("2026-09-18", 25, 1000, 500, "HIGH",
@@ -440,7 +462,7 @@ def test_forward_block_new_strike_annotation():
     ]}}
     text = "\n".join(_forward_block(snap))
     assert "（新行权价 C 0.5k / P 0.3k）" in text
-    assert "ΔOI:      C +1.0k / P +0.5k（含新行权价 C 0.5k / P 0.3k）" in text
+    assert "今日变化ΔOI: C +1.0k / P +0.5k（含新行权价 C 0.5k / P 0.3k）" in text
 
 
 def test_ticker_morning_includes_forward_block():

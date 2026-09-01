@@ -158,7 +158,7 @@ def _options_block(snapshot: Dict[str, Any]) -> List[str]:
     skew = m.get("skew")
     skew_txt = f"{fmt(skew, 1)}pp" if skew is not None else "N/A"
     line = (
-        f"Options: P/C量 {fmt(m.get('pc_ratio'), 2)} | OI比 {fmt(m.get('pc_oi_ratio'), 2)} | "
+        f"Options: P/C成交量 {fmt(m.get('pc_ratio'), 2)} | OI比 {fmt(m.get('pc_oi_ratio'), 2)} | "
         f"ATM IV {fmt_pct_safe(m.get('atm_iv'))} | Skew {skew_txt} | "
         f"Term {fmt(m.get('term_ratio'), 2)} | ExpMove {expmove_txt} | Rank {rank_txt}"
     )
@@ -625,10 +625,100 @@ def _fwd_shares(v) -> str:
     return f"{float(v):.0f} shares"
 
 
-def _fwd_l2(e: Dict[str, Any]) -> List[str]:
+def _fnum(v):
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return None
+
+
+def _rankpct(rank):
+    r = _fnum(rank)
+    if r is None:
+        return None
+    return r * 100.0 if r <= 1.0 else r
+
+
+def _is_low_relevance(t: Dict[str, Any]) -> bool:
+    """低相关性/彩票（AND 判据，实证校准 2026-09-01）：权利金名义 <$50k 且 距现价 >10%。
+    必须两者同时成立才判彩票：近月档价格低是"标的便宜"不是彩票（不误伤低价股）；
+    大额累计名义超阈值 → 不误杀。旧快照 relevance 字段口径不同，一律按行内数据现算。"""
+    try:
+        from engine.yaml_mini import load
+
+        qs = (load(Path(__file__).resolve().parent.parent / "config" / "thresholds.yaml")
+              or {}).get("quant_summary_v1") or {}
+        low_k = float(qs.get("notional_low_k", 50.0))
+        far_pct = float(qs.get("dist_far_pct", 10.0))
+    except Exception:  # noqa: BLE001
+        low_k, far_pct = 50.0, 10.0
+    notional = t.get("notional")
+    dist = t.get("distance_pct")
+    return (
+        notional is not None and abs(float(notional)) < low_k * 1000.0
+        and dist is not None and abs(float(dist)) > far_pct
+    )
+
+
+def _relevant_top(top: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Top ΔOI 只保留有经济相关性的行（彩票/低信息价值不进展示，避免污染排名）。"""
+    return [t for t in top if not _is_low_relevance(t)]
+
+
+def _forward_quant(e: Dict[str, Any], snapshot: Dict[str, Any]) -> Optional[str]:
+    """每个 Forward Structure 期限底部的量化解读（只用该期限自身数据 + 快照整体 IV 参照）。"""
+    m = snapshot.get("momentum") or {}
+    p3 = snapshot.get("p3") or {}
+    clauses: List[str] = []
+    ci, pi = _fnum(e.get("call_oi")), _fnum(e.get("put_oi"))
+    cd, pd_ = _fnum(e.get("call_delta_oi")), _fnum(e.get("put_delta_oi"))
+    if ci and pi and ci > 0:
+        r = pi / ci
+        if r <= 0.85:
+            clauses.append("存量 Call 重")
+        elif r >= 1.18:
+            clauses.append("存量 Put 重")
+        else:
+            clauses.append("存量两侧均衡")
+        if cd is not None and pd_ is not None:
+            if r <= 1.0 and pd_ > cd:
+                clauses.append("⚠️ 背离：存量 Call 重但当日 Put 增仓更多")
+            elif r >= 1.0 and cd > pd_:
+                clauses.append("⚠️ 背离：存量 Put 重但当日 Call 增仓更多")
+    iv = _fnum(e.get("atm_iv"))
+    if iv:
+        parts = [f"ATM IV {iv * 100:.1f}%"]
+        rank = _rankpct(m.get("iv_rank"))
+        if rank is not None:
+            parts.append(f"历史 Rank {rank:.0f}%（近端代理）")
+        rv20 = _fnum((p3.get("iv_rv") or {}).get("rv_20d"))
+        if rv20 and rv20 > 0:
+            parts.append(f"IV/RV {iv / rv20:.2f}×（近似）")
+        clauses.append("｜".join(parts))
+    # 跨期限斜率：该期限 vs 最远有 IV 的期限
+    exps = ((snapshot.get("forward") or {}).get("expirations")) or []
+    far_iv = None
+    for x in exps:
+        xiv = _fnum(x.get("atm_iv"))
+        if xiv:
+            far_iv = xiv
+    if iv and far_iv and far_iv > 0 and abs(far_iv - iv) > 1e-9:
+        if iv > far_iv:
+            clauses.append("期限倒挂（近端 IV > 远月）")
+        elif far_iv > iv * 1.05:
+            clauses.append("期限正常（远月高于近端）")
+    de = _fnum(e.get("delta_exposure"))
+    if de is not None:
+        clauses.append(f"净 delta 敞口 {'正' if de >= 0 else '负'} {abs(de):,.0f} 股（方向不可观测）")
+    if not clauses:
+        return None
+    return "量化解读： " + "｜".join(clauses) + "——方向不可观测，观察点，非方向信号"
+
+
+def _fwd_l2(e: Dict[str, Any], snapshot: Dict[str, Any]) -> List[str]:
     lines = [f"📆 {e['expiration'][5:]} Forward Structure"]
-    lines.append(f"OI:       C {_fwd_k(e.get('call_oi'), signed=False)} / P {_fwd_k(e.get('put_oi'), signed=False)}")
-    dline = f"ΔOI:      C {_fwd_k(e.get('call_delta_oi'))} / P {_fwd_k(e.get('put_delta_oi'))}"
+    lines.append(f"存量OI:      C {_fwd_k(e.get('call_oi'), signed=False)} / P {_fwd_k(e.get('put_oi'), signed=False)}")
+    dline = f"今日变化ΔOI: C {_fwd_k(e.get('call_delta_oi'))} / P {_fwd_k(e.get('put_delta_oi'))}"
     new_txt = []
     if e.get("call_new_oi"):
         new_txt.append(f"C {_fwd_k(e['call_new_oi'], signed=False)}")
@@ -639,50 +729,33 @@ def _fwd_l2(e: Dict[str, Any]) -> List[str]:
     lines.append(dline)
     if e.get("atm_call_price") is not None and e.get("atm_put_price") is not None:
         lines.append(
-            f"ATM:      C {fmt(e['atm_call_price'], 2)} / P {fmt(e['atm_put_price'], 2)}"
+            f"平值价格ATM:  C {fmt(e['atm_call_price'], 2)} / P {fmt(e['atm_put_price'], 2)}"
         )
     if e.get("atm_iv") is not None:
-        lines.append(f"ATM IV:   {e['atm_iv'] * 100:.1f}%")
+        lines.append(f"隐含波动率 ATM IV:  {e['atm_iv'] * 100:.1f}%")
     if e.get("delta_exposure") is not None:
-        lines.append(f"ΔOI Δ Exposure*: {_fwd_shares(e['delta_exposure'])}")
-    top = e.get("top_delta_oi") or []
+        lines.append(f"净 delta 敞口变化 ΔOI Δ Exposure*: {_fwd_shares(e['delta_exposure'])}")
+    top_raw = e.get("top_delta_oi") or []
+    top = _relevant_top(top_raw)
+    n_filtered = len(top_raw) - len(top)
     if top:
         lines.append("Top ΔOI（行权价 ｜ ΔOI ｜ 最新价 ｜ 名义金额* ｜ 距现价）:")
         for t in top:
             dist_txt = f"{t['distance_pct']:+.1f}%" if t.get("distance_pct") is not None else "N/A"
             last_txt = f"${fmt(t['last_price'], 2)}" if t.get("last_price") is not None else "N/A"
-            # 相关性标记：优先用快照已存字段；旧快照缺字段时按行内数据现算（同一阈值）
-            rel_mark = ""
-            try:
-                from engine.yaml_mini import load
-
-                qs = (load(Path(__file__).resolve().parent.parent / "config" / "thresholds.yaml")
-                      or {}).get("quant_summary_v1") or {}
-                low_k = float(qs.get("notional_low_k", 50.0))
-                far_pct = float(qs.get("dist_far_pct", 10.0))
-                try:
-                    last_f = float(t["last_price"]) if t.get("last_price") is not None else None
-                except (TypeError, ValueError):
-                    last_f = None
-                lottery = last_f is not None and last_f > 0 and last_f <= 0.05
-                low_far = (
-                    t.get("notional") is not None
-                    and abs(float(t["notional"])) < low_k * 1000.0
-                    and t.get("distance_pct") is not None
-                    and abs(float(t["distance_pct"])) > far_pct
-                )
-                if t.get("relevance") == "LOW" or lottery or low_far:
-                    rel_mark = "（低相关性/彩票）"
-            except Exception:  # noqa: BLE001
-                pass
             lines.append(
                 f"{t['type'][0].upper()} {int(t['strike'])} ｜ {t['delta_oi']:+,} ｜ "
-                f"{last_txt} ｜ 名义 {_fwd_money(t.get('notional'))}* ｜ {dist_txt}{rel_mark}"
+                f"{last_txt} ｜ 名义 {_fwd_money(t.get('notional'))}* ｜ {dist_txt}"
             )
+        if n_filtered:
+            lines.append(f"（已过滤 {n_filtered} 条低相关性彩票：名义 <$50k 且距现价 >10%）")
     ref = _fwd_structure_ref(top)
     if ref:
         lines.append(f"结构参考：{ref}（结构观察，非价格预测）")
     lines.append("*模型估算/名义金额代理；买开/卖开方向不可观测（Scenario A/B）")
+    fq = _forward_quant(e, snapshot)
+    if fq:
+        lines.append(fq)
     lines.append("")
     return lines
 
@@ -696,17 +769,19 @@ def _fwd_structure_ref(top: List[Dict[str, Any]]) -> Optional[str]:
     below = max((t for t in pos if t["distance_pct"] < 0), key=lambda t: t["delta_oi"], default=None)
     parts = []
     if above is not None:
-        parts.append(f"{int(above['strike'])}（{above['distance_pct']:+.1f}%）上方")
+        parts.append(f"{int(above['strike'])}（{above['distance_pct']:+.1f}%）")
     if below is not None:
-        parts.append(f"{int(below['strike'])}（{below['distance_pct']:+.1f}%）下方")
+        parts.append(f"{int(below['strike'])}（{below['distance_pct']:+.1f}%）")
     if not parts:
         return None
+    if len(parts) == 1:
+        return parts[0] + "附近形成 OI 变化集中"
     return " / ".join(parts) + "形成 OI 变化集中区"
 
 
 def _fwd_medium_top(e: Dict[str, Any]) -> Optional[str]:
     """Medium 结算日一行紧凑 Top ΔOI（跨两侧 |ΔOI| 排序，取前 2）。"""
-    top = (e.get("top_delta_oi") or [])[:2]
+    top = _relevant_top(e.get("top_delta_oi") or [])[:2]
     if not top:
         return None
     parts = [f"{int(t['strike'])}{t['type'][0].upper()} {t['delta_oi']:+,}" for t in top]
@@ -759,7 +834,7 @@ def _forward_block(snapshot: Dict[str, Any]) -> List[str]:
     lines.append("")
     for e in fwd["expirations"]:
         if e.get("activity") == "HIGH":
-            lines += _fwd_l2(e)
+            lines += _fwd_l2(e, snapshot)
         elif e.get("activity") == "MEDIUM":
             compact = _fwd_medium_top(e)
             if compact:

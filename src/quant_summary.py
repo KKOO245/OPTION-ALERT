@@ -202,7 +202,8 @@ def gex_quant_line(snapshot: Dict[str, Any], prev_snapshot: Optional[Dict[str, A
         return None
     clauses: List[str] = []
     def _money(v: float) -> str:
-        return f"{abs(v)/1e8:.2f}亿" if abs(v) >= 1e8 else f"{abs(v)/1e6:.0f}百万"
+        # 金额单位规范：≥1亿 用"X.XX亿"，<1亿 用"XXXX万"（不用"百万"）
+        return f"{abs(v)/1e8:.2f}亿" if abs(v) >= 1e8 else f"{abs(v)/1e4:.0f}万"
     # 程度（有 15 年分位则用分位，否则用数值符号）
     ticker = (snapshot.get("ticker") or "").upper()
     gex_pct = None

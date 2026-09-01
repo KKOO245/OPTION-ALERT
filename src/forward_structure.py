@@ -192,12 +192,15 @@ def build_forward_structure(
             except Exception:  # noqa: BLE001
                 pass
             relevance = "OK"
-            lottery_price = c["last"] is not None and c["last"] > 0 and c["last"] <= 0.05
-            low_notional_far = (
+            # 名义判据（修正版）：ΔOI×价格×100 的权利金总额 < 阈值 → 低相关性。
+            # 纯名义与标的价格无关：低价股近月档不误伤；大额彩票累计不漏。
+            # 彩票判据（AND，实证校准 2026-09-01）：权利金名义 <$50k 且 距现价 >10%。
+            # 必须两者同时成立：近月档价格低是"标的便宜"不是彩票（不误伤低价股）；
+            # 大额累计（如 10万张×$0.03=$30万）名义超阈值 → 不误杀。
+            if (
                 notional is not None and abs(notional) < rel_low_k * 1000.0
                 and dist is not None and abs(dist) > rel_far_pct
-            )
-            if lottery_price or low_notional_far:
+            ):
                 relevance = "LOW"
             top.append({
                 "strike": c["strike"],
@@ -279,6 +282,7 @@ def build_forward_structure(
             for t in top:
                 if (
                     t["magnitude"] == "HIGH"
+                    and t.get("relevance") != "LOW"
                     and t.get("r1") is not None
                     and t["r1"] >= r1_hi
                     and t["distance_pct"] is not None
