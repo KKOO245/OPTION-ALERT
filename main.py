@@ -943,6 +943,7 @@ def cmd_send_report_all(args) -> int:
     body = []
     ticker_hl = {}
     used_dates = []
+    latest_ts = ""
     render_failed = 0
     market_ve = None
     for t in tickers:
@@ -950,6 +951,9 @@ def cmd_send_report_all(args) -> int:
         if snap is None:
             print(f"无 {args.session} 快照，跳过 {t}")
             continue
+        ts = snap.get("created_at") or ""
+        if ts > latest_ts:
+            latest_ts = ts
         if market_ve is None:
             snap_ve = (snap.get("context") or {}).get("vol_environment")
             if isinstance(snap_ve, dict):
@@ -1008,7 +1012,8 @@ def cmd_send_report_all(args) -> int:
                 "为避免把旧日期报告混入本次推送，跳过发送"
             )
             return 0
-    lines = [f"# 📊 期权{session_zh} {final_date}", ""]
+    hm = latest_ts[11:16]
+    lines = [f"# 📊 期权{session_zh} {final_date}" + (f"（快照 {hm} ET）" if hm else ""), ""]
     mixed = len(set(used_dates)) > 1
     if date_str and (final_date != date_str or mixed):
         if final_date != date_str:
