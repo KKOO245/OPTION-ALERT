@@ -1,10 +1,10 @@
-# 期权晨报 2026-09-03（快照 11:17 ET）
+# 期权晨报 2026-09-03（快照 12:15 ET）
 
 📊 市场环境
 
-SPY $769.44 ｜ QQQ $716.07
-VIX 14.85 ↓2.3%（5D -2.4%） ｜ Vol Regime: LOW
-CNN 恐惧贪婪 35.2（fear）
+SPY $773.21 ｜ QQQ $717.33
+VIX 14.69 ↓3.4%（5D +1.2%） ｜ Vol Regime: LOW
+CNN 恐惧贪婪 35.8（fear）
 全市场 P/C OI（OCC 结算 08-28，2023-06 以来）: Equity 0.75（分位 12%） ｜ Index 0.94（分位 11%）
 
 ⇒ VIX ↑ = SPX 期权隐含的近 30 日预期波动率上升；不判方向，不进入 Direction Edge。
@@ -32,11 +32,11 @@ Options: P/C成交量 0.51 | OI比 0.68 | ATM IV 91.7% | Skew 2.6pp | Term 0.85 
    ⇒ 当日成交 vs 存量仓位：当日成交偏 Call，存量Call-dominant
    ExpMove 期限化（expmove_v1）: 09-04（1D）±5.2% ｜ 09-11（8D）±9.2% ｜ 09-18（15D）±12.3% ｜ 09-25（22D）±13.8%
 🔧 结构（未验证研究层：Mechanism Scenario A/B——OI 开仓方向不可观测）
-Gamma Regime: POSITIVE（模型分类） | GEX(存量) 869,305 | GEX Change vs 上次快照 273,566 | Flip: Primary Flip: 17.26（PRIMARY，全链重定价 + 覆盖达标）
+Gamma Regime: POSITIVE（模型分类） | GEX(存量) 905,713 | GEX Change vs 上次快照 309,974 | Flip: Primary Flip: 17.26（PRIMARY，全链重定价 + 覆盖达标）
 🔎 测量完整性: GEX 符号契约 gex_sign_v1（Model A: Call+ / Put−）｜ Gamma 口径 全链重定价 ｜ Effective GEX 覆盖: 91%（带内） ｜ IV 有效性: VALID 176 / LOW 94 / INVALID 196
 结构观察区: Primary Flip 17.26（全链重定价，覆盖 91%）
-最近结构参考: Flip 17（现价高于该位 3.0%）
-量化视角： 正 Gamma（87万，无历史分位）｜正 Gamma 增强（+27万）｜现价位于 Flip 上方 3.02%——观察点，非方向信号
+最近结构参考: Flip 17（现价高于该位 3.1%）
+量化视角： 正 Gamma（91万，无历史分位）｜正 Gamma 增强（+31万）｜现价位于 Flip 上方 3.14%——观察点，非方向信号
 🧭 结构解读（全部依赖上方假设）
 • Gamma 区域：切换参考 17（全链重定价，覆盖 91%）。
 • 做市商（条件机制）：若 Scenario A + 负 Gamma 成立，跌破关键位下方可能对应顺周期卖出压力增加；实际做市商对冲流量不可观测。Scenario B → 方向相反。不进入方向决策。
@@ -67,16 +67,14 @@ Gamma Regime: POSITIVE（模型分类） | GEX(存量) 869,305 | GEX Change vs �
 隐含波动率 ATM IV:  91.7%
 净 delta 敞口变化 ΔOI Δ Exposure*: 12k shares
 Top ΔOI（行权价 ｜ ΔOI ｜ 最新价 ｜ 名义金额* ｜ 距现价）:
-C 18 ｜ +247 ｜ $0.45 ｜ 名义 $11.1k* ｜ +1.2%
-C 19 ｜ -121 ｜ $0.10 ｜ 名义 $-1.2k* ｜ +6.9%
-P 17 ｜ +51 ｜ $0.10 ｜ 名义 $510* ｜ -4.4%
-结构参考：18（+1.2%） / 17（-4.4%）形成 OI 变化集中区（结构观察，非价格预测）
+C 18 ｜ +247 ｜ $0.45 ｜ 名义 $11.1k* ｜ +1.1%
+C 19 ｜ -121 ｜ $0.10 ｜ 名义 $-1.2k* ｜ +6.7%
+P 17 ｜ +51 ｜ $0.10 ｜ 名义 $510* ｜ -4.5%
+结构参考：18（+1.1%） / 17（-4.5%）形成 OI 变化集中区（结构观察，非价格预测）
 *模型估算/名义金额代理；买开/卖开方向不可观测（Scenario A/B）
 量化解读： 存量 Call 重｜ATM IV 91.7%｜历史 Rank 20%（近端代理）｜期限倒挂（近端 IV > 远月）｜净 delta 敞口 正 12,219 股（方向不可观测）——方向不可观测，观察点，非方向信号
 
-09-11（MEDIUM △）Top ΔOI: 19C +19 ｜ 16P +17
-
-09-18（MEDIUM △）Top ΔOI: 16P +40
+09-11（MEDIUM △）Top ΔOI: 19C +19
 
 09-25（MEDIUM △）Top ΔOI: 18C +18 ｜ 19C +16
 
