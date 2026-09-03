@@ -2,9 +2,9 @@
 
 📊 市场环境
 
-SPY $773.21 ｜ QQQ $717.23
+SPY $772.61 ｜ QQQ $717.67
 VIX 14.69 ↓3.4%（5D +1.2%） ｜ Vol Regime: LOW
-CNN 恐惧贪婪 35.8（fear）
+CNN 恐惧贪婪 35.3（fear）
 全市场 P/C OI（OCC 结算 08-28，2023-06 以来）: Equity 0.75（分位 12%） ｜ Index 0.94（分位 11%）
 
 ⇒ VIX ↑ = SPX 期权隐含的近 30 日预期波动率上升；不判方向，不进入 Direction Edge。
