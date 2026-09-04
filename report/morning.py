@@ -96,21 +96,41 @@ def _oi_percentile_line(snapshot: Dict[str, Any]) -> Optional[str]:
     return "   ⇒ 历史分位（15年 lambdaclass 全链口径）: " + " ｜ ".join(parts)
 
 
-def _occ_macro_line() -> Optional[str]:
-    """全市场 P/C OI（OCC 结算口径，前一交易日）及 2023-06 以来历史分位。"""
+def _pcr_side_txt(v: float) -> str:
+    """P/C OI 存量方向描述（与注解口径一致：低=Call 重，高=Put 重）。"""
+    if v <= 0.80:
+        return "Call 侧明显更重"
+    if v < 1.0:
+        return "接近均衡略偏 Call"
+    if v <= 1.20:
+        return "接近均衡略偏 Put"
+    return "Put 侧明显更重"
+
+
+def _pct_zone_txt(pct: float) -> str:
+    if pct <= 25:
+        return "低位"
+    if pct >= 75:
+        return "高位"
+    return "中位"
+
+
+def _occ_macro_lines() -> List[str]:
+    """全市场 P/C OI（OCC 结算口径，前一交易日）：主行 + 下方量化解读行。
+    解读只复述主行的数值/分位（方向描述 + 历史区间），不添加主行之外的信息。"""
     try:
         import pandas as pd
         from pathlib import Path
 
         p = Path(__file__).resolve().parent.parent / "data" / "oi_history" / "OCC_DAILY.csv"
         if not p.exists():
-            return None
+            return []
         df = pd.read_csv(p)
         if df.empty or "equity_pcr_oi" not in df.columns:
-            return None
+            return []
         df = df.dropna(subset=["equity_pcr_oi"]).reset_index(drop=True)
         if df.empty:
-            return None
+            return []
         last = df.iloc[-1]
         date = str(last["date"])[5:]  # YYYY-MM-DD → MM-DD
         eq = float(last["equity_pcr_oi"])
@@ -119,6 +139,12 @@ def _occ_macro_line() -> Optional[str]:
             f"Equity {eq:.2f}（分位 {eq_pct:.0f}%）"
             if eq_pct is not None else f"Equity {eq:.2f}"
         ]
+        quant = []
+        if eq_pct is not None:
+            quant.append(
+                f"⇒ 全市场个股期权存量 Put/Call = {eq:.2f}，{_pcr_side_txt(eq)}，"
+                f"{len(df)} 个结算日中只高于 {eq_pct:.0f}% 的交易日，处于历史{_pct_zone_txt(eq_pct)}区间"
+            )
         if "index_pcr_oi" in df.columns:
             idx = last.get("index_pcr_oi")
             if idx is not None and idx == idx:
@@ -128,9 +154,14 @@ def _occ_macro_line() -> Optional[str]:
                     f"Index {idx:.2f}（分位 {idx_pct:.0f}%）"
                     if idx_pct is not None else f"Index {idx:.2f}"
                 )
-        return f"全市场 P/C OI（OCC 结算 {date}，2023-06 以来）: " + " ｜ ".join(parts)
+                if idx_pct is not None:
+                    quant.append(
+                        f"⇒ 全市场指数期权存量 Put/Call = {idx:.2f}，{_pcr_side_txt(idx)}，"
+                        f"{len(df)} 个结算日中只高于 {idx_pct:.0f}% 的交易日，处于历史{_pct_zone_txt(idx_pct)}区间"
+                    )
+        return [f"全市场 P/C OI（OCC 结算 {date}，2023-06 以来）: " + " ｜ ".join(parts)] + quant
     except Exception:  # noqa: BLE001
-        return None
+        return []
 
 
 def _options_block(snapshot: Dict[str, Any]) -> List[str]:
@@ -350,14 +381,35 @@ def _structure_interpretation(snapshot: Dict[str, Any]) -> List[str]:
     cw, pw = loc.get("call_wall"), loc.get("put_wall")
     cw_cls, pw_cls = loc.get("call_wall_class"), loc.get("put_wall_class")
     lines = ["🧭 结构解读（全部依赖上方假设）"]
-    downs = [f"{fmt(pw, 0)}（Put Wall{('，弱结构' if pw_cls == 'WEAK' else '')}）"] if pw else []
-    ups = []
+
+    def _side(level) -> str:
+        """按现价相对位置定上/下：level ≤ spot → 下方（支撑侧），否则上方（压力侧）。"""
+        try:
+            return "下方" if float(level) <= float(spot) else "上方"
+        except (TypeError, ValueError):
+            return "上方"
+
+    downs, ups = [], []
+    if pw:
+        (downs if (spot is None or _side(pw) == "下方") else ups).append(
+            f"{fmt(pw, 0)}（Put Wall{('，弱结构' if pw_cls == 'WEAK' else '')}）"
+        )
     if mp:
-        ups.append(f"{fmt(mp, 0)}（MaxPain，仅结算参考）")
+        (downs if (spot is not None and _side(mp) == "下方") else ups).append(
+            f"{fmt(mp, 0)}（MaxPain，仅结算参考）"
+        )
     if cw:
-        ups.append(f"{fmt(cw, 0)}（Call Wall{('，弱结构' if cw_cls == 'WEAK' else '')}）")
-    if downs:
-        lines.append(f"• 支撑/压力参考：下方 {' / '.join(downs)}；上方 {' / '.join(ups) if ups else 'N/A'}。")
+        (downs if (spot is not None and _side(cw) == "下方") else ups).append(
+            f"{fmt(cw, 0)}（Call Wall{('，弱结构' if cw_cls == 'WEAK' else '')}）"
+        )
+    # Max Pain 独立显示：任一参考位存在即渲染整行（不再被 Put Wall 是否存在绑架）
+    if downs or ups:
+        parts = []
+        if downs:
+            parts.append("下方 " + " / ".join(downs))
+        if ups:
+            parts.append("上方 " + " / ".join(ups))
+        lines.append("• 支撑/压力参考：" + "；".join(parts) + "。")
     flips = loc.get("flip_levels") or []
     if flips:
         ref = (loc.get("flip_primary") or flips[0])
@@ -521,9 +573,7 @@ def market_block(market: Optional[Dict[str, Any]]) -> List[str]:
         fg_rating = market.get("fg_rating")
         if fg is not None:
             lines.append(f"CNN 恐惧贪婪 {fg}{'（' + str(fg_rating) + '）' if fg_rating else ''}")
-        occ_line = _occ_macro_line()
-        if occ_line:
-            lines.append(occ_line)
+        lines.extend(_occ_macro_lines())
         lines.append("")
         lines.append("⇒ VIX ↑ = SPX 期权隐含的近 30 日预期波动率上升；不判方向，不进入 Direction Edge。")
         if label == "INSUFFICIENT_DATA":
@@ -540,9 +590,7 @@ def market_block(market: Optional[Dict[str, Any]]) -> List[str]:
     if fg is not None:
         m.append(f"CNN 恐惧贪婪 {fg}{'（' + str(fg_rating) + '）' if fg_rating else ''}")
     out = ["市场背景： " + " ｜ ".join(m)] if m else []
-    occ_line = _occ_macro_line()
-    if occ_line:
-        out.append(occ_line)
+    out.extend(_occ_macro_lines())
     if out:
         out.append("")
     return out
@@ -753,6 +801,9 @@ def _fwd_l2(e: Dict[str, Any], snapshot: Dict[str, Any]) -> List[str]:
     if ref:
         lines.append(f"结构参考：{ref}（结构观察，非价格预测）")
     lines.append("*模型估算/名义金额代理；买开/卖开方向不可观测（Scenario A/B）")
+    refs = _fwd_exp_refs(e, snapshot)
+    if refs:
+        lines.append("该期限仓位参考（Wall 同墙位口径，Max Pain 仅结算参考）: " + refs)
     fq = _forward_quant(e, snapshot)
     if fq:
         lines.append(fq)
@@ -786,6 +837,29 @@ def _fwd_medium_top(e: Dict[str, Any]) -> Optional[str]:
         return None
     parts = [f"{int(t['strike'])}{t['type'][0].upper()} {t['delta_oi']:+,}" for t in top]
     return f"{e['expiration'][5:]}（MEDIUM △）Top ΔOI: " + " ｜ ".join(parts)
+
+
+def _fwd_exp_refs(e: Dict[str, Any], snapshot: Dict[str, Any]) -> Optional[str]:
+    """该期限 Max Pain + Call/Put Wall（OI 峰值口径），返回"｜"连接串；无有效数据返回 None。"""
+    parts = []
+    mp = e.get("max_pain")
+    if mp is not None:
+        parts.append(f"Max Pain {fmt(mp, 0)}（结算参考）")
+    spot = snapshot.get("spot")
+    for zh, key in (("Call Wall", "call_wall"), ("Put Wall", "put_wall")):
+        pk = e.get(key)
+        if pk and pk.get("strike") is not None:
+            dist = ""
+            if spot:
+                try:
+                    d = (float(pk["strike"]) / float(spot) - 1.0) * 100.0
+                    weak = "，弱" if pk.get("class") == "WEAK" else ""
+                    dist = f"（{d:+.1f}%{weak}）"
+                except (TypeError, ValueError):
+                    dist = ""
+            strike_txt = f"{float(pk['strike']):g}"  # 525 → '525'，462.5 → '462.5'
+            parts.append(f"{zh} {strike_txt}{dist}（OI {_fwd_k(pk.get('oi'), signed=False)}）")
+    return " ｜ ".join(parts) if parts else None
 
 
 def _fwd_l3(e: Dict[str, Any], sig: Dict[str, Any]) -> List[str]:
@@ -841,8 +915,17 @@ def _forward_block(snapshot: Dict[str, Any]) -> List[str]:
             lines += _fwd_l2(e, snapshot)
         elif e.get("activity") == "MEDIUM":
             compact = _fwd_medium_top(e)
+            refs = _fwd_exp_refs(e, snapshot)
             if compact:
                 lines.append(compact)
+            if refs:
+                lines.append(f"{e['expiration'][5:]}（MEDIUM △）仓位参考: {refs}")
+            if compact or refs:
+                lines.append("")
+        else:  # LOW：也给出该期限 Max Pain + Call/Put Wall（OI 事实，不因低活动而省略）
+            refs = _fwd_exp_refs(e, snapshot)
+            if refs:
+                lines.append(f"{e['expiration'][5:]}（Activity LOW）仓位参考: {refs}")
                 lines.append("")
     return lines
 

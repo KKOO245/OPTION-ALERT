@@ -213,11 +213,19 @@ def gex_quant_line(snapshot: Dict[str, Any], prev_snapshot: Optional[Dict[str, A
             gex_pct = _pct_rank(gex_v, hist.get("net_gex", []))
     if gex_pct is not None:
         if gex_pct <= p["gex_pct_low"]:
-            clauses.append(f"负 Gamma（{_money(gex_v)}，历史分位 {gex_pct:.0f}%，偏负区）" if gex_v < 0
-                           else f"正 Gamma（{_money(gex_v)}，历史分位 {gex_pct:.0f}%，偏正区）")
+            # 低分位（带符号）：负值=深度负，正值=轻度正（多数交易日更正）
+            clauses.append(
+                f"负 Gamma（{_money(gex_v)}，历史分位偏负区，比 {100 - gex_pct:.0f}% 的交易日更负）"
+                if gex_v < 0 else
+                f"正 Gamma（{_money(gex_v)}，历史分位偏正区，弱于 {100 - gex_pct:.0f}% 的交易日）"
+            )
         elif gex_pct >= p["gex_pct_high"]:
-            clauses.append(f"正 Gamma（{_money(gex_v)}，历史分位 {gex_pct:.0f}%，偏正区）" if gex_v > 0
-                           else f"负 Gamma（{_money(gex_v)}，历史分位 {gex_pct:.0f}%，偏负区）")
+            # 高分位（带符号）：正值=显著正，负值=轻负（多数交易日更负）
+            clauses.append(
+                f"正 Gamma（{_money(gex_v)}，历史分位偏正区，比 {gex_pct:.0f}% 的交易日更正）"
+                if gex_v > 0 else
+                f"负 Gamma（{_money(gex_v)}，历史分位偏负区，轻于 {gex_pct:.0f}% 的交易日）"
+            )
         else:
             clauses.append(f"{'负' if gex_v < 0 else '正'} Gamma（{_money(gex_v)}，历史分位 {gex_pct:.0f}%，中性区）")
     else:

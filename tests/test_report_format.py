@@ -11,6 +11,7 @@ from report.morning import (
     market_block,
     render_morning,
     ticker_morning,
+    _occ_macro_lines,
 )
 from tests._helpers import load_fixture
 
@@ -336,6 +337,17 @@ def test_evening_scorecard_uses_day_open():
     assert "今晨" in text2
 
 
+def test_evening_scorecard_prev_close_baseline():
+    """晚报评分卡：今开基准 + 昨收基准并存（当日实际涨跌口径）。"""
+    snap = load_fixture("snapshot_evening_soxx.json")
+    morning = load_fixture("snapshot_morning_soxx.json")
+    morning["context"]["day_open"] = 500.0
+    text = ticker_evening(snap, morning=morning, prev_close=505.0)
+    score_line = next(l for l in text.split("\n") if "→ 收盘" in l)
+    assert "今开 500.00 → 收盘" in score_line
+    assert "昨收 505.00 → 收盘" in score_line
+
+
 def test_ticker_morning_no_vix_lines_without_setup():
     snap = load_fixture("snapshot_morning_soxx.json")
     text = ticker_morning(snap)
@@ -459,6 +471,76 @@ def test_structure_interpretation_shows_max_pain():
     snap["context"]["max_pain"] = 500.0
     joined = "\n".join(_structure_interpretation(snap))
     assert "500（MaxPain，仅结算参考）" in joined
+
+
+def test_structure_interpretation_max_pain_without_put_wall():
+    """Max Pain 独立显示：Put Wall 缺失（REMOTE/无数据）时不再吞掉 Max Pain。"""
+    snap = load_fixture("snapshot_morning_soxx.json")
+    snap["location"]["put_wall"] = None
+    snap["location"]["call_wall"] = None
+    snap["spot"] = 124.88
+    snap["context"]["max_pain"] = 120.0
+    joined = "\n".join(_structure_interpretation(snap))
+    assert "下方 120（MaxPain，仅结算参考）" in joined
+
+
+def test_structure_interpretation_wall_side_by_actual_position():
+    """Wall 上/下标签按现价相对位置：Put Wall 高于现价时标'上方'，不再硬编码'下方'。"""
+    snap = load_fixture("snapshot_morning_soxx.json")
+    snap["spot"] = 496.35
+    snap["location"]["put_wall"] = 500.0
+    snap["location"]["put_wall_class"] = "WEAK"
+    snap["location"]["call_wall"] = None
+    snap["context"]["max_pain"] = 520.0
+    joined = "\n".join(_structure_interpretation(snap))
+    assert "上方 500（Put Wall，弱结构）" in joined
+    assert "520（MaxPain，仅结算参考）" in joined
+
+
+def test_occ_macro_lines_have_quant_interpretation():
+    """OCC 全市场 P/C OI 行下方带量化解读（数值/分位从主行动态取，不编造）。"""
+    lines = _occ_macro_lines()
+    assert lines and lines[0].startswith("全市场 P/C OI（OCC 结算")
+    assert any("全市场个股期权存量 Put/Call = " in l and "个结算日中只高于" in l for l in lines)
+    assert any("全市场指数期权存量 Put/Call = " in l for l in lines)
+
+
+def test_forward_block_per_expiration_oi_refs():
+    """Forward 期限仓位参考：该期限 Max Pain + Call/Put Wall（OI 峰值口径）。"""
+    snap = {
+        "forward": {"expirations": [
+            _fwd_exp("2026-09-04", 3, 700, 4000, "MEDIUM",
+                     max_pain=520.0,
+                     call_wall={"strike": 525.0, "oi": 5363.0, "class": "PRIMARY"},
+                     put_wall={"strike": 462.5, "oi": 3415.0, "class": "WEAK"}),
+        ]},
+        "spot": 496.35,
+    }
+    text = "\n".join(_forward_block(snap))
+    assert "该期限仓位参考（Wall 同墙位口径，Max Pain 仅结算参考）" in text
+    assert "Max Pain 520" in text
+    assert "Call Wall 525" in text
+    assert "Put Wall 462.5（-6.8%，弱）" in text
+
+
+def test_forward_block_every_expiration_shows_walls_and_maxpain():
+    """每一期（含 LOW）都显示该期限 Max Pain + Call/Put Wall，不再只展开 HIGH。"""
+    snap = {
+        "forward": {"expirations": [
+            _fwd_exp("2026-09-04", 3, 700, 4000, "HIGH",
+                     max_pain=520.0, call_wall={"strike": 525.0, "oi": 5363.0, "class": "PRIMARY"},
+                     put_wall={"strike": 462.5, "oi": 3415.0, "class": "WEAK"}),
+            _fwd_exp("2026-09-11", 10, 100, 100, "LOW",
+                     max_pain=530.0, call_wall={"strike": 530.0, "oi": 3258.0, "class": "PRIMARY"},
+                     put_wall={"strike": 500.0, "oi": 3861.0, "class": "PRIMARY"}),
+        ]},
+        "spot": 496.35,
+    }
+    text = "\n".join(_forward_block(snap))
+    assert "09-11（Activity LOW）仓位参考" in text
+    assert "Max Pain 530" in text
+    assert "Call Wall 530" in text
+    assert "Put Wall 500" in text
 
 
 def test_low_relevance_and_rule_no_good_data_kill():

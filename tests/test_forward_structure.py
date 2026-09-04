@@ -77,6 +77,34 @@ def test_expirations_order_and_dte():
     assert [e["dte"] for e in out["expirations"]] == [4, 11, 18, 25]
 
 
+def test_exp_wall_remote_lottery_filtered():
+    """远端彩票档（峰值距现价 >10%）判 REMOTE → 不显示 Wall。"""
+    crs = [
+        {"type": "call", "strike": 635.0, "oi": 5399.0},  # +27.9% 远端峰值
+        {"type": "call", "strike": 525.0, "oi": 5363.0},
+        {"type": "call", "strike": 500.0, "oi": 1000.0},
+    ]
+    assert fs._exp_wall(crs, "call", 496.35) is None
+
+
+def test_exp_wall_primary_and_weak():
+    """距离内 Wall：dominance + strength 双满足 → PRIMARY；不足 → WEAK。"""
+    primary = [
+        {"type": "put", "strike": 500.0, "oi": 3861.0},
+        {"type": "put", "strike": 480.0, "oi": 1000.0},
+        {"type": "put", "strike": 460.0, "oi": 500.0},
+    ]
+    w = fs._exp_wall(primary, "put", 496.35)
+    assert w and w["strike"] == 500.0 and w["class"] == "PRIMARY"
+
+    weak = [
+        {"type": "call", "strike": 500.0, "oi": 2000.0},
+        {"type": "call", "strike": 495.0, "oi": 1900.0},  # 次强接近 → dominance < 1.5
+    ]
+    w2 = fs._exp_wall(weak, "call", 496.35)
+    assert w2 and w2["strike"] == 500.0 and w2["class"] == "WEAK"
+
+
 def test_aggregation_and_atm():
     out = _build()
     e = next(x for x in out["expirations"] if x["expiration"] == "2026-09-18")

@@ -73,17 +73,25 @@ def _target_line(setup_status: Optional[Dict[str, Any]], today) -> str:
 
 def _scorecard(morning: Optional[Dict[str, Any]], evening: Dict[str, Any],
                key_level_status: Optional[str],
-               setup_status: Optional[Dict[str, Any]] = None) -> List[str]:
+               setup_status: Optional[Dict[str, Any]] = None,
+               prev_close: Optional[float] = None) -> List[str]:
     ticker = evening.get("ticker", "?")
     lines = ["📋 Thesis Scorecard（今开/晨间条件 vs 收盘实况，只打事实勾）"]
+    e_spot = evening.get("spot")
     if morning is None:
-        lines.append(f"{ticker}: 晨报缺失（当日未生成），只报收盘事实")
+        if prev_close and e_spot:
+            chg = (float(e_spot) / float(prev_close) - 1.0) * 100.0
+            lines.append(
+                f"{ticker}: 晨报缺失（当日未生成），只报收盘事实：昨收 {fmt(prev_close, 2)} → "
+                f"收盘 {fmt(e_spot, 2)}（{chg:+.1f}%）"
+            )
+        else:
+            lines.append(f"{ticker}: 晨报缺失（当日未生成），只报收盘事实")
     else:
         gap = _trading_gap(morning.get("created_at", "")[:10], evening.get("created_at", "")[:10])
         if gap >= 1:
             lines.append(f"{ticker}: ⚠️ 晨报为 {gap} 个交易日前（标的可能停更），仅作收盘事实对照")
         m_spot = morning.get("spot")
-        e_spot = evening.get("spot")
         # 今开 = 当日常规时段开盘价（晨报快照 context.day_open，缺则用晚报快照的，再缺回退晨报 spot）
         m_open = ((morning.get("context") or {}).get("day_open"))
         if m_open is None:
@@ -92,9 +100,16 @@ def _scorecard(morning: Optional[Dict[str, Any]], evening: Dict[str, Any],
         ref_label = "今开" if m_open is not None else "今晨"
         if m_ref and e_spot:
             chg = (e_spot / m_ref - 1.0) * 100
-            lines.append(
+            line = (
                 f"{ticker}: {ref_label} {fmt(m_ref, 2)} → 收盘 {fmt(e_spot, 2)}（{chg:+.1f}%）"
                 + (_day_range(evening) or "")
+            )
+            # 昨收基准（当日实际涨跌）：与今开基准并存，两口径各有用途
+            if prev_close and float(prev_close) > 0:
+                chg_pc = (float(e_spot) / float(prev_close) - 1.0) * 100.0
+                line += f" ｜ 昨收 {fmt(prev_close, 2)} → 收盘 {fmt(e_spot, 2)}（{chg_pc:+.1f}%）"
+            lines.append(
+                line
             )
     if key_level_status:
         lines.append(f"关键位状态: {key_level_status}——纯事实")
@@ -112,11 +127,12 @@ def ticker_evening(
     gex_change: Optional[float] = None,
     key_level_status: Optional[str] = None,
     event_dates: Optional[List[Dict[str, Any]]] = None,
+    prev_close: Optional[float] = None,
 ) -> str:
     """单个标的的晚报区块（Scorecard + 明细，不含标题/市场/日历/提醒）。"""
     ticker = snapshot.get("ticker", "?")
     lines: List[str] = [ticker_heading(ticker)]
-    lines += _scorecard(morning, snapshot, key_level_status, setup_status)
+    lines += _scorecard(morning, snapshot, key_level_status, setup_status, prev_close)
     lines += _options_block(snapshot)
     if setup_status:
         spread = _vix_spread_line(snapshot)
@@ -148,6 +164,7 @@ def render_evening(
     calendar: Optional[List[str]] = None,
     market: Optional[Dict[str, Any]] = None,
     event_dates: Optional[List[Dict[str, Any]]] = None,
+    prev_close: Optional[float] = None,
 ) -> str:
     date = snapshot.get("created_at", "")[:10]
     hm = (snapshot.get("created_at") or "")[11:16]
@@ -169,7 +186,7 @@ def render_evening(
     lines.append(
         ticker_evening(
             snapshot, morning, activity, setup_status, gex, gex_change,
-            key_level_status, event_dates,
+            key_level_status, event_dates, prev_close,
         )
     )
     return "\n".join(lines)

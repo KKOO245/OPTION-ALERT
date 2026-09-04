@@ -96,6 +96,67 @@ def _prev_oi_map(prev) -> Dict[str, float]:
     return out
 
 
+def _exp_max_pain(crs: List[Dict[str, Any]]) -> Optional[float]:
+    """该期限 Max Pain（结算口径，与 metrics.max_pain 同公式）：让期权买方在假设结算价 S 下
+    总赔付最小的行权价。只依赖 OI 分布，与 Spot/IV/Wall 无关。薄/空链返回 None。"""
+    rows = [c for c in crs if (c.get("oi") or 0) > 0]
+    if not rows:
+        return None
+    strikes = sorted({c["strike"] for c in rows})
+    best_k, best_cost = None, None
+    for s in strikes:
+        cost = 0.0
+        for c in rows:
+            k = c["strike"]
+            oi = c["oi"]
+            if c["type"] == "call" and k <= s:
+                cost += (s - k) * oi
+            elif c["type"] == "put" and k >= s:
+                cost += (k - s) * oi
+        if best_cost is None or cost < best_cost:
+            best_cost, best_k = cost, s
+    return best_k
+
+
+def _exp_wall(crs: List[Dict[str, Any]], typ: str, spot: Optional[float],
+              wq: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
+    """该期限单侧 Wall（与 metrics.walls_v1 同口径，墙位候选参数一致）：
+      - 距离过滤：|Wall 距现价| > distance_cap_pct → REMOTE（彩票式远端档），返回 None 不进报告；
+      - dominance：Wall OI / 次强非零 OI ≥ dominance_min；
+      - strength：Wall OI ≥ strength_median_mult × 非零 OI 中位数；
+      PRIMARY = 距离内 + dominant + strong；WEAK = 距离内但不满足 dominance/strength。"""
+    if spot is None:
+        return None
+    wq = wq or {}
+    cap = float(wq.get("distance_cap_pct", 10.0))
+    dom_min = float(wq.get("dominance_min", 1.5))
+    str_mult = float(wq.get("strength_median_mult", 3.0))
+    oi_by_k: Dict[float, float] = {}
+    for c in crs:
+        if c.get("type") != typ:
+            continue
+        oi = c.get("oi") or 0
+        if oi <= 0:
+            continue
+        k = c["strike"]
+        oi_by_k[k] = oi_by_k.get(k, 0.0) + oi
+    if not oi_by_k:
+        return None
+    peak_k = max(oi_by_k, key=lambda k: oi_by_k[k])
+    peak_oi = oi_by_k[peak_k]
+    dist = (peak_k / float(spot) - 1.0) * 100.0
+    if abs(dist) > cap:
+        return None  # REMOTE：远端档过滤
+    others = [v for k, v in oi_by_k.items() if k != peak_k]
+    dominance = peak_oi / max(others) if others else None
+    vals = sorted(oi_by_k.values())
+    n = len(vals)
+    median = vals[n // 2] if n % 2 else (vals[n // 2 - 1] + vals[n // 2]) / 2.0
+    strong = peak_oi >= str_mult * median
+    cls = "PRIMARY" if (dominance is not None and dominance >= dom_min and strong) else "WEAK"
+    return {"strike": peak_k, "oi": round(peak_oi, 0), "class": cls}
+
+
 def build_forward_structure(
     contracts: Optional[List[Dict[str, Any]]],
     prev,
@@ -291,6 +352,10 @@ def build_forward_structure(
                 ):
                     significant.append(t)
 
+        exp_mp = _exp_max_pain(crs)
+        wq = (cfg.get("wall_quality_v1") or {}) if isinstance(cfg, dict) else {}
+        exp_cw = _exp_wall(crs, "call", spot, wq)
+        exp_pw = _exp_wall(crs, "put", spot, wq)
         expirations.append({
             "expiration": exp,
             "dte": int(dte),
@@ -316,6 +381,9 @@ def build_forward_structure(
             "top_delta_oi": top,
             "roll_candidates": roll_candidates,
             "significant": significant,
+            "max_pain": exp_mp,
+            "call_wall": exp_cw,
+            "put_wall": exp_pw,
         })
 
     expirations.sort(key=lambda e: e["dte"])

@@ -668,6 +668,7 @@ def cmd_render_evening(args) -> int:
         morning = snaps.load(date_str, ticker, "morning")
     except FileNotFoundError:
         morning = None
+    prev_evening = _prev_evening_snapshot(snaps, date_str, ticker)
     thresholds = yaml_mini.load(Path(args.config_root) / "thresholds.yaml")
     status = _setup_status(snap, store, Path(args.config_root), thresholds)
     text = render_evening(
@@ -679,6 +680,7 @@ def cmd_render_evening(args) -> int:
         market=_market_context("evening"),
         calendar=_calendar_lines(),
         event_dates=_macro_event_dates(),
+        prev_close=(prev_evening or {}).get("spot"),
     )
     _write_report(args.out, text)
     return 0
@@ -752,22 +754,30 @@ def _chunk_text(text: str, limit: int = 1900) -> list:
 
 
 def _post_webhook(webhook: str, body: dict) -> None:
-    """发送单条消息到 Discord webhook：429/5xx 重试一次。"""
+    """发送单条消息到 Discord webhook：429 按 Retry-After 退避、5xx 短退避，最多 3 次。"""
     payload = json.dumps(body).encode("utf-8")
     req = urllib.request.Request(
         webhook,
         data=payload,
         headers={"Content-Type": "application/json", "User-Agent": DISCORD_USER_AGENT},
     )
-    for attempt in (1, 2):
+    for attempt in (1, 2, 3):
         try:
             with urllib.request.urlopen(req, timeout=30) as resp:
                 if resp.status >= 300:
                     raise RuntimeError(f"Discord webhook HTTP {resp.status}")
             return
         except urllib.error.HTTPError as e:
-            if attempt == 1 and e.code in (429, 500, 502, 503, 504):
-                time.sleep(1.5)
+            if e.code in (429, 500, 502, 503, 504) and attempt < 3:
+                wait = 3.0
+                if e.code == 429:
+                    try:
+                        ra = float(e.headers.get("Retry-After", 2.0))
+                        wait = min(max(ra, 1.0), 30.0)
+                    except (TypeError, ValueError):
+                        wait = 3.0
+                print(f"Discord HTTP {e.code}，等待 {wait:.1f}s 后重试（第 {attempt}/3 次）")
+                time.sleep(wait)
                 continue
             raise
 
@@ -784,8 +794,14 @@ def _discord_send(webhook: str, text: str) -> None:
     except IndexError:
         webhook_id = "?"
     print(f"webhook id: {webhook_id}")
-    for chunk in _chunk_text(text):
+    chunks = _chunk_text(text)
+    for i, chunk in enumerate(chunks):
         _post_webhook(webhook, {"content": chunk})
+        # 限流护栏：Discord webhook 30 条/分钟。长报告切块连发会在第 31 条起吃 429，
+        # 曾导致"消息已发出但命令报错 → 未写已发送标记 → 下一轮整份重发"（重复早报）。
+        # 每条间隔 ≥2.1s（约 28 条/分钟），给整份发送留出余量。
+        if i < len(chunks) - 1:
+            time.sleep(2.1)
 
 
 def _sent_log_path(data_root) -> Path:
@@ -977,12 +993,14 @@ def cmd_send_report_all(args) -> int:
                     morning = snaps.load(used_date, t, "morning")
                 except FileNotFoundError:
                     morning = None
+                prev_evening = _prev_evening_snapshot(snaps, used_date, t)
                 text = ticker_evening(
                     snap,
                     morning=morning,
                     activity=activity,
                     setup_status=_render_status_arg(status),
                     event_dates=event_dates,
+                    prev_close=(prev_evening or {}).get("spot"),
                 )
             prev_ref = prev if args.session == "morning" else (morning if args.session == "evening" else None)
             from report.highlight import build_highlights

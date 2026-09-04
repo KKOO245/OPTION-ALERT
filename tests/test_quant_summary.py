@@ -92,6 +92,27 @@ def test_gex_quant_change_and_watch():
     assert gex_quant_line(_mk_snapshot(p3={"gex": {}}), prev, Path(".")) is None
 
 
+def test_gex_quant_extreme_wording():
+    """GEX 极端分位文案：负 Gamma 低分位用'比 N% 的交易日更负'（方向与数值一致，不写反）。"""
+    import shutil
+    import tempfile
+
+    tmp_path = Path(tempfile.mkdtemp(prefix="qs_gex_"))
+    oi = tmp_path / "data" / "oi_history"
+    oi.mkdir(parents=True)
+    # 历史 net_gex 全为大的正值 → 当前 -5e7 处于 0% 分位（比 100% 的交易日更负）
+    rows = "date,spot,net_gex,flip,primary_flip,pcr_oi_all,pcr_oi_near\n"
+    for i in range(80):
+        rows += f"2025-01-{i%28+1:02d},500.0,1000000000.0,505.0,505.0,1.0,1.0\n"
+    (oi / "QQQ.csv").write_text(rows, encoding="utf-8")
+    snap = _mk_snapshot("QQQ", p3={"gex": {"net_gex": -5.0e7}})
+    s = gex_quant_line(snap, None, tmp_path)
+    assert s is not None
+    assert "比 100% 的交易日更负" in s
+    assert "历史分位偏负区" in s
+    shutil.rmtree(tmp_path, ignore_errors=True)
+
+
 def test_activity_quant_pattern():
     spot = 700.0
     events = [
