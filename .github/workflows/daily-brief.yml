@@ -1,0 +1,191 @@
+name: 每日简报
+
+on:
+  schedule:
+    # 与完整报告同一套每小时触发；窗口判断在脚本内：
+    # 简报晨报目标 08:00（容差到 12:30），简报晚报 16:30（容差到 19:30）。
+    - cron: "0 11-23 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      force_send:
+        description: "强制发送（忽略时间检查，用于手动补发/测试）"
+        type: boolean
+        default: true
+      session:
+        description: "指定发送会话（morning=早简报 / evening=晚简报 / both=两份）"
+        type: choice
+        default: morning
+        options:
+          - morning
+          - evening
+          - both
+
+permissions:
+  contents: write
+
+# 同一 workflow 多次触发排队串行，禁止并行（防 GitHub 补跑撞车重复发送）
+concurrency:
+  group: daily-brief
+  cancel-in-progress: false
+
+jobs:
+  send-brief:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 拉取仓库代码
+        uses: actions/checkout@v4
+
+      - name: 快速时间检查（非目标时段直接结束）
+        id: timecheck
+        env:
+          FORCE_SEND: ${{ github.event.inputs.force_send }}
+        run: |
+          python3 - <<'PY'
+          import datetime, os
+          from zoneinfo import ZoneInfo
+          now = datetime.datetime.now(ZoneInfo("America/Toronto"))
+          force = os.environ.get("FORCE_SEND", "false").lower() == "true"
+          run = force
+          if not run:
+              cur = now.hour * 60 + now.minute
+              # 简报晨报目标 08:00，容差 270 分钟（到 12:30）
+              # 简报晚报目标 16:30，容差 180 分钟（到 19:30）
+              run = any(
+                  0 <= cur - (h * 60 + m) <= tol
+                  for (h, m), tol in (((8, 0), 270), ((16, 30), 180))
+              )
+          print(f"多伦多时间 {now:%Y-%m-%d %H:%M}，需要运行={run}")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
+              f.write(f"run_needed={'true' if run else 'false'}\n")
+          PY
+
+      - name: 设置Python环境
+        if: steps.timecheck.outputs.run_needed == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: 安装依赖
+        if: steps.timecheck.outputs.run_needed == 'true'
+        run: pip install -r requirements.txt
+
+      - name: 刷新 VIX 历史（后台自动维护）
+        if: steps.timecheck.outputs.run_needed == 'true'
+        run: python scripts/fetch_vix_history.py
+
+      - name: 刷新每日收盘价（后台自动维护）
+        if: steps.timecheck.outputs.run_needed == 'true'
+        run: python scripts/update_closes_daily.py
+
+      - name: 刷新快照（dry-run：只抓数据/存快照，不发旧格式、不锁完整报告）
+        if: steps.timecheck.outputs.run_needed == 'true'
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+          # 简报只需刷新快照，不走旧格式 LLM 深度分析（省钱、避免无关文本生成）
+          LLM_ENABLED: "false"
+          REPORT_DRY_RUN: "true"
+          SESSION_INPUT: ${{ github.event.inputs.session }}
+        run: |
+          SESSIONS=$(python3 - <<'PY'
+          import datetime, os
+          from zoneinfo import ZoneInfo
+          now = datetime.datetime.now(ZoneInfo("America/Toronto"))
+          sess_input = os.environ.get("SESSION_INPUT", "")
+          if sess_input == "morning":
+              print("morning")
+          elif sess_input == "evening":
+              print("evening")
+          elif sess_input == "both":
+              print("morning evening")
+          else:
+              cur = now.hour * 60 + now.minute
+              if 8 * 60 <= cur <= 12 * 60 + 30:
+                  print("morning")
+              elif 16 * 60 + 30 <= cur <= 19 * 60 + 30:
+                  print("evening")
+              else:
+                  print("skip")
+          PY
+          )
+          if [ "$SESSIONS" = "skip" ]; then
+            echo "非简报窗口，无需刷新快照"
+            exit 0
+          fi
+          echo "刷新快照会话: [$SESSIONS]"
+          FAILED=0
+          for S in $SESSIONS; do
+            FORCE_SEND=true FORCE_SESSION="$S" python src/options_report.py || { echo "[快照刷新失败] $S"; FAILED=1; }
+          done
+          [ "$FAILED" = "0" ] || exit 1
+
+      - name: 渲染并发送简报（幂等：_sent_log 已有当天会话则跳过）
+        if: always() && steps.timecheck.outputs.run_needed == 'true'
+        env:
+          DISCORD_BRIEF_WEBHOOK_URL: ${{ secrets.DISCORD_BRIEF_WEBHOOK_URL }}
+          FORCE: ${{ github.event.inputs.force_send }}
+          SESSION_INPUT: ${{ github.event.inputs.session }}
+        run: |
+          SESSIONS=$(python3 - <<'PY'
+          import datetime, os
+          from zoneinfo import ZoneInfo
+          now = datetime.datetime.now(ZoneInfo("America/Toronto"))
+          sess_input = os.environ.get("SESSION_INPUT", "")
+          if sess_input == "morning":
+              print("morning")
+          elif sess_input == "evening":
+              print("evening")
+          elif sess_input == "both":
+              print("morning evening")
+          elif os.environ.get("FORCE", "") == "true":
+              print("morning evening")
+          else:
+              cur = now.hour * 60 + now.minute
+              if 8 * 60 <= cur <= 12 * 60 + 30:
+                  print("morning")
+              elif 16 * 60 + 30 <= cur <= 19 * 60 + 30:
+                  print("evening")
+              else:
+                  print("skip")
+          PY
+          )
+          if [ "$SESSIONS" = "skip" ]; then
+            echo "非发送窗口，跳过"
+            exit 0
+          fi
+          echo "本次发送会话: [$SESSIONS]"
+          DATE=$(python3 - <<'PY'
+          import datetime
+          from zoneinfo import ZoneInfo
+          print(datetime.datetime.now(ZoneInfo("America/Toronto")).date().isoformat())
+          PY
+          )
+          echo "== 验证 webhook =="
+          python scripts/send_brief.py --session morning --date "$DATE" \
+            --webhook-url "$DISCORD_BRIEF_WEBHOOK_URL" --verify || exit 1
+          FAILED=0
+          for S in $SESSIONS; do
+            python scripts/send_brief.py --session "$S" --date "$DATE" \
+              --webhook-url "$DISCORD_BRIEF_WEBHOOK_URL" || { echo "[发送失败] $S"; FAILED=1; }
+            sleep 1
+          done
+          [ "$FAILED" = "0" ] || exit 1
+          echo "简报发送完成"
+
+      - name: 保存快照/发送记录（带 pull-rebase 重试，防与完整报告 workflow 撞车）
+        if: always() && steps.timecheck.outputs.run_needed == 'true'
+        run: |
+          git config user.name "options-report-bot"
+          git config user.email "options-report-bot@users.noreply.github.com"
+          for i in 1 2 3; do
+            git pull --rebase origin main || true
+            git add data/history data/analytics data/reports data/iv_history data/closes \
+              data/chain_history data/oi_history data/vix_history analytics state thesis episodes
+            git diff --cached --quiet && { echo "无变更"; exit 0; }
+            git commit -m "简报更新数据快照 $(date -u +'%Y-%m-%d %H:%M')" && git push && { echo "已推送"; exit 0; }
+            echo "提交/推送冲突，第 $i 次重试"
+            sleep 5
+          done
+          echo "连续 3 次提交失败，需要人工处理" && exit 1

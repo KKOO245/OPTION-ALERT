@@ -16,7 +16,7 @@ jobs:
       - name: 拉取仓库代码
         uses: actions/checkout@v4
 
-      - name: 检查今天两份报告是否已发送
+      - name: 检查今天四份输出是否已发送（完整晨/晚报 + 晨/晚简报）
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
@@ -26,7 +26,7 @@ jobs:
 
           now = datetime.datetime.now(ZoneInfo("America/Toronto"))
           cur = now.hour * 60 + now.minute
-          # 16:45-18:45 检查，让 17:00/18:00 两个整点槽都能触发（降低 GitHub cron 漏触发风险）
+          # 16:45-18:45 检查，让 17:00/18:00 两个整点槽都能触发
           if not (16 * 60 + 45 <= cur <= 18 * 60 + 45):
               print("非检查窗口，跳过")
               raise SystemExit(0)
@@ -42,14 +42,20 @@ jobs:
               except Exception as e:
                   print(f"读取发送记录失败: {e}")
 
-          missing = [s for s in ("早报", "晚报") if s not in sessions]
+          required = [
+              ("早报", "每日期权报告"),
+              ("晚报", "每日期权报告"),
+              ("早报简报", "每日简报"),
+              ("晚报简报", "每日简报"),
+          ]
+          missing = [f"{name}（{src}）" for name, src in required if name not in sessions]
           if not missing:
-              print(f"{today} 两份报告都已发送")
+              print(f"{today} 四份输出都已发送")
               raise SystemExit(0)
 
           msg = (f"⚠️ 报告漏发告警：{today} 多伦多时间已过 17:30，"
-                 f"但以下报告没有发送记录：{'、'.join(missing)}。"
-                 "请检查 GitHub Actions 运行日志。")
+                 f"以下输出没有发送记录：{'、'.join(missing)}。"
+                 "请检查 GitHub Actions 运行日志（每日期权报告 / 每日简报）。")
           print(msg)
           webhook = os.environ.get("DISCORD_WEBHOOK_URL", "")
           if not webhook:
