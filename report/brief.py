@@ -322,6 +322,36 @@ def render_brief(snap: Dict[str, Any], session: str = "morning", ticker: str = "
     return "\n".join(lines)
 
 
+def render_ticker_block(snap: Dict[str, Any], session: str = "morning", ticker: str = "QQQ") -> str:
+    """多标的摘要里的单个标的区块：一句话 + 结构图 + 条件路径 + 最多 2 条风险项。"""
+    date_str, _ts = _parse_created(snap.get("created_at"))
+    sess_zh = "晨" if session == "morning" else "晚"
+    lines = [f"### {ticker}｜{sess_zh}简报 {date_str}", "", _one_line(snap), ""]
+    lines += _structural_map(snap)
+    lines.append("")
+    lines += _conditional_path(snap)
+    risk = _risk_items(snap)
+    if len(risk) > 1:  # 含标题，最多标题 + 2 条
+        lines.append("")
+        lines += risk[:3]
+    return "\n".join(lines)
+
+
+def render_digest(
+    snapshots: List[Tuple[str, Dict[str, Any]]],
+    session: str = "morning",
+    date_str: str = "",
+) -> str:
+    """合并多标的为一条摘要消息（幂等按会话整体记账，避免逐标的发送的账本分裂）。"""
+    sess_zh = "晨报简报" if session == "morning" else "晚报简报"
+    blocks = [render_ticker_block(snap, session=session, ticker=t) for t, snap in snapshots]
+    head = f"# 📋 期权简报（多标的·{sess_zh}）{date_str}".rstrip()
+    lines = [head, f"共 {len(snapshots)} 个标的；个别标的缺快照时自动跳过，不阻塞整批。", ""]
+    lines.append("\n\n---\n\n".join(blocks))
+    lines.append("— 完整版晨报/晚报仍在原频道推送；本简报仅作提醒，不构成投资建议。")
+    return "\n".join(lines)
+
+
 if __name__ == "__main__":  # 本地自检入口：python report/brief.py <snapshot.json> [morning|evening]
     import json
     import sys

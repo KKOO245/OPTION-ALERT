@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""简报发送 CLI：渲染 → 幂等检查 → Discord 推送 → 写发送台账。
+"""简报发送 CLI（多标的）：渲染 → 幂等检查 → 一次推送 → 一次写台账。
 
 用法（仓库根目录执行）：
   python scripts/send_brief.py --session morning --date 2026-09-04 \
       --webhook-url "$DISCORD_BRIEF_WEBHOOK_URL"
-  python scripts/send_brief.py --session evening --date 2026-09-04 --dry-run
+  python scripts/send_brief.py --session morning --date 2026-09-04 --dry-run
+  python scripts/send_brief.py --session morning --tickers QQQ,SPY --dry-run
 
-幂等：与完整晨/晚报共用 data/history/_sent_log.json，但键分离
-（早报简报 / 晚报简报），互不锁死。
+标的名单：默认读取 config/brief_tickers.txt（每行一个，# 开头为注释）。
+该文件是用户名单：程序只读，任何代码/脚本不得写入或覆盖。
+幂等：与完整晨/晚报共用 data/history/_sent_log.json，键分离
+（早报简报 / 晚报简报）；整批成功后统一记账，避免逐标的账本分裂。
 """
 
 from __future__ import annotations
@@ -26,9 +29,9 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from report.brief import _parse_created, render_brief  # noqa: E402
+from report.brief import _parse_created, render_brief, render_digest  # noqa: E402
 
-DISCORD_USER_AGENT = "Mozilla/5.0 (option-alert-brief/1.0)"
+DISCORD_USER_AGENT = "Mozilla/5.0 (option-alert-brief/1.1)"
 _LOG_KEY = {"morning": "早报简报", "evening": "晚报简报"}
 
 
@@ -145,11 +148,25 @@ def _verify(webhook: str) -> int:
         return 1
 
 
+def _load_universe(data_root: Path, override: str | None) -> list:
+    """标的名单：--tickers 覆盖 > config/brief_tickers.txt > 默认 QQQ。只读，绝不写该文件。"""
+    if override:
+        return [t.strip().upper() for t in override.split(",") if t.strip()]
+    cfg = Path(data_root) / "config" / "brief_tickers.txt"
+    out = []
+    if cfg.exists():
+        for line in cfg.read_text(encoding="utf-8").splitlines():
+            line = line.split("#", 1)[0].strip()
+            if line:
+                out.append(line.upper())
+    return out or ["QQQ"]
+
+
 def main() -> int:
     _utf8()
-    ap = argparse.ArgumentParser(description="发送 QQQ 简报到 Discord")
+    ap = argparse.ArgumentParser(description="发送期权简报到 Discord（多标的）")
     ap.add_argument("--session", required=True, choices=["morning", "evening"])
-    ap.add_argument("--ticker", default="QQQ")
+    ap.add_argument("--tickers", default=None, help="逗号分隔；默认读 config/brief_tickers.txt")
     ap.add_argument("--date", default=None, help="YYYY-MM-DD；默认取最新快照日期")
     ap.add_argument("--webhook-url", default=None)
     ap.add_argument("--data-root", default=None, help="仓库/数据根目录（默认脚本上级目录）")
@@ -159,7 +176,6 @@ def main() -> int:
     args = ap.parse_args()
 
     data_root = Path(args.data_root) if args.data_root else ROOT
-    ticker = args.ticker.upper()
 
     if args.verify:
         return _verify(args.webhook_url or "")
@@ -180,21 +196,37 @@ def main() -> int:
             return 1
         day = _parse_created(latest.get("created_at"))[0]
 
-    try:
-        snap = snaps.load(day, ticker, args.session)
-    except FileNotFoundError:
-        print(f"无 {day} {args.session} 快照（{ticker}），跳过（正常情况，例如周末/标的未抓取）")
-        return 0
+    tickers = _load_universe(data_root, args.tickers)
+    loaded = []
+    skipped = []
+    stale = []
+    for t in tickers:
+        try:
+            snap = snaps.load(day, t, args.session)
+        except FileNotFoundError:
+            skipped.append(t)
+            continue
+        snap_day, _ts = _parse_created(snap.get("created_at"))
+        if snap_day != day:
+            if not args.allow_stale:
+                stale.append(t)
+                continue
+            print(f"[新鲜度] {t} 快照日期 {snap_day} != 目标 {day}（--allow-stale 已放行）")
+        loaded.append((t, snap))
 
-    snap_day, _ts = _parse_created(snap.get("created_at"))
-    if snap_day != day and not args.allow_stale:
-        print(
-            f"[新鲜度] 快照日期 {snap_day} != 目标 {day}；"
-            "为避免把旧日期简报混入本次推送，跳过（可用 --allow-stale 手动测试）"
-        )
+    if not loaded:
+        print(f"无 {day} {args.session} 快照（名单 {len(tickers)} 个），本次跳过")
         return 0
+    if skipped:
+        print(f"跳过无快照标的：{', '.join(skipped)}")
+    if stale:
+        print(f"跳过日期不符标的：{', '.join(stale)}")
 
-    text = render_brief(snap, session=args.session, ticker=ticker)
+    text = (
+        render_digest(loaded, session=args.session, date_str=day)
+        if len(loaded) > 1
+        else render_brief(loaded[0][1], session=args.session, ticker=loaded[0][0])
+    )
     if args.dry_run:
         print(text)
         return 0
@@ -207,7 +239,7 @@ def main() -> int:
         return 0
     _discord_send(args.webhook_url, text)
     _mark_sent(data_root, args.session, day)
-    print(f"已发送 {ticker} {_LOG_KEY[args.session]}（{day}）到 Discord")
+    print(f"已发送 {_LOG_KEY[args.session]}（{day}，{len(loaded)} 个标的）到 Discord")
     return 0
 
 
