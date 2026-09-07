@@ -1,4 +1,4 @@
-# 期权晚报 2026-09-07（快照 16:40 ET）
+# 期权晚报 2026-09-07（快照 19:08 ET）
 
 📊 市场环境
 
@@ -20,9 +20,7 @@ CNN 恐惧贪婪 41.9（fear）
 - 周五 09-11 08:30　【高】Core Inflation Rate YoY　预测 2.4 ｜ 实际 待公布 ｜ 前值 2.5
 - 周五 09-11 10:00　【高】密歇根消费者信心 Consumer Sentiment Prel　预测 51 ｜ 实际 待公布 ｜ 前值 51.7
 
-🔍 重点速览
-🟡 **近现价集中开仓**: 09-11 365P ΔOI +98（距现价 -0.5%）
-   ⇒ 高等级 OI 变化且贴近现价；方向 Unknown（买开/卖开不可观测）
+🔍 重点速览: 今日无重点项（机械检查 highlight_v1）
 
 
 ## ISRG
@@ -64,34 +62,26 @@ Call Wall 400（弱结构｜现价低于该位 8.3%）
 量化视角： 5 个事件合计 ΔOI ≈ 311 张（Put 267 / Call 44），跨 1 个期限｜近端保护（3 档，距现价 ≤5%，权利金合计约 $0M，买/卖方向不可观测）｜Put 增仓为主（孤立/局部，暂不构成模式推断）——方向未知，观察连续性，观察点，非方向信号
 📆 Forward Expiration Structure
 
-09-11  C +0.2k / P +0.4k ｜ Activity HIGH ｜ 4D
-09-18  C -67 / P +31 ｜ Activity MEDIUM △ ｜ 11D
-09-25  C +9 / P +11 ｜ Activity MEDIUM △ ｜ 18D
-10-02  C +6 / P +8 ｜ Activity MEDIUM △ ｜ 25D
+09-11  C +0 / P +0 ｜ Activity LOW ｜ 4D
+09-18  C +0 / P +0 ｜ Activity LOW ｜ 11D
+09-25  C +0 / P +0 ｜ Activity LOW ｜ 18D
+10-02  C +0 / P +0 ｜ Activity LOW ｜ 25D
 
 📆 09-11 Forward Structure
 存量OI:      C 1.0k / P 1.1k
-今日变化ΔOI: C +0.2k / P +0.4k
+今日变化ΔOI: C +0 / P +0
 平值价格ATM:  C 6.00 / P 6.80
 隐含波动率 ATM IV:  33.2%
-净 delta 敞口变化 ΔOI Δ Exposure*: -5k shares
-Top ΔOI（行权价 ｜ ΔOI ｜ 最新价 ｜ 名义金额* ｜ 距现价）:
-P 365 ｜ +98 ｜ $5.38 ｜ 名义 $52.7k* ｜ -0.5%
-P 350 ｜ +80 ｜ $1.05 ｜ 名义 $8.4k* ｜ -4.6%
-P 357 ｜ +55 ｜ $2.29 ｜ 名义 $12.6k* ｜ -2.5%
-结构参考：365（-0.5%）附近形成 OI 变化集中（结构观察，非价格预测）
+净 delta 敞口变化 ΔOI Δ Exposure*: 0 shares
 *模型估算/名义金额代理；买开/卖开方向不可观测（Scenario A/B）
 该期限仓位参考（Wall 同墙位口径，Max Pain 仅结算参考）: Max Pain 375（结算参考） ｜ Call Wall 400（+9.1%，弱）（OI 0.1k） ｜ Put Wall 350（-4.6%）（OI 0.2k）
-量化解读： 存量两侧均衡｜ATM IV 33.2%｜期限倒挂（近端 IV > 远月）｜净 delta 敞口 负 4,648 股（方向不可观测）——方向不可观测，观察点，非方向信号
+量化解读： 存量两侧均衡｜ATM IV 33.2%｜期限倒挂（近端 IV > 远月）｜净 delta 敞口 正 0 股（方向不可观测）——方向不可观测，观察点，非方向信号
 
-09-18（MEDIUM △）Top ΔOI: 380C -25
-09-18（MEDIUM △）仓位参考: Max Pain 378（结算参考） ｜ Call Wall 400（+9.1%，弱）（OI 1.1k）
+09-18（Activity LOW）仓位参考: Max Pain 378（结算参考） ｜ Call Wall 400（+9.1%，弱）（OI 1.1k）
 
-09-25（MEDIUM △）Top ΔOI: 365C +6 ｜ 345P +4
-09-25（MEDIUM △）仓位参考: Max Pain 380（结算参考） ｜ Put Wall 370（+0.9%，弱）（OI 0.1k）
+09-25（Activity LOW）仓位参考: Max Pain 380（结算参考） ｜ Put Wall 370（+0.9%，弱）（OI 0.1k）
 
-10-02（MEDIUM △）Top ΔOI: 370C +6 ｜ 340P +5
-10-02（MEDIUM △）仓位参考: Max Pain 370（结算参考） ｜ Put Wall 335（-8.6%）（OI 2.3k）
+10-02（Activity LOW）仓位参考: Max Pain 370（结算参考） ｜ Put Wall 335（-8.6%）（OI 2.3k）
 
 数据质量: 行情 A ｜ 期权结构 A ｜ 流向 C ｜ 做市商机制 C —— Flow 相关层（Activity 连续性、做市商机制解读）置信度受限。
 Setup: 今日无 Setup 触发（机械检查全部 Setup）
