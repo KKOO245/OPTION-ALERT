@@ -1,10 +1,10 @@
-# 期权晨报 2026-09-08（快照 10:20 ET）
+# 期权晨报 2026-09-08（快照 10:49 ET）
 
 📊 市场环境
 
-SPY $766.61 ｜ QQQ $717.62
-VIX 15.64 ↑2.2%（5D -4.3%） ｜ Vol Regime: NORMAL
-CNN 恐惧贪婪 41.2（fear）
+SPY $767.02 ｜ QQQ $719.00
+VIX 15.51 ↑1.4%（5D -5.1%） ｜ Vol Regime: NORMAL
+CNN 恐惧贪婪 41.5（fear）
 全市场 P/C OI（OCC 结算 08-28，2023-06 以来）: Equity 0.75（分位 12%） ｜ Index 0.94（分位 11%）
 ⇒ 全市场个股期权存量 Put/Call = 0.75，Call 侧明显更重，815 个结算日中只高于 12% 的交易日，处于历史低位区间
 ⇒ 全市场指数期权存量 Put/Call = 0.94，接近均衡略偏 Call，815 个结算日中只高于 11% 的交易日，处于历史低位区间
@@ -21,7 +21,7 @@ CNN 恐惧贪婪 41.2（fear）
 - 周五 09-11 10:00　【高】密歇根消费者信心 Consumer Sentiment Prel　预测 51 ｜ 实际 待公布 ｜ 前值 51.7
 
 🔍 重点速览
-🟡 **单日价格波动**: +4.5%（vs 前收盘）
+🟡 **单日价格波动**: +4.1%（vs 前收盘）
    ⇒ 价格变动超阈值；纯事实，不解释方向
 
 
@@ -35,15 +35,15 @@ Options: P/C成交量 0.20 | OI比 0.81 | ATM IV 83.5% | Skew -4.3pp | Term 0.78
    ⇒ Put/Call Volume: 0.20×（Call 成交量高于 Put）→ 方向 Unknown
    ⇒ Put/Call OI: 0.81×（两侧接近均衡）
    ⇒ 当日成交 vs 存量仓位：当日成交偏 Call，存量接近均衡
-   ExpMove 期限化（expmove_v1）: 09-11（3D）±6.6% ｜ 09-18（10D）±11.9% ｜ 09-25（17D）±14.3% ｜ 10-02（24D）±14.8%
-   ⇒ IV–VIX Spread: +67.9pp*（*近月 ATM IV − VIX；期限未对齐，仅作相对波动率 Proxy，不直接代表期权定价贵/便宜）
+   ExpMove 期限化（expmove_v1）: 09-11（3D）±6.6% ｜ 09-18（10D）±12.0% ｜ 09-25（17D）±14.3% ｜ 10-02（24D）±14.8%
+   ⇒ IV–VIX Spread: +68.0pp*（*近月 ATM IV − VIX；期限未对齐，仅作相对波动率 Proxy，不直接代表期权定价贵/便宜）
 🔧 结构（未验证研究层：Mechanism Scenario A/B——OI 开仓方向不可观测）
-Gamma Regime: POSITIVE（模型分类） | GEX(存量) 3,189,146 | GEX Change vs 上次快照 2,859,576 | Flip: Primary Flip: 54.62（PRIMARY，全链重定价 + 覆盖达标）
+Gamma Regime: POSITIVE（模型分类） | GEX(存量) 2,919,410 | GEX Change vs 上次快照 2,589,839 | Flip: Primary Flip: 54.62（PRIMARY，全链重定价 + 覆盖达标）
 🔎 测量完整性: GEX 符号契约 gex_sign_v1（Model A: Call+ / Put−）｜ Gamma 口径 全链重定价 ｜ Effective GEX 覆盖: 99%（带内） ｜ IV 有效性: VALID 236 / LOW 54 / INVALID 120
 结构观察区: Primary Flip 54.62（全链重定价，覆盖 99%）
-Call Wall 60（弱结构｜现价低于该位 5.0%）
-最近结构参考: Flip 55（现价高于该位 4.4%）
-量化视角： 正 Gamma（319万，无历史分位）｜正 Gamma 增强（+286万）｜现价位于 Flip 上方 4.36%——观察点，非方向信号
+Call Wall 60（弱结构｜现价低于该位 5.4%）
+最近结构参考: Flip 55（现价高于该位 4.0%）
+量化视角： 正 Gamma（292万，无历史分位）｜正 Gamma 增强（+259万）｜现价位于 Flip 上方 3.97%——观察点，非方向信号
 🧭 结构解读（全部依赖上方假设）
 • 支撑/压力参考：下方 54（MaxPain，仅结算参考）；上方 60（Call Wall，弱结构）。
 • Gamma 区域：切换参考 55（全链重定价，覆盖 99%）。
@@ -68,9 +68,9 @@ Call Wall 60（弱结构｜现价低于该位 5.0%）
 该期限仓位参考（Wall 同墙位口径，Max Pain 仅结算参考）: Max Pain 54（结算参考）
 量化解读： 存量 Call 重｜ATM IV 83.5%｜历史 Rank 76%（近端代理）｜期限倒挂（近端 IV > 远月）｜净 delta 敞口 正 0 股（方向不可观测）——方向不可观测，观察点，非方向信号
 
-09-18（Activity LOW）仓位参考: Max Pain 55（结算参考） ｜ Put Wall 55（-3.5%，弱）（OI 9.1k）
+09-18（Activity LOW）仓位参考: Max Pain 55（结算参考） ｜ Put Wall 55（-3.1%，弱）（OI 9.1k）
 
-09-25（Activity LOW）仓位参考: Max Pain 52（结算参考） ｜ Call Wall 60（+5.3%，弱）（OI 0.7k）
+09-25（Activity LOW）仓位参考: Max Pain 52（结算参考） ｜ Call Wall 60（+5.7%，弱）（OI 0.7k）
 
 10-02（Activity LOW）仓位参考: Max Pain 59（结算参考）
 
