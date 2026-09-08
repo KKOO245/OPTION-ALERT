@@ -2,7 +2,7 @@
 
 📊 市场环境
 
-SPY $765.76 ｜ QQQ $718.36
+SPY $765.75 ｜ QQQ $718.36
 VIX 15.51 ↑1.4%（5D -5.1%） ｜ Vol Regime: NORMAL
 CNN 恐惧贪婪 40.8（fear）
 全市场 P/C OI（OCC 结算 08-28，2023-06 以来）: Equity 0.75（分位 12%） ｜ Index 0.94（分位 11%）
