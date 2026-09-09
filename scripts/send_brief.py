@@ -17,6 +17,8 @@
 from __future__ import annotations
 
 import argparse
+import csv
+import gzip
 import json
 import os
 import sys
@@ -29,10 +31,11 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from report.brief import _parse_created, render_brief, render_digest  # noqa: E402
+from report.brief import _parse_created, render_brief, render_digest_with_state  # noqa: E402
 
 DISCORD_USER_AGENT = "Mozilla/5.0 (option-alert-brief/1.1)"
 _LOG_KEY = {"morning": "早报简报", "evening": "晚报简报"}
+_STATE_NAME = "brief_signal_state.json"
 
 
 def _utf8() -> None:
@@ -162,6 +165,98 @@ def _load_universe(data_root: Path, override: str | None) -> list:
     return out or ["QQQ"]
 
 
+def _state_path(data_root: Path) -> Path:
+    return Path(data_root) / "data" / "history" / _STATE_NAME
+
+
+def _load_state(data_root: Path) -> dict:
+    path = _state_path(data_root)
+    if not path.exists():
+        return {}
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def _save_state(data_root: Path, state: dict) -> None:
+    path = _state_path(data_root)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(state, ensure_ascii=False, indent=1), encoding="utf-8")
+
+
+def _merge_state(state: dict, pending: list, resolved: list, day: str) -> None:
+    """移除已结算条件，写入新待兑现条件（同日同档只保留最新）。"""
+    sigs = state.setdefault("signals", {})
+    for key in resolved:
+        sigs.pop(key, None)
+    for p in pending:
+        p["created"] = day
+        key = f"{p.get('ticker')}|{p.get('expiry')}|{p.get('kind')}"
+        sigs[key] = p
+    if len(sigs) > 12:  # 防御性上限：删最旧的
+        for key in list(sigs)[: len(sigs) - 12]:
+            sigs.pop(key, None)
+
+
+def _load_chain_history(
+    data_root: Path, ticker: str, day: str, interest: list, n_files: int = 5
+) -> dict:
+    """读取最近 n 个链快照（日期 <= day），按到期档汇总 CALL/PUT OI，
+    并在最新快照上附带各档 top CALL/PUT 集中 strike（用于标注"集中位"具体价位）。
+
+    口径：链文件日期 D 的 OI = 前一交易日终值（OCC 滞后），相邻文件差
+    = 最近已入账交易日的净变化。只读，不写任何文件。
+    """
+    chain_dir = Path(data_root) / "data" / "chain_history" / ticker
+    if not chain_dir.exists():
+        return {}
+    files = sorted(p.name for p in chain_dir.glob("*.csv.gz") if p.name[:10] <= day)
+    files = files[-n_files:]
+    hist: dict = {}
+    tops: dict = {}
+    newest = files[-1] if files else None
+    for name in files:
+        date = name[:10]
+        per: dict = {}
+        with gzip.open(chain_dir / name, "rt", encoding="utf-8", errors="replace") as f:
+            for r in csv.DictReader(f):
+                exp = str(r.get("expiration") or "").strip()
+                if exp not in interest:
+                    continue
+                typ = (r.get("right") or "").strip().upper()
+                try:
+                    oi = float(r.get("openInterest") or 0)
+                except (TypeError, ValueError):
+                    continue
+                per.setdefault(exp, {"C": 0.0, "P": 0.0})
+                if typ == "CALL":
+                    per[exp]["C"] += oi
+                elif typ == "PUT":
+                    per[exp]["P"] += oi
+                if name == newest:
+                    try:
+                        strike = float(r.get("strike") or 0)
+                    except (TypeError, ValueError):
+                        strike = None
+                    if strike is not None:
+                        tops.setdefault(exp, {"CALL": [], "PUT": []})
+                        if typ in ("CALL", "PUT"):
+                            tops[exp][typ].append((strike, oi))
+        for exp, v in per.items():
+            hist.setdefault(exp, []).append({"date": date, "C": v["C"], "P": v["P"]})
+    out: dict = {}
+    for exp, seq in hist.items():
+        tc = sorted(tops.get(exp, {}).get("CALL", []), key=lambda x: x[1], reverse=True)[:3]
+        tp = sorted(tops.get(exp, {}).get("PUT", []), key=lambda x: x[1], reverse=True)[:3]
+        out[exp] = {
+            "seq": seq,
+            "topC": [{"s": s, "oi": o} for s, o in tc],
+            "topP": [{"s": s, "oi": o} for s, o in tp],
+        }
+    return out
+
+
 def main() -> int:
     _utf8()
     ap = argparse.ArgumentParser(description="发送期权简报到 Discord（多标的）")
@@ -222,10 +317,24 @@ def main() -> int:
     if stale:
         print(f"跳过日期不符标的：{', '.join(stale)}")
 
-    text = (
-        render_digest(loaded, session=args.session, date_str=day)
-        if len(loaded) > 1
-        else render_brief(loaded[0][1], session=args.session, ticker=loaded[0][0])
+    full_tickers = [t for t, _ in loaded]
+    chain_map = {}
+    for t, snap in loaded:
+        interest = [
+            str(e.get("expiration"))
+            for e in ((snap.get("forward") or {}).get("expirations") or [])
+        ]
+        chain_map[t] = _load_chain_history(data_root, t, day, interest)
+    state = _load_state(data_root)
+    pending_all: list = []
+    resolved_all: list = []
+    text, pending_all, resolved_all = render_digest_with_state(
+        loaded,
+        session=args.session,
+        date_str=day,
+        full_tickers=full_tickers,
+        chain_data=chain_map,
+        prior_state=state,
     )
     if args.dry_run:
         print(text)
@@ -239,6 +348,8 @@ def main() -> int:
         return 0
     _discord_send(args.webhook_url, text)
     _mark_sent(data_root, args.session, day)
+    _merge_state(state, pending_all, resolved_all, day)
+    _save_state(data_root, state)
     print(f"已发送 {_LOG_KEY[args.session]}（{day}，{len(loaded)} 个标的）到 Discord")
     return 0
 
