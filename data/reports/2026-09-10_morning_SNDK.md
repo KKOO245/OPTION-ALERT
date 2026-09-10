@@ -2,9 +2,9 @@
 
 📊 市场环境
 
-SPY $759.23 ｜ QQQ $711.66
+SPY $758.49 ｜ QQQ $708.69
 VIX 17.34 ↑5.3%（5D +21.1%） ｜ Vol Regime: NORMAL
-CNN 恐惧贪婪 35.9（fear）
+CNN 恐惧贪婪 33.3（fear）
 全市场 P/C OI（OCC 结算 08-28，2023-06 以来）: Equity 0.75（分位 12%） ｜ Index 0.94（分位 11%）
 ⇒ 全市场个股期权存量 Put/Call = 0.75，Call 侧明显更重，815 个结算日中只高于 12% 的交易日，处于历史低位区间
 ⇒ 全市场指数期权存量 Put/Call = 0.94，接近均衡略偏 Call，815 个结算日中只高于 11% 的交易日，处于历史低位区间
@@ -15,8 +15,8 @@ CNN 恐惧贪婪 35.9（fear）
 - 周四 09-10 08:30　【高】PPI 生产者物价 MoM　预测 0.4 ｜ 实际 0.4 ｜ 前值 0.1　✅ 今日已公布
 - 周四 09-10 10:00　【高】成屋销售　预测 3.98 ｜ 实际 3.98 ｜ 前值 4.06　✅ 今日已公布
 - 周五 09-11 08:30　【高】Core Inflation Rate MoM　预测 0.2 ｜ 实际 待公布 ｜ 前值 0.2
-- 周五 09-11 08:30　【高】Inflation Rate YoY　预测 3.4 ｜ 实际 待公布 ｜ 前值 3.4
 - 周五 09-11 08:30　【高】Inflation Rate MoM　预测 0.4 ｜ 实际 待公布 ｜ 前值 0.1
+- 周五 09-11 08:30　【高】Inflation Rate YoY　预测 3.4 ｜ 实际 待公布 ｜ 前值 3.4
 - 周五 09-11 08:30　【高】Core Inflation Rate YoY　预测 2.4 ｜ 实际 待公布 ｜ 前值 2.5
 - 周五 09-11 10:00　【高】密歇根消费者信心 Consumer Sentiment Prel　预测 51 ｜ 实际 待公布 ｜ 前值 51.7
 
@@ -113,7 +113,7 @@ P 1590 ｜ +78 ｜ $48.09 ｜ 名义 $375.1k* ｜ -6.9%
 10-02（MEDIUM △）Top ΔOI: 1900C +41 ｜ 1700C +33
 10-02（MEDIUM △）仓位参考: Max Pain 1,565（结算参考） ｜ Call Wall 1800（+5.4%，弱）（OI 0.3k）
 
-📅 事件差分（观察，非因果）: 09-11（1D）ATM IV 77.7% vs 09-18 68.6%（差 +9.1pp）——覆盖 PPI 生产者物价 MoM、成屋销售、Core Inflation Rate MoM、Inflation Rate YoY、Inflation Rate MoM、Core Inflation Rate YoY、密歇根消费者信心 Consumer Sentiment Prel
+📅 事件差分（观察，非因果）: 09-11（1D）ATM IV 77.7% vs 09-18 68.6%（差 +9.1pp）——覆盖 PPI 生产者物价 MoM、成屋销售、Core Inflation Rate MoM、Inflation Rate MoM、Inflation Rate YoY、Core Inflation Rate YoY、密歇根消费者信心 Consumer Sentiment Prel
    符合'覆盖事件的期权溢价更高'（美联储 IFDP 1376 实证；单日截面，需连续多日确认）
 
 数据质量: 行情 A ｜ 期权结构 A ｜ 流向 C ｜ 做市商机制 C —— Flow 相关层（Activity 连续性、做市商机制解读）置信度受限。
