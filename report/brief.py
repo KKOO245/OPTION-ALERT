@@ -459,6 +459,130 @@ def _fmt_k(v: Any) -> str:
         return "N/A"
 
 
+def _zero_dte_lines(zero: Optional[Dict[str, Any]], spot: Any) -> List[str]:
+    """0DTE（今日到期）区块：规模、近端集中、ATM 隐含波动。仅事实 + 机制参考。"""
+    if not zero:
+        return []
+    rows = zero.get("rows") or []
+    if not rows and not (zero.get("C") or zero.get("P")):
+        return []
+    best: Dict[Tuple[float, str], Dict[str, Any]] = {}
+    for r in rows:
+        key = (float(r["s"]), str(r["right"]))
+        if r["oi"] > best.get(key, {}).get("oi", -1):
+            best[key] = r
+    ck = float(zero.get("C") or 0)
+    pk = float(zero.get("P") or 0)
+    ratio = (pk / ck) if ck else None
+    lines = ["## ⏱ 0DTE（今日到期）"]
+    scale = f"C {_fmt_k(ck)} / P {_fmt_k(pk)}" + (f"（P/C {ratio:.2f}）" if ratio else "")
+    lines.append(f"- **规模：{scale}**——当日到期的 Gamma/钉住行为由该档主导（OI 存量事实）。")
+    if spot:
+        def _top(right: str) -> str:
+            items = sorted(
+                (v for v in best.values() if v["right"] == right),
+                key=lambda x: x["oi"], reverse=True,
+            )[:2]
+            return " / ".join(
+                f"{x['s']:.0f}（{_fmt_k(x['oi'])}，{100 * (x['s'] / float(spot) - 1):+.0f}%）"
+                for x in items
+            ) or "无"
+
+        lines.append(
+            f"- **近端集中（±15%）：Put {_top('PUT')}｜Call {_top('CALL')}**"
+            "——当日盘中参考位（位置观察，非预测）。"
+        )
+        strikes = sorted({k[0] for k in best}, key=lambda s: abs(s / float(spot) - 1))[:3]
+        for s in strikes:
+            c = best.get((s, "CALL"))
+            p = best.get((s, "PUT"))
+            if c and p and c.get("mid") and p.get("mid"):
+                imp = (float(c["mid"]) + float(p["mid"])) / float(spot) * 100
+                ivs = [float(x["iv"]) for x in (c, p) if x.get("iv")]
+                iv_txt = f"｜ATM IV {sum(ivs) / len(ivs) * 100:.1f}%" if ivs else ""
+                lines.append(
+                    f"- **ATM {s:.0f}｜Straddle 隐含波动 ±{imp:.2f}%{iv_txt}**"
+                    "——当日波动定价（事实；不构成方向）。"
+                )
+                break
+    lines.append("- 到期后失效：上述 0DTE 集中位今日收盘后全部失效（机制参考）。")
+    return lines
+
+
+# 近档 P/C OI 历史分位（20/80）与同状态 3 日方向统计（QQQ/SPY，2011-2025 / 2008-2025）
+_PCR_STATS = {
+    "QQQ": {"lo": 1.28, "hi": 2.06, "lo_mean": 0.35, "lo_n": 741, "hi_mean": 0.17, "hi_era_ok": False},
+    "SPY": {"lo": 1.45, "hi": 2.31, "lo_mean": 0.26, "lo_n": 820, "hi_mean": 0.15, "hi_era_ok": True},
+}
+
+
+def _signal_layer(
+    snap: Dict[str, Any], chain: Optional[Dict[str, Any]], ticker: str
+) -> List[str]:
+    """📶 信号层：环境/结构/事件三层，全部标"建议，非指令"，含证据与置信度。"""
+    t = ticker.upper()
+    exps = ((snap.get("forward") or {}).get("expirations")) or []
+    lines = ["## 📶 信号层（建议，非指令）"]
+
+    # 环境层：GEX 波动（已验证）
+    gex = ((snap.get("p3") or {}).get("gex") or {}).get("net_gex")
+    st = _BACKTEST.get(t)
+    if gex is not None and float(gex) < 0:
+        if st:
+            lines.append(
+                f"- **环境层（已验证）**：GEX<0 → 波动放大（{t} {st['lo']}-{st['hi']} 回测 |3日| "
+                f"{st['abs_neg']:.2f}% vs 正 Gamma {st['abs_pos']:.2f}%）；无下行方向 edge。"
+                "建议：只调整仓位/结构，不据此做空。"
+            )
+        else:
+            lines.append(
+                "- **环境层（本标的未验证）**：GEX<0 的波动放大结论仅来自 QQQ/SPY 回测，"
+                f"{t} 无同口径历史——建议仅作风险提示。"
+            )
+    else:
+        lines.append("- **环境层**：GEX≥0 或数值不可用——波动放大结论不适用，无环境信号。")
+    # 结构层：近档 P/C OI 分位（跨标的验证过的唯一方向倾向）
+    info = (chain or {}).get(str(exps[0].get("expiration"))) if exps else None
+    if info and info.get("seq"):
+        last = info["seq"][-1]
+        ck, pk = float(last.get("C") or 0), float(last.get("P") or 0)
+        pst = _PCR_STATS.get(t)
+        if ck > 0 and pst:
+            pcr = pk / ck
+            if pcr <= pst["lo"]:
+                lines.append(
+                    f"- **结构层（已验证，跨标的）**：近档 P/C OI {pcr:.2f} ≤ 20 分位 "
+                    f"{pst['lo']}（call-heavy）→ 历史同状态 3 日均值 {pst['lo_mean']:+.2f}%"
+                    f"（N={pst['lo_n']}，CI 不含 0，效应小、非因果）——建议：偏多倾向，低置信。"
+                )
+            elif pcr >= pst["hi"]:
+                era = "时代一致" if pst["hi_era_ok"] else "时代不一致"
+                lines.append(
+                    f"- **结构层（观察）**：近档 P/C OI {pcr:.2f} ≥ 80 分位 {pst['hi']}"
+                    f"（put-heavy）→ 历史 3 日均值 {pst['hi_mean']:+.2f}% 但 {era}——"
+                    "不足以作为方向信号（不作建议）。"
+                )
+            else:
+                lines.append(
+                    f"- **结构层**：近档 P/C OI {pcr:.2f} 位于历史中段（20/80 分位 "
+                    f"{pst['lo']}/{pst['hi']}）——无结构化方向信号。"
+                )
+        elif ck > 0:
+            lines.append(
+                f"- **结构层（未验证）**：近档 P/C OI {pk/ck:.2f}；{t} 无同口径历史分位，"
+                "仅作结构观察，不给方向建议。"
+            )
+    # 事件层：0DTE / OI 轨迹（候选，未验证）
+    zero = (chain or {}).get("_0dte")
+    if zero and (zero.get("C") or zero.get("P")):
+        lines.append(
+            "- **事件层（候选，未验证）**：0DTE 规模与近端 OI 见上方 ⏱ 区块——"
+            "到期日钉住/磁吸属机制参考，未做历史验证，不建议据此下单。"
+        )
+    lines.append("- 以上为建议性信号（含置信度与证据），不是指令；决定权在你。")
+    return lines
+
+
 def _exp_interpretation(e: Dict[str, Any], ds: List[float], spot: Any) -> str:
     """单档解读句：全部基于已给字段，方向性一律带观察/机制标签。"""
     pk = float(e.get("put_oi") or 0)
@@ -777,6 +901,7 @@ def render_brief(snap: Dict[str, Any], session: str = "morning", ticker: str = "
     lines += _structural_map(snap)
     lines.append("")
     lines += _conditional_path(snap)
+    spot = snap.get("spot")
     lines.append("")
     lines += _risk_items(snap)
     lines.append("")
@@ -798,6 +923,7 @@ def _full_block_parts(
     lines += _structural_map(snap)
     lines.append("")
     lines += _conditional_path(snap)
+    spot = snap.get("spot")
     confirm_lines, resolved, confirmed = _eval_prior_signals(snap, chain, prior_state, ticker)
     trend = _expiry_trend_lines(snap, chain, session, force_exps=confirmed)
     pending = _pending_signals(snap, chain, session, ticker, force_exps=confirmed)
@@ -814,6 +940,12 @@ def _full_block_parts(
         lines += [f"- {x}" for x in confirm_lines]
         if trend:
             lines += [f"- {x}" for x in trend]
+    zero_lines = _zero_dte_lines((chain or {}).get("_0dte"), spot)
+    if zero_lines:
+        lines += [""] + zero_lines
+    sig_lines = _signal_layer(snap, chain, ticker)
+    if sig_lines:
+        lines += [""] + sig_lines
     lines.append("")
     lines.append("## 🔴 风险 / 🟢 机会")
     lines += [f"- {x}" for x in generic]

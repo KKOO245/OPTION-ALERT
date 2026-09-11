@@ -200,7 +200,8 @@ def _merge_state(state: dict, pending: list, resolved: list, day: str) -> None:
 
 
 def _load_chain_history(
-    data_root: Path, ticker: str, day: str, interest: list, n_files: int = 5
+    data_root: Path, ticker: str, day: str, interest: list, n_files: int = 5,
+    spot: float | None = None,
 ) -> dict:
     """读取最近 n 个链快照（日期 <= day），按到期档汇总 CALL/PUT OI，
     并在最新快照上附带各档 top CALL/PUT 集中 strike（用于标注"集中位"具体价位）。
@@ -211,10 +212,13 @@ def _load_chain_history(
     chain_dir = Path(data_root) / "data" / "chain_history" / ticker
     if not chain_dir.exists():
         return {}
+    # 0DTE（当日到期）必须纳入读取范围：快照 forward 因 min_dte=1 排除了它
+    interest = list(dict.fromkeys(list(interest) + [day]))
     files = sorted(p.name for p in chain_dir.glob("*.csv.gz") if p.name[:10] <= day)
     files = files[-n_files:]
     hist: dict = {}
     tops: dict = {}
+    zero = {"C": 0.0, "P": 0.0, "rows": []}
     newest = files[-1] if files else None
     for name in files:
         date = name[:10]
@@ -243,6 +247,21 @@ def _load_chain_history(
                         tops.setdefault(exp, {"CALL": [], "PUT": []})
                         if typ in ("CALL", "PUT"):
                             tops[exp][typ].append((strike, oi))
+                    if exp == day:
+                        if typ == "CALL":
+                            zero["C"] += oi
+                        elif typ == "PUT":
+                            zero["P"] += oi
+                        try:
+                            mid = float(r.get("mid") or 0)
+                            iv = float(r.get("iv") or 0)
+                        except (TypeError, ValueError):
+                            mid, iv = 0.0, 0.0
+                        if typ in ("CALL", "PUT") and strike is not None:
+                            if spot is None or abs(strike / float(spot) - 1) <= 0.15:
+                                zero["rows"].append({
+                                    "s": strike, "right": typ, "oi": oi, "mid": mid, "iv": iv,
+                                })
         for exp, v in per.items():
             hist.setdefault(exp, []).append({"date": date, "C": v["C"], "P": v["P"]})
     out: dict = {}
@@ -255,6 +274,8 @@ def _load_chain_history(
             "topC": [{"s": s, "oi": o} for s, o in tc],
             "topP": [{"s": s, "oi": o} for s, o in tp],
         }
+    if zero["rows"] or zero["C"] or zero["P"]:
+        out["_0dte"] = zero
     return out
 
 
@@ -325,7 +346,9 @@ def main() -> int:
             str(e.get("expiration"))
             for e in ((snap.get("forward") or {}).get("expirations") or [])
         ]
-        chain_map[t] = _load_chain_history(data_root, t, day, interest)
+        chain_map[t] = _load_chain_history(
+            data_root, t, day, interest, spot=(snap.get("spot") or None)
+        )
     state = _load_state(data_root)
     pending_all: list = []
     resolved_all: list = []
