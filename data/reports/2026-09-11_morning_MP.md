@@ -2,7 +2,7 @@
 
 📊 市场环境
 
-SPY $764.42 ｜ QQQ $714.88
+SPY $764.32 ｜ QQQ $714.88
 VIX 15.78 ↓11.6%（5D +8.6%） ｜ Vol Regime: NORMAL
 CNN 恐惧贪婪 33.3（fear）
 全市场 P/C OI（OCC 结算 08-28，2023-06 以来）: Equity 0.75（分位 12%） ｜ Index 0.94（分位 11%）
@@ -73,28 +73,19 @@ Put Wall 55（弱结构｜现价低于该位 6.2%）
 10-09  C +62 / P +84 ｜ Activity MEDIUM △ ｜ 28D
 
 📆 09-18 Forward Structure
-存量OI:      C 52.8k / P 42.9k
-今日变化ΔOI: C +2.3k / P -1.7k
-平值价格ATM:  C 1.31 / P 2.38
-隐含波动率 ATM IV:  62.6%
-净 delta 敞口变化 ΔOI Δ Exposure*: 131k shares
-Top ΔOI（行权价 ｜ ΔOI ｜ 最新价 ｜ 名义金额* ｜ 距现价）:
-C 54 ｜ +1,928 ｜ $0.70 ｜ 名义 $135.0k* ｜ +4.7%
-C 55 ｜ +617 ｜ $0.53 ｜ 名义 $32.7k* ｜ +6.6%
-（已过滤 1 条低相关性彩票：名义 <$50k 且距现价 >10%）
-结构参考：54（+4.7%）附近形成 OI 变化集中（结构观察，非价格预测）
-*模型估算/名义金额代理；买开/卖开方向不可观测（Scenario A/B）
-该期限仓位参考（Wall 同墙位口径，Max Pain 仅结算参考）: Max Pain 55（结算参考） ｜ Put Wall 55（+6.6%，弱）（OI 8.8k）
-量化解读： 存量 Call 重｜ATM IV 62.6%｜历史 Rank 88%（近端代理）｜净 delta 敞口 正 130,883 股（方向不可观测）——方向不可观测，观察点，非方向信号
+存量OI: C 52.8k / P 42.9k，今日变化ΔOI: C +2.3k / P -1.7k，平值价格ATM: C $1.31 / P $2.38 ｜ ATM IV 62.6%，净 delta 敞口 131k shares
+Top ΔOI: C 54 +1,928 ｜ C 55 +617
+仓位参考: Max Pain 55 ｜ Put Wall 55（+6.6%，弱）（OI 8.8k）
+量化解读： 存量 Call 重｜ATM IV 62.6%｜历史 Rank 88%（近端代理）｜净 delta 敞口 正 130,883 股
 
 09-25（MEDIUM △）Top ΔOI: 55P +542 ｜ 53P +47
-09-25（MEDIUM △）仓位参考: Max Pain 55（结算参考）
+09-25（MEDIUM △）仓位参考: Max Pain 55
 
 10-02（MEDIUM △）Top ΔOI: 48P +62 ｜ 50P +21
-10-02（MEDIUM △）仓位参考: Max Pain 59（结算参考） ｜ Put Wall 50（-3.1%）（OI 1.2k）
+10-02（MEDIUM △）仓位参考: Max Pain 59 ｜ Put Wall 50（-3.1%）（OI 1.2k）
 
 10-09（MEDIUM △）Top ΔOI: 55C -52 ｜ 50P +29
-10-09（MEDIUM △）仓位参考: Max Pain 55（结算参考） ｜ Call Wall 55（+6.6%）（OI 1.0k） ｜ Put Wall 47（-8.9%）（OI 1.0k）
+10-09（MEDIUM △）仓位参考: Max Pain 55 ｜ Call Wall 55（+6.6%）（OI 1.0k） ｜ Put Wall 47（-8.9%）（OI 1.0k）
 
 数据质量: 行情 A ｜ 期权结构 A ｜ 流向 C ｜ 做市商机制 C —— Flow 相关层（Activity 连续性、做市商机制解读）置信度受限。
 Setup B1 v1 — Core Conditions

@@ -1,4 +1,4 @@
-# 期权晚报 2026-09-11（快照 16:40 ET）
+# 期权晚报 2026-09-11（快照 17:15 ET）
 
 📊 市场环境
 
@@ -23,8 +23,6 @@ CNN 恐惧贪婪 33.3（fear）
    ⇒ Gamma 状态翻转是波动环境变化信号；仍为模型层，方向不可观测（Scenario A/B）
 🟡 **单日价格波动**: -5.6%（vs 前收盘）
    ⇒ 价格变动超阈值；纯事实，不解释方向
-🟡 **近现价集中开仓**: 10-02 17P ΔOI +15（距现价 +3.6%）
-   ⇒ 高等级 OI 变化且贴近现价；方向 Unknown（买开/卖开不可观测）
 
 📌 周末待办：
 • 每周同步：cd D:\git\Option Alert-数据储存；git pull
@@ -72,33 +70,21 @@ Put Wall 16（弱结构｜现价高于该位 2.6%）
 量化视角： 5 个事件合计 ΔOI ≈ 450 张（Put 358 / Call 92），跨 3 个期限｜Put 增仓为主（孤立/局部，暂不构成模式推断）——方向未知，观察连续性，观察点，非方向信号
 📆 Forward Expiration Structure
 
-09-18  C +0.1k / P +0.3k ｜ Activity HIGH ｜ 7D
-09-25  C +34 / P +91 ｜ Activity MEDIUM △ ｜ 14D
-10-02  C +0 / P +4 ｜ Activity LOW ｜ 21D
-10-09  C +44 / P +86 ｜ Activity MEDIUM △ ｜ 28D
+09-18  C +0 / P +0 ｜ Activity LOW ｜ 7D
+09-25  C +0 / P +0 ｜ Activity LOW ｜ 14D
+10-02  C +0 / P +0 ｜ Activity LOW ｜ 21D
+10-09  C +0 / P +0 ｜ Activity LOW ｜ 28D
 
 📆 09-18 Forward Structure
-存量OI:      C 7.7k / P 3.8k
-今日变化ΔOI: C +0.1k / P +0.3k
-平值价格ATM:  C 1.70 / P 0.45
-隐含波动率 ATM IV:  72.2%
-净 delta 敞口变化 ΔOI Δ Exposure*: -4k shares
-Top ΔOI（行权价 ｜ ΔOI ｜ 最新价 ｜ 名义金额* ｜ 距现价）:
-P 16 ｜ +167 ｜ $0.28 ｜ 名义 $4.7k* ｜ -2.5%
-P 17 ｜ +67 ｜ $0.62 ｜ 名义 $4.2k* ｜ +3.6%
-（已过滤 1 条低相关性彩票：名义 <$50k 且距现价 >10%）
-结构参考：17（+3.6%） / 16（-2.5%）形成 OI 变化集中区（结构观察，非价格预测）
-*模型估算/名义金额代理；买开/卖开方向不可观测（Scenario A/B）
-该期限仓位参考（Wall 同墙位口径，Max Pain 仅结算参考）: Max Pain 19（结算参考） ｜ Put Wall 18（+9.7%，弱）（OI 0.7k）
-量化解读： 存量 Call 重｜⚠️ 背离：存量 Call 重但当日 Put 增仓更多｜ATM IV 72.2%｜历史 Rank 86%（近端代理）｜期限倒挂（近端 IV > 远月）｜净 delta 敞口 负 4,068 股（方向不可观测）——方向不可观测，观察点，非方向信号
+存量OI: C 7.7k / P 3.8k，今日变化ΔOI: C +0 / P +0，平值价格ATM: C $1.70 / P $0.45 ｜ ATM IV 72.2%，净 delta 敞口 0 shares
+仓位参考: Max Pain 19 ｜ Put Wall 18（+9.7%，弱）（OI 0.7k）
+量化解读： 存量 Call 重｜ATM IV 72.2%｜历史 Rank 86%（近端代理）｜期限倒挂（近端 IV > 远月）｜净 delta 敞口 正 0 股
 
-09-25（MEDIUM △）Top ΔOI: 17P +25 ｜ 16P +17
-09-25（MEDIUM △）仓位参考: Max Pain 19（结算参考） ｜ Put Wall 15（-8.6%，弱）（OI 0.2k）
+09-25（Activity LOW）仓位参考: Max Pain 19 ｜ Put Wall 15（-8.6%，弱）（OI 0.2k）
 
-10-02（Activity LOW）仓位参考: Max Pain 19（结算参考）
+10-02（Activity LOW）仓位参考: Max Pain 19
 
-10-09（MEDIUM △）Top ΔOI: 15P +23 ｜ 16P +19
-10-09（MEDIUM △）仓位参考: Max Pain 19（结算参考） ｜ Put Wall 16（-2.5%）（OI 66）
+10-09（Activity LOW）仓位参考: Max Pain 19 ｜ Put Wall 16（-2.5%）（OI 66）
 
 数据质量: 行情 A ｜ 期权结构 A ｜ 流向 C ｜ 做市商机制 C —— Flow 相关层（Activity 连续性、做市商机制解读）置信度受限。
 Setup B1 v1 — Core Conditions

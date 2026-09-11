@@ -2,7 +2,7 @@
 
 📊 市场环境
 
-SPY $764.42 ｜ QQQ $714.88
+SPY $764.32 ｜ QQQ $714.88
 VIX 15.78 ↓11.6%（5D +8.6%） ｜ Vol Regime: NORMAL
 CNN 恐惧贪婪 33.3（fear）
 全市场 P/C OI（OCC 结算 08-28，2023-06 以来）: Equity 0.75（分位 12%） ｜ Index 0.94（分位 11%）
@@ -72,28 +72,19 @@ Put Wall 155（弱结构｜现价高于该位 2.0%） | Call Wall 170（弱结�
 10-09  C +16 / P +10 ｜ Activity MEDIUM △ ｜ 28D
 
 📆 09-18 Forward Structure
-存量OI:      C 71.2k / P 119.5k
-今日变化ΔOI: C +0.7k / P +0.7k
-平值价格ATM:  C 2.60 / P 3.50
-隐含波动率 ATM IV:  30.7%
-净 delta 敞口变化 ΔOI Δ Exposure*: -15k shares
-Top ΔOI（行权价 ｜ ΔOI ｜ 最新价 ｜ 名义金额* ｜ 距现价）:
-P 156 ｜ +998 ｜ $2.35 ｜ 名义 $234.5k* ｜ -1.3%
-P 155 ｜ -333 ｜ $2.02 ｜ 名义 $-67.3k* ｜ -1.9%
-C 173 ｜ +232 ｜ $0.06 ｜ 名义 $1.4k* ｜ +9.4%
-结构参考：173（+9.4%） / 156（-1.3%）形成 OI 变化集中区（结构观察，非价格预测）
-*模型估算/名义金额代理；买开/卖开方向不可观测（Scenario A/B）
-该期限仓位参考（Wall 同墙位口径，Max Pain 仅结算参考）: Max Pain 158（结算参考） ｜ Call Wall 155（-1.9%，弱）（OI 10.8k） ｜ Put Wall 158（-0.1%，弱）（OI 16.7k）
-量化解读： 存量 Put 重｜ATM IV 30.7%｜历史 Rank 16%（近端代理）｜期限倒挂（近端 IV > 远月）｜净 delta 敞口 负 14,974 股（方向不可观测）——方向不可观测，观察点，非方向信号
+存量OI: C 71.2k / P 119.5k，今日变化ΔOI: C +0.7k / P +0.7k，平值价格ATM: C $2.60 / P $3.50 ｜ ATM IV 30.7%，净 delta 敞口 -15k shares
+Top ΔOI: P 156 +998 ｜ P 155 -333 ｜ C 173 +232
+仓位参考: Max Pain 158 ｜ Call Wall 155（-1.9%，弱）（OI 10.8k） ｜ Put Wall 158（-0.1%，弱）（OI 16.7k）
+量化解读： 存量 Put 重｜ATM IV 30.7%｜历史 Rank 16%（近端代理）｜期限倒挂（近端 IV > 远月）｜净 delta 敞口 负 14,974 股
 
 09-25（MEDIUM △）Top ΔOI: 151P +29 ｜ 160C +25
-09-25（MEDIUM △）仓位参考: Max Pain 160（结算参考） ｜ Call Wall 167（+5.6%）（OI 1.4k） ｜ Put Wall 154（-2.6%）（OI 1.2k）
+09-25（MEDIUM △）仓位参考: Max Pain 160 ｜ Call Wall 167（+5.6%）（OI 1.4k） ｜ Put Wall 154（-2.6%）（OI 1.2k）
 
 10-02（MEDIUM △）Top ΔOI: 155P +16 ｜ 150P +6
-10-02（MEDIUM △）仓位参考: Max Pain 161（结算参考） ｜ Call Wall 165（+4.4%）（OI 0.2k） ｜ Put Wall 150（-5.1%，弱）（OI 0.2k）
+10-02（MEDIUM △）仓位参考: Max Pain 161 ｜ Call Wall 165（+4.4%）（OI 0.2k） ｜ Put Wall 150（-5.1%，弱）（OI 0.2k）
 
 10-09（MEDIUM △）Top ΔOI: 167C +13 ｜ 147P +7
-10-09（MEDIUM △）仓位参考: Max Pain 160（结算参考）
+10-09（MEDIUM △）仓位参考: Max Pain 160
 
 数据质量: 行情 A ｜ 期权结构 A ｜ 流向 C ｜ 做市商机制 C —— Flow 相关层（Activity 连续性、做市商机制解读）置信度受限。
 Setup: 今日无 Setup 触发（机械检查全部 Setup）

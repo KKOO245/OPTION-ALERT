@@ -1,4 +1,4 @@
-# 期权晚报 2026-09-11（快照 16:40 ET）
+# 期权晚报 2026-09-11（快照 17:15 ET）
 
 📊 市场环境
 
@@ -21,8 +21,6 @@ CNN 恐惧贪婪 33.3（fear）
 🔍 重点速览
 🟡 **单日价格波动**: +2.6%（vs 前收盘）
    ⇒ 价格变动超阈值；纯事实，不解释方向
-🟡 **近现价集中开仓**: 09-18 182C ΔOI +4,962（距现价 +4.1%）
-   ⇒ 高等级 OI 变化且贴近现价；方向 Unknown（买开/卖开不可观测）
 
 📌 周末待办：
 • 每周同步：cd D:\git\Option Alert-数据储存；git pull
@@ -68,51 +66,21 @@ Put Wall 160（弱结构｜现价高于该位 9.5%）
 量化视角： 5 个事件合计 ΔOI ≈ 15,747 张（Put 0 / Call 15,747），跨 1 个期限——方向未知，观察连续性，观察点，非方向信号
 📆 Forward Expiration Structure
 
-09-18  C +15.0k / P -0.8k ｜ Activity HIGH ｜ 7D
-09-25  C +0.7k / P +0.4k ｜ Activity HIGH ｜ 14D
-10-02  C +91 / P +0.4k ｜ Activity MEDIUM △ ｜ 21D
-10-09  C +0.1k / P +0.2k ｜ Activity HIGH ｜ 28D
+09-18  C +0 / P +0 ｜ Activity LOW ｜ 7D
+09-25  C +0 / P +0 ｜ Activity LOW ｜ 14D
+10-02  C +0 / P +0 ｜ Activity LOW ｜ 21D
+10-09  C +0 / P +0 ｜ Activity LOW ｜ 28D
 
 📆 09-18 Forward Structure
-存量OI:      C 203.4k / P 97.0k
-今日变化ΔOI: C +15.0k / P -0.8k
-平值价格ATM:  C 6.24 / P 5.90
-隐含波动率 ATM IV:  62.3%
-净 delta 敞口变化 ΔOI Δ Exposure*: 707k shares
-Top ΔOI（行权价 ｜ ΔOI ｜ 最新价 ｜ 名义金额* ｜ 距现价）:
-C 182 ｜ +4,962 ｜ $3.46 ｜ 名义 $1.72M* ｜ +4.1%
-C 175 ｜ +4,818 ｜ $6.24 ｜ 名义 $3.01M* ｜ -0.1%
-C 177 ｜ +3,089 ｜ $5.15 ｜ 名义 $1.59M* ｜ +1.3%
-结构参考：182（+4.1%） / 175（-0.1%）形成 OI 变化集中区（结构观察，非价格预测）
-*模型估算/名义金额代理；买开/卖开方向不可观测（Scenario A/B）
-该期限仓位参考（Wall 同墙位口径，Max Pain 仅结算参考）: Max Pain 175（结算参考） ｜ Call Wall 182.5（+4.1%，弱）（OI 9.3k） ｜ Put Wall 160（-8.7%，弱）（OI 9.8k）
-量化解读： 存量 Call 重｜ATM IV 62.3%｜历史 Rank 31%（近端代理）｜净 delta 敞口 正 706,606 股（方向不可观测）——方向不可观测，观察点，非方向信号
+存量OI: C 203.4k / P 97.0k，今日变化ΔOI: C +0 / P +0，平值价格ATM: C $6.24 / P $5.90 ｜ ATM IV 62.3%，净 delta 敞口 0 shares
+仓位参考: Max Pain 175 ｜ Call Wall 182.5（+4.1%，弱）（OI 9.3k） ｜ Put Wall 160（-8.7%，弱）（OI 9.8k）
+量化解读： 存量 Call 重｜ATM IV 62.3%｜历史 Rank 31%（近端代理）｜净 delta 敞口 正 0 股
 
-📆 09-25 Forward Structure
-存量OI:      C 11.4k / P 9.2k
-今日变化ΔOI: C +0.7k / P +0.4k
-平值价格ATM:  C 8.85 / P 8.59
-隐含波动率 ATM IV:  62.7%
-净 delta 敞口变化 ΔOI Δ Exposure*: 13k shares
-Top ΔOI（行权价 ｜ ΔOI ｜ 最新价 ｜ 名义金额* ｜ 距现价）:
-C 175 ｜ +108 ｜ $8.85 ｜ 名义 $95.6k* ｜ -0.1%
-（已过滤 2 条低相关性彩票：名义 <$50k 且距现价 >10%）
-结构参考：175（-0.1%）附近形成 OI 变化集中（结构观察，非价格预测）
-*模型估算/名义金额代理；买开/卖开方向不可观测（Scenario A/B）
-该期限仓位参考（Wall 同墙位口径，Max Pain 仅结算参考）: Max Pain 170（结算参考） ｜ Call Wall 185（+5.6%，弱）（OI 1.1k）
-量化解读： 存量 Call 重｜ATM IV 62.7%｜历史 Rank 31%（近端代理）｜净 delta 敞口 正 12,841 股（方向不可观测）——方向不可观测，观察点，非方向信号
+09-25（Activity LOW）仓位参考: Max Pain 170 ｜ Call Wall 185（+5.6%，弱）（OI 1.1k）
 
-10-02（MEDIUM △）仓位参考: Max Pain 188（结算参考） ｜ Put Wall 172.5（-1.6%，弱）（OI 1.1k）
+10-02（Activity LOW）仓位参考: Max Pain 188 ｜ Put Wall 172.5（-1.6%，弱）（OI 1.1k）
 
-📆 10-09 Forward Structure
-存量OI:      C 1.8k / P 2.5k
-今日变化ΔOI: C +0.1k / P +0.2k
-平值价格ATM:  C 12.08 / P 12.26
-隐含波动率 ATM IV:  64.8%
-净 delta 敞口变化 ΔOI Δ Exposure*: 2k shares
-*模型估算/名义金额代理；买开/卖开方向不可观测（Scenario A/B）
-该期限仓位参考（Wall 同墙位口径，Max Pain 仅结算参考）: Max Pain 182（结算参考） ｜ Call Wall 185（+5.6%，弱）（OI 0.2k）
-量化解读： 存量 Put 重｜ATM IV 64.8%｜历史 Rank 31%（近端代理）｜净 delta 敞口 正 1,619 股（方向不可观测）——方向不可观测，观察点，非方向信号
+10-09（Activity LOW）仓位参考: Max Pain 182 ｜ Call Wall 185（+5.6%，弱）（OI 0.2k）
 
 数据质量: 行情 A ｜ 期权结构 A ｜ 流向 C ｜ 做市商机制 C —— Flow 相关层（Activity 连续性、做市商机制解读）置信度受限。
 Setup: 今日无 Setup 触发（机械检查全部 Setup）

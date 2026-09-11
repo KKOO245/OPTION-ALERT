@@ -2,7 +2,7 @@
 
 📊 市场环境
 
-SPY $764.34 ｜ QQQ $714.88
+SPY $764.32 ｜ QQQ $714.88
 VIX 15.78 ↓11.6%（5D +8.6%） ｜ Vol Regime: NORMAL
 CNN 恐惧贪婪 33.3（fear）
 全市场 P/C OI（OCC 结算 08-28，2023-06 以来）: Equity 0.75（分位 12%） ｜ Index 0.94（分位 11%）
@@ -69,39 +69,21 @@ Gamma Regime: POSITIVE（模型分类） | GEX(存量) 11,990,594 | GEX Change v
 10-09  C +0.1k / P +0.4k ｜ Activity MEDIUM △ ｜ 28D
 
 📆 09-18 Forward Structure
-存量OI:      C 110.3k / P 106.6k
-今日变化ΔOI: C +2.2k / P +1.8k
-平值价格ATM:  C 4.00 / P 3.65
-隐含波动率 ATM IV:  52.1%
-净 delta 敞口变化 ΔOI Δ Exposure*: -29k shares
-Top ΔOI（行权价 ｜ ΔOI ｜ 最新价 ｜ 名义金额* ｜ 距现价）:
-P 132 ｜ +571 ｜ $3.65 ｜ 名义 $208.4k* ｜ -0.0%
-P 129 ｜ +408 ｜ $2.38 ｜ 名义 $97.1k* ｜ -2.3%
-（已过滤 1 条低相关性彩票：名义 <$50k 且距现价 >10%）
-结构参考：129（-2.3%）附近形成 OI 变化集中（结构观察，非价格预测）
-*模型估算/名义金额代理；买开/卖开方向不可观测（Scenario A/B）
-该期限仓位参考（Wall 同墙位口径，Max Pain 仅结算参考）: Max Pain 120（结算参考） ｜ Call Wall 120（-9.1%，弱）（OI 9.9k）
-量化解读： 存量两侧均衡｜ATM IV 52.1%｜净 delta 敞口 负 29,102 股（方向不可观测）——方向不可观测，观察点，非方向信号
+存量OI: C 110.3k / P 106.6k，今日变化ΔOI: C +2.2k / P +1.8k，平值价格ATM: C $4.00 / P $3.65 ｜ ATM IV 52.1%，净 delta 敞口 -29k shares
+Top ΔOI: P 132 +571 ｜ P 129 +408
+仓位参考: Max Pain 120 ｜ Call Wall 120（-9.1%，弱）（OI 9.9k）
+量化解读： 存量两侧均衡｜ATM IV 52.1%｜净 delta 敞口 负 29,102 股
 
 📆 09-25 Forward Structure
-存量OI:      C 8.3k / P 8.3k
-今日变化ΔOI: C +0.9k / P +0.3k
-平值价格ATM:  C 5.15 / P 5.45
-隐含波动率 ATM IV:  51.6%
-净 delta 敞口变化 ΔOI Δ Exposure*: 20k shares
-Top ΔOI（行权价 ｜ ΔOI ｜ 最新价 ｜ 名义金额* ｜ 距现价）:
-C 145 ｜ +391 ｜ $1.43 ｜ 名义 $55.9k* ｜ +9.8%
-C 140 ｜ +195 ｜ $2.53 ｜ 名义 $49.3k* ｜ +6.0%
-C 133 ｜ +91 ｜ $6.00 ｜ 名义 $54.6k* ｜ +0.7%
-结构参考：145（+9.8%）附近形成 OI 变化集中（结构观察，非价格预测）
-*模型估算/名义金额代理；买开/卖开方向不可观测（Scenario A/B）
-该期限仓位参考（Wall 同墙位口径，Max Pain 仅结算参考）: Max Pain 132（结算参考） ｜ Call Wall 145（+9.8%）（OI 1.8k）
-量化解读： 存量两侧均衡｜⚠️ 背离：存量 Put 重但当日 Call 增仓更多｜ATM IV 51.6%｜净 delta 敞口 正 19,598 股（方向不可观测）——方向不可观测，观察点，非方向信号
+存量OI: C 8.3k / P 8.3k，今日变化ΔOI: C +0.9k / P +0.3k，平值价格ATM: C $5.15 / P $5.45 ｜ ATM IV 51.6%，净 delta 敞口 20k shares
+Top ΔOI: C 145 +391 ｜ C 140 +195 ｜ C 133 +91
+仓位参考: Max Pain 132 ｜ Call Wall 145（+9.8%）（OI 1.8k）
+量化解读： 存量两侧均衡｜⚠️ 背离：存量 Put 重但当日 Call 增仓更多｜ATM IV 51.6%｜净 delta 敞口 正 19,598 股
 
-10-02（Activity LOW）仓位参考: Max Pain 131（结算参考）
+10-02（Activity LOW）仓位参考: Max Pain 131
 
 10-09（MEDIUM △）Top ΔOI: 120P +128 ｜ 133C +29
-10-09（MEDIUM △）仓位参考: Max Pain 140（结算参考） ｜ Put Wall 140（+6.0%，弱）（OI 0.5k）
+10-09（MEDIUM △）仓位参考: Max Pain 140 ｜ Put Wall 140（+6.0%，弱）（OI 0.5k）
 
 数据质量: 行情 A ｜ 期权结构 A ｜ 流向 C ｜ 做市商机制 C —— Flow 相关层（Activity 连续性、做市商机制解读）置信度受限。
 Setup: 今日无 Setup 触发（机械检查全部 Setup）

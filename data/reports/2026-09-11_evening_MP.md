@@ -1,4 +1,4 @@
-# 期权晚报 2026-09-11（快照 16:40 ET）
+# 期权晚报 2026-09-11（快照 17:15 ET）
 
 📊 市场环境
 
@@ -66,46 +66,21 @@ Put Wall 55（弱结构｜现价低于该位 8.2%）
 量化视角： 5 个事件合计 ΔOI ≈ 3,829 张（Put 542 / Call 3,287），跨 3 个期限｜有实质成本保护 1 档（权利金 >$1，买/卖方向不可观测）｜Put 增仓为主（孤立/局部，暂不构成模式推断）——方向未知，观察连续性，观察点，非方向信号
 📆 Forward Expiration Structure
 
-09-18  C +2.3k / P -1.7k ｜ Activity HIGH ｜ 7D
-09-25  C +0.4k / P +0.7k ｜ Activity HIGH ｜ 14D
-10-02  C +17 / P +0.2k ｜ Activity MEDIUM △ ｜ 21D
-10-09  C +62 / P +84 ｜ Activity MEDIUM △ ｜ 28D
+09-18  C +0 / P +0 ｜ Activity LOW ｜ 7D
+09-25  C +0 / P +0 ｜ Activity LOW ｜ 14D
+10-02  C +0 / P +0 ｜ Activity LOW ｜ 21D
+10-09  C +0 / P +0 ｜ Activity LOW ｜ 28D
 
 📆 09-18 Forward Structure
-存量OI:      C 52.8k / P 42.9k
-今日变化ΔOI: C +2.3k / P -1.7k
-平值价格ATM:  C 1.49 / P 1.86
-隐含波动率 ATM IV:  58.4%
-净 delta 敞口变化 ΔOI Δ Exposure*: 118k shares
-Top ΔOI（行权价 ｜ ΔOI ｜ 最新价 ｜ 名义金额* ｜ 距现价）:
-C 54 ｜ +1,928 ｜ $0.61 ｜ 名义 $117.6k* ｜ +6.9%
-C 55 ｜ +617 ｜ $0.44 ｜ 名义 $27.1k* ｜ +8.9%
-（已过滤 1 条低相关性彩票：名义 <$50k 且距现价 >10%）
-结构参考：54（+6.9%）附近形成 OI 变化集中（结构观察，非价格预测）
-*模型估算/名义金额代理；买开/卖开方向不可观测（Scenario A/B）
-该期限仓位参考（Wall 同墙位口径，Max Pain 仅结算参考）: Max Pain 55（结算参考） ｜ Put Wall 55（+8.9%，弱）（OI 8.8k）
-量化解读： 存量 Call 重｜ATM IV 58.4%｜历史 Rank 65%（近端代理）｜期限正常（远月高于近端）｜净 delta 敞口 正 118,121 股（方向不可观测）——方向不可观测，观察点，非方向信号
+存量OI: C 52.8k / P 42.9k，今日变化ΔOI: C +0 / P +0，平值价格ATM: C $1.49 / P $1.86 ｜ ATM IV 58.4%，净 delta 敞口 0 shares
+仓位参考: Max Pain 55 ｜ Put Wall 55（+8.9%，弱）（OI 8.8k）
+量化解读： 存量 Call 重｜ATM IV 58.4%｜历史 Rank 65%（近端代理）｜期限正常（远月高于近端）｜净 delta 敞口 正 0 股
 
-📆 09-25 Forward Structure
-存量OI:      C 4.7k / P 4.8k
-今日变化ΔOI: C +0.4k / P +0.7k
-平值价格ATM:  C 2.39 / P 2.34
-隐含波动率 ATM IV:  61.1%
-净 delta 敞口变化 ΔOI Δ Exposure*: -37k shares
-Top ΔOI（行权价 ｜ ΔOI ｜ 最新价 ｜ 名义金额* ｜ 距现价）:
-P 55 ｜ +542 ｜ $5.08 ｜ 名义 $275.3k* ｜ +8.9%
-P 53 ｜ +47 ｜ $3.90 ｜ 名义 $18.3k* ｜ +4.9%
-（已过滤 1 条低相关性彩票：名义 <$50k 且距现价 >10%）
-结构参考：55（+8.9%）附近形成 OI 变化集中（结构观察，非价格预测）
-*模型估算/名义金额代理；买开/卖开方向不可观测（Scenario A/B）
-该期限仓位参考（Wall 同墙位口径，Max Pain 仅结算参考）: Max Pain 55（结算参考）
-量化解读： 存量两侧均衡｜ATM IV 61.1%｜历史 Rank 65%（近端代理）｜净 delta 敞口 负 36,538 股（方向不可观测）——方向不可观测，观察点，非方向信号
+09-25（Activity LOW）仓位参考: Max Pain 55
 
-10-02（MEDIUM △）Top ΔOI: 48P +62 ｜ 50P +21
-10-02（MEDIUM △）仓位参考: Max Pain 59（结算参考） ｜ Put Wall 50（-1.0%）（OI 1.2k）
+10-02（Activity LOW）仓位参考: Max Pain 59 ｜ Put Wall 50（-1.0%）（OI 1.2k）
 
-10-09（MEDIUM △）Top ΔOI: 55C -52 ｜ 50P +29
-10-09（MEDIUM △）仓位参考: Max Pain 55（结算参考） ｜ Call Wall 55（+8.9%）（OI 1.0k） ｜ Put Wall 47（-6.9%）（OI 1.0k）
+10-09（Activity LOW）仓位参考: Max Pain 55 ｜ Call Wall 55（+8.9%）（OI 1.0k） ｜ Put Wall 47（-6.9%）（OI 1.0k）
 
 数据质量: 行情 A ｜ 期权结构 A ｜ 流向 C ｜ 做市商机制 C —— Flow 相关层（Activity 连续性、做市商机制解读）置信度受限。
 Setup A v1 — Core Conditions
