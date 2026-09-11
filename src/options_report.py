@@ -530,6 +530,13 @@ def main():
                     coverage=coverage,
                     p3=p3,
                 )
+                # 今日到期（0DTE）层：仅晨报需要；晚报不计算、不渲染（收盘后 0DTE 已结算，数值失真）。
+                snap["zero_dte"] = None
+                if session_name == "早报":
+                    try:
+                        snap["zero_dte"] = metrics_mod.zero_dte_summary(contracts, spot, prev)
+                    except Exception as e:
+                        print(f"[警告] {ticker} 0DTE 汇总失败（不影响报告）: {e}")
                 SnapshotStore(BASE_DIR).store(snap)
             except Exception as e:
                 print(f"[警告] {ticker} 快照入库失败（不影响报告发送）: {e}")

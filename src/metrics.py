@@ -526,6 +526,92 @@ def _new_position_exposure(df, prev_lookup, spot):
     return round(new_gex, 0), round(new_delta, 0)
 
 
+def zero_dte_summary(contracts, spot, prev=None):
+    """今日到期（0DTE）层：独立展示，仅晨报渲染（晚报 dte<0 时天然为空）。
+
+    只描述事实：存量 OI、当日成交量、平值 C/P 价与 IV、预期波动、
+    Max Pain、Top |ΔOI|。方向（买开/卖开）不可观测，不做推断。
+    """
+    df = _frame(contracts)
+    if df.empty:
+        return None
+    z = df[df["dte"] == 0]
+    if z.empty:
+        return None
+
+    call_oi = int(z.loc[z["type"] == "call", "open_interest"].sum())
+    put_oi = int(z.loc[z["type"] == "put", "open_interest"].sum())
+    call_vol = int(z.loc[z["type"] == "call", "volume"].sum())
+    put_vol = int(z.loc[z["type"] == "put", "volume"].sum())
+
+    atm_iv, expected_move_pct, atm_strike = atm_metrics(z, spot)
+    atm_call_price = None
+    atm_put_price = None
+    if atm_strike is not None:
+        sub = z[z["strike"] == atm_strike]
+        calls = sub[sub["type"] == "call"]
+        puts = sub[sub["type"] == "put"]
+        if not calls.empty:
+            mids = calls["mid"].dropna()
+            if len(mids):
+                atm_call_price = float(mids.iloc[0])
+        if not puts.empty:
+            mids = puts["mid"].dropna()
+            if len(mids):
+                atm_put_price = float(mids.iloc[0])
+
+    exp = str(sorted(z["expiration"].unique())[0])
+    pain = max_pain(z, [exp]).get(exp)
+
+    pl = _prev_lookup(prev)
+    rows = []
+    if pl:
+        for r in z.itertuples(index=False):
+            sym = getattr(r, "contract_symbol", None)
+            if not sym:
+                continue
+            oi_now = int(getattr(r, "open_interest", 0) or 0)
+            oi_prev, _ = pl.get(sym, (0, 0))
+            delta = oi_now - int(oi_prev or 0)
+            if delta == 0:
+                continue
+            dist = None
+            strike = getattr(r, "strike", None)
+            if spot and strike is not None:
+                dist = (float(strike) / float(spot) - 1.0) * 100.0
+            mid = getattr(r, "mid", None)
+            last = getattr(r, "last", None)
+            last_price = (
+                float(mid) if mid is not None
+                else (float(last) if last is not None else None)
+            )
+            rows.append({
+                "strike": float(strike) if strike is not None else None,
+                "type": getattr(r, "type", ""),
+                "delta_oi": int(delta),
+                "last_price": last_price,
+                "distance_pct": round(dist, 1) if dist is not None else None,
+            })
+        rows.sort(key=lambda x: -abs(x["delta_oi"]))
+    top_delta_oi = rows[:3]
+
+    return {
+        "expiration": exp,
+        "dte": 0,
+        "call_oi": call_oi,
+        "put_oi": put_oi,
+        "call_volume": call_vol,
+        "put_volume": put_vol,
+        "atm_strike": atm_strike,
+        "atm_call_price": atm_call_price,
+        "atm_put_price": atm_put_price,
+        "atm_iv": atm_iv,
+        "expected_move_pct": expected_move_pct,
+        "max_pain": pain,
+        "top_delta_oi": top_delta_oi,
+    }
+
+
 def compute_metrics(contracts, spot, prev=None,
                     fetch_window=40, anomaly_window=35,
                     min_volume=500, vol_oi_min=1.0, top_n=5):

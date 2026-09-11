@@ -757,53 +757,45 @@ def _forward_quant(e: Dict[str, Any], snapshot: Dict[str, Any]) -> Optional[str]
             clauses.append("期限正常（远月高于近端）")
     de = _fnum(e.get("delta_exposure"))
     if de is not None:
-        clauses.append(f"净 delta 敞口 {'正' if de >= 0 else '负'} {abs(de):,.0f} 股（方向不可观测）")
+        clauses.append(f"净 delta 敞口 {'正' if de >= 0 else '负'} {abs(de):,.0f} 股")
     if not clauses:
         return None
-    return "量化解读： " + "｜".join(clauses) + "——方向不可观测，观察点，非方向信号"
+    return "量化解读： " + "｜".join(clauses)
 
 
 def _fwd_l2(e: Dict[str, Any], snapshot: Dict[str, Any]) -> List[str]:
     lines = [f"📆 {e['expiration'][5:]} Forward Structure"]
-    lines.append(f"存量OI:      C {_fwd_k(e.get('call_oi'), signed=False)} / P {_fwd_k(e.get('put_oi'), signed=False)}")
-    dline = f"今日变化ΔOI: C {_fwd_k(e.get('call_delta_oi'))} / P {_fwd_k(e.get('put_delta_oi'))}"
+    parts = [
+        f"存量OI: C {_fwd_k(e.get('call_oi'), signed=False)} / P {_fwd_k(e.get('put_oi'), signed=False)}"
+    ]
+    dpart = f"今日变化ΔOI: C {_fwd_k(e.get('call_delta_oi'))} / P {_fwd_k(e.get('put_delta_oi'))}"
     new_txt = []
     if e.get("call_new_oi"):
         new_txt.append(f"C {_fwd_k(e['call_new_oi'], signed=False)}")
     if e.get("put_new_oi"):
         new_txt.append(f"P {_fwd_k(e['put_new_oi'], signed=False)}")
     if new_txt:
-        dline += "（含新行权价 " + " / ".join(new_txt) + "）"
-    lines.append(dline)
+        dpart += "（新行权价 " + " / ".join(new_txt) + "）"
+    parts.append(dpart)
     if e.get("atm_call_price") is not None and e.get("atm_put_price") is not None:
-        lines.append(
-            f"平值价格ATM:  C {fmt(e['atm_call_price'], 2)} / P {fmt(e['atm_put_price'], 2)}"
-        )
-    if e.get("atm_iv") is not None:
-        lines.append(f"隐含波动率 ATM IV:  {e['atm_iv'] * 100:.1f}%")
+        ap = f"平值价格ATM: C ${fmt(e['atm_call_price'], 2)} / P ${fmt(e['atm_put_price'], 2)}"
+        if e.get("atm_iv") is not None:
+            ap += f" ｜ ATM IV {e['atm_iv'] * 100:.1f}%"
+        parts.append(ap)
+    elif e.get("atm_iv") is not None:
+        parts.append(f"ATM IV {e['atm_iv'] * 100:.1f}%")
     if e.get("delta_exposure") is not None:
-        lines.append(f"净 delta 敞口变化 ΔOI Δ Exposure*: {_fwd_shares(e['delta_exposure'])}")
-    top_raw = e.get("top_delta_oi") or []
-    top = _relevant_top(top_raw)
-    n_filtered = len(top_raw) - len(top)
+        parts.append(f"净 delta 敞口 {_fwd_shares(e['delta_exposure'])}")
+    lines.append("，".join(parts))
+    top = _relevant_top(e.get("top_delta_oi") or [])
     if top:
-        lines.append("Top ΔOI（行权价 ｜ ΔOI ｜ 最新价 ｜ 名义金额* ｜ 距现价）:")
-        for t in top:
-            dist_txt = f"{t['distance_pct']:+.1f}%" if t.get("distance_pct") is not None else "N/A"
-            last_txt = f"${fmt(t['last_price'], 2)}" if t.get("last_price") is not None else "N/A"
-            lines.append(
-                f"{t['type'][0].upper()} {int(t['strike'])} ｜ {t['delta_oi']:+,} ｜ "
-                f"{last_txt} ｜ 名义 {_fwd_money(t.get('notional'))}* ｜ {dist_txt}"
-            )
-        if n_filtered:
-            lines.append(f"（已过滤 {n_filtered} 条低相关性彩票：名义 <$50k 且距现价 >10%）")
-    ref = _fwd_structure_ref(top)
-    if ref:
-        lines.append(f"结构参考：{ref}（结构观察，非价格预测）")
-    lines.append("*模型估算/名义金额代理；买开/卖开方向不可观测（Scenario A/B）")
+        top_parts = [
+            f"{t['type'][0].upper()} {int(t['strike'])} {t['delta_oi']:+,}" for t in top
+        ]
+        lines.append("Top ΔOI: " + " ｜ ".join(top_parts))
     refs = _fwd_exp_refs(e, snapshot)
     if refs:
-        lines.append("该期限仓位参考（Wall 同墙位口径，Max Pain 仅结算参考）: " + refs)
+        lines.append("仓位参考: " + refs)
     fq = _forward_quant(e, snapshot)
     if fq:
         lines.append(fq)
@@ -844,7 +836,7 @@ def _fwd_exp_refs(e: Dict[str, Any], snapshot: Dict[str, Any]) -> Optional[str]:
     parts = []
     mp = e.get("max_pain")
     if mp is not None:
-        parts.append(f"Max Pain {fmt(mp, 0)}（结算参考）")
+        parts.append(f"Max Pain {fmt(mp, 0)}")
     spot = snapshot.get("spot")
     for zh, key in (("Call Wall", "call_wall"), ("Put Wall", "put_wall")):
         pk = e.get(key)
@@ -873,8 +865,6 @@ def _fwd_l3(e: Dict[str, Any], sig: Dict[str, Any]) -> List[str]:
         f"ΔOI {sig['delta_oi']:+,} ｜ 距现价 {dist_txt} ｜ OI 集中 Top3 ｜ ΔOI/Volume {r1_txt}"
     )
     lines.append("⇒ 该期限/行权价出现显著 OI 变化集中。")
-    lines.append("⇒ 买开/卖开方向不可观测（Scenario A/B）。")
-    lines.append("⇒ 独立结构观察，不进入 Direction Edge / Gate。")
     lines.append("")
     return lines
 
@@ -930,6 +920,40 @@ def _forward_block(snapshot: Dict[str, Any]) -> List[str]:
     return lines
 
 
+def _zero_dte_block(snapshot: Dict[str, Any]) -> List[str]:
+    """今日到期（0DTE）独立小节：主数据横排一行 + 可选 Top ΔOI 一行。"""
+    z = snapshot.get("zero_dte")
+    if not isinstance(z, dict) or not z.get("expiration"):
+        return []
+    parts = [
+        f"存量OI: C {_fwd_k(z.get('call_oi'), signed=False)} / P {_fwd_k(z.get('put_oi'), signed=False)}",
+        f"今日成交量: C {_fwd_k(z.get('call_volume'), signed=False)} / P {_fwd_k(z.get('put_volume'), signed=False)}",
+    ]
+    if z.get("atm_strike") is not None:
+        c = z.get("atm_call_price")
+        p = z.get("atm_put_price")
+        c_txt = f"${fmt(c, 2)}" if c is not None else "N/A"
+        p_txt = f"${fmt(p, 2)}" if p is not None else "N/A"
+        atm_part = f"平值价格ATM: C {c_txt} / P {p_txt}"
+        if z.get("atm_iv") is not None:
+            atm_part += f" ｜ ATM IV {z['atm_iv'] * 100:.1f}%"
+        parts.append(atm_part)
+    if z.get("expected_move_pct") is not None:
+        parts.append(f"预期波动 ±{z['expected_move_pct']:.1f}%")
+    if z.get("max_pain") is not None:
+        parts.append(f"Max Pain {fmt(z['max_pain'], 0)}")
+    lines = ["🎯 今日到期（0DTE）", "，".join(parts)]
+    top = z.get("top_delta_oi") or []
+    if top:
+        top_parts = []
+        for t in top:
+            strike_txt = int(t["strike"]) if t.get("strike") is not None else "?"
+            top_parts.append(f"{t['type'][0].upper()} {strike_txt} {t['delta_oi']:+,}")
+        lines.append("Top ΔOI: " + " ｜ ".join(top_parts))
+    lines.append("")
+    return lines
+
+
 def ticker_morning(
     snapshot: Dict[str, Any],
     prev_snapshot: Optional[Dict[str, Any]] = None,
@@ -979,6 +1003,7 @@ def ticker_morning(
     lines += _structure_block(snapshot, gex=gex, gex_change=gex_change, prev_snapshot=prev_snapshot)
     lines += _structure_interpretation(snapshot)
     lines += _activity_block(activity, stale_note=stale_note, snapshot=snapshot)
+    lines += _zero_dte_block(snapshot)
     lines += _forward_block(snapshot)
     lines += _event_differential_lines(snapshot, event_dates)
     dq_line = _data_quality_line(snapshot)

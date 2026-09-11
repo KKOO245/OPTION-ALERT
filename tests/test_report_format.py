@@ -420,17 +420,16 @@ def test_forward_block_l2_l3():
     ]}}
     text = "\n".join(_forward_block(snap))
     assert "09-18 Forward Structure" in text
-    assert "存量OI:      C 42.8k / P 31.6k" in text
+    assert "存量OI: C 42.8k / P 31.6k" in text
     assert "今日变化ΔOI: C +5.4k / P +0.8k" in text
-    assert "平值价格ATM:  C 5.84 / P 14.12" in text
-    assert "隐含波动率 ATM IV:  38.8%" in text
-    assert "ΔOI Δ Exposure*: 1.2M shares" in text
-    assert "C 575 ｜ +7,348 ｜ $0.87 ｜ 名义 $639.3k* ｜ +11.5%" in text
-    assert "结构参考" in text and "形成 OI 变化集中区" in text
+    assert "平值价格ATM: C $5.84 / P $14.12 ｜ ATM IV 38.8%" in text
+    assert "净 delta 敞口 1.2M shares" in text
+    assert "Top ΔOI: C 575 +7,348 ｜ C 670 +4,120 ｜ P 500 +2,850" in text
     # v1 不渲染 L3（未验证的经验阈值堆叠，后台计算但不上报告）
     assert "Significant Forward Positioning" not in text
     assert "ΔOI/Volume 126%" not in text
-    assert "买开/卖开方向不可观测" in text
+    assert "结构参考" not in text
+    assert "买开/卖开方向不可观测" not in text
 
 
 def test_forward_block_medium_compact_top():
@@ -517,7 +516,7 @@ def test_forward_block_per_expiration_oi_refs():
         "spot": 496.35,
     }
     text = "\n".join(_forward_block(snap))
-    assert "该期限仓位参考（Wall 同墙位口径，Max Pain 仅结算参考）" in text
+    assert "仓位参考: Max Pain 520" in text
     assert "Max Pain 520" in text
     assert "Call Wall 525" in text
     assert "Put Wall 462.5（-6.8%，弱）" in text
@@ -570,7 +569,7 @@ def test_forward_block_new_strike_annotation():
     ]}}
     text = "\n".join(_forward_block(snap))
     assert "（新行权价 C 0.5k / P 0.3k）" in text
-    assert "今日变化ΔOI: C +1.0k / P +0.5k（含新行权价 C 0.5k / P 0.3k）" in text
+    assert "今日变化ΔOI: C +1.0k / P +0.5k（新行权价 C 0.5k / P 0.3k）" in text
 
 
 def test_ticker_morning_includes_forward_block():
