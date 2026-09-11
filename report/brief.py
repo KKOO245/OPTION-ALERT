@@ -640,8 +640,14 @@ def _expiry_trend_lines(
 
     picks = _feature_picks(exps, forced=force_exps)
 
-    def _concentration_txt(e: Dict[str, Any], info: Dict[str, Any]) -> Tuple[str, str]:
-        """返回 (补充说明, 该档集中 strike 文本)。"""
+    def _concentration_txt(
+        e: Dict[str, Any], info: Dict[str, Any], spot_v: Any
+    ) -> Tuple[str, str]:
+        """返回 (补充说明, 集中 strike 文本)。
+
+        规则：近端集中 = 距现价 ±12% 带内 OI 最大 strike（真正的结构参考）；
+        带外的巨量 OI 单列为"深虚值尾部"（保护/彩票盘，不是近端结构位）。
+        """
         cw = e.get("call_wall") or {}
         pw = e.get("put_wall") or {}
         top_p = info.get("topP") or []
@@ -651,11 +657,35 @@ def _expiry_trend_lines(
             notes.append("PW 无（wall_quality_v1 阈值未达标）")
         if not cw.get("strike"):
             notes.append("CW 无（wall_quality_v1 阈值未达标）")
+        band = 0.12
+
+        def _tag(items):
+            return " / ".join(
+                f"{_fmt(x['s'], 0)}（{_fmt_k(x['oi'])}，"
+                f"{100 * (float(x['s']) / float(spot_v) - 1):+.0f}%）"
+                for x in items
+            )
+
         conc = []
-        if top_p:
-            conc.append("Put 集中 " + " / ".join(f"{_fmt(x['s'], 0)}（{_fmt_k(x['oi'])}）" for x in top_p[:2]))
-        if top_c:
-            conc.append("Call 集中 " + " / ".join(f"{_fmt(x['s'], 0)}（{_fmt_k(x['oi'])}）" for x in top_c[:2]))
+        if spot_v:
+            near_p = [x for x in top_p if abs(float(x["s"]) / float(spot_v) - 1) <= band][:2]
+            near_c = [x for x in top_c if abs(float(x["s"]) / float(spot_v) - 1) <= band][:2]
+            far_p = [x for x in top_p if abs(float(x["s"]) / float(spot_v) - 1) > band][:2]
+            far_c = [x for x in top_c if abs(float(x["s"]) / float(spot_v) - 1) > band][:2]
+            conc.append("近端 Put 集中 " + (_tag(near_p) if near_p else "±12% 内无显著集中"))
+            conc.append("近端 Call 集中 " + (_tag(near_c) if near_c else "±12% 内无显著集中"))
+            if far_p or far_c:
+                tail = []
+                if far_p:
+                    tail.append("Put " + _tag(far_p))
+                if far_c:
+                    tail.append("Call " + _tag(far_c))
+                conc.append("深虚值尾部（保护/彩票盘，非近端位）" + "；".join(tail))
+        else:
+            if top_p:
+                conc.append("Put 集中 " + _tag(top_p[:2]))
+            if top_c:
+                conc.append("Call 集中 " + _tag(top_c[:2]))
         return ("；".join(notes), "｜".join(conc))
 
     lines: List[str] = []
@@ -668,7 +698,7 @@ def _expiry_trend_lines(
         ratio = (float(pk) / float(ck)) if ck else None
         em = e.get("expmove_pct")
         em_txt = f"±{float(em):.2f}%" if em is not None else "N/A"
-        wall_notes, conc_txt = _concentration_txt(e, info)
+        wall_notes, conc_txt = _concentration_txt(e, info, spot)
 
         parts = [f"MaxPain {_fmt(e.get('max_pain'), 0)}"]
         cw = e.get("call_wall") or {}
@@ -780,6 +810,7 @@ def _full_block_parts(
     if confirm_lines or trend:
         lines.append("")
         lines.append("## 🎯 四档专题")
+        lines.append("*集中位 = 该档 OI 最大的行权价；括号 = OI 与距现价%。带外巨量 OI 单列为深虚值尾部。*")
         lines += [f"- {x}" for x in confirm_lines]
         if trend:
             lines += [f"- {x}" for x in trend]
