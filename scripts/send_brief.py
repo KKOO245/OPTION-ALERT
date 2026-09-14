@@ -192,7 +192,10 @@ def _merge_state(state: dict, pending: list, resolved: list, day: str) -> None:
         sigs.pop(key, None)
     for p in pending:
         p["created"] = day
-        key = f"{p.get('ticker')}|{p.get('expiry')}|{p.get('kind')}"
+        key = (
+            f"{p.get('ticker')}|{p.get('expiry')}|{p.get('kind')}"
+            f"|v{p.get('rule_version', 1)}"
+        )
         sigs[key] = p
     if len(sigs) > 12:  # 防御性上限：删最旧的
         for key in list(sigs)[: len(sigs) - 12]:
@@ -257,13 +260,16 @@ def _load_chain_history(
                             iv = float(r.get("iv") or 0)
                             vol = float(r.get("volume") or 0)
                             delta = float(r.get("delta") or 0)
+                            bid = float(r.get("bid") or 0)
+                            ask = float(r.get("ask") or 0)
                         except (TypeError, ValueError):
-                            mid, iv, vol, delta = 0.0, 0.0, 0.0, 0.0
+                            mid, iv, vol, delta, bid, ask = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
                         if typ in ("CALL", "PUT") and strike is not None:
                             # 0DTE 抓全档（含深虚值尾部/零 OI 档）：用于尾部通道、成交量通道、双 MaxPain
                             zero["rows"].append({
                                 "s": strike, "right": typ, "oi": oi, "mid": mid,
                                 "iv": iv, "vol": vol, "delta": delta,
+                                "bid": bid, "ask": ask,
                             })
         for exp, v in per.items():
             hist.setdefault(exp, []).append({"date": date, "C": v["C"], "P": v["P"]})
@@ -377,6 +383,19 @@ def main() -> int:
     _mark_sent(data_root, args.session, day)
     _merge_state(state, pending_all, resolved_all, day)
     _save_state(data_root, state)
+    # 审计日志：记录每次结算/新挂起，便于后续统计命中率（供 git 一起提交）
+    if resolved_all or pending_all:
+        log_path = data_root / "data" / "history" / "brief_signal_log.jsonl"
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        with log_path.open("a", encoding="utf-8") as f:
+            f.write(json.dumps({
+                "date": day, "session": args.session,
+                "resolved": resolved_all,
+                "pending": [
+                    f"{p.get('ticker')}|{p.get('expiry')}|{p.get('kind')}"
+                    f"|v{p.get('rule_version', 1)}" for p in pending_all
+                ],
+            }, ensure_ascii=False) + "\n")
     print(f"已发送 {_LOG_KEY[args.session]}（{day}，{len(loaded)} 个标的）到 Discord")
     return 0
 

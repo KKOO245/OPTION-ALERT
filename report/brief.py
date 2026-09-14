@@ -557,8 +557,64 @@ def _near_top3_lines(snap: Dict[str, Any], chain: Optional[Dict[str, Any]], tick
     ]
 
 
-def _max_pain(rows: List[Dict[str, Any]]) -> Optional[float]:
-    """MaxPain：让期权买方总内在价值最小的结算价（OI 口径）。"""
+def _roll_lines(snap: Dict[str, Any], chain: Optional[Dict[str, Any]]) -> List[str]:
+    """移仓候选：近档 OI 减少 + 后一档 OI 增加（同侧、同一入账日、幅度匹配）。"""
+    exps = ((snap.get("forward") or {}).get("expirations")) or []
+    if not chain or len(exps) < 2:
+        return []
+
+    def delta(exp: str, side: str) -> Optional[float]:
+        seq = ((chain.get(exp) or {}).get("seq")) or []
+        if len(seq) < 2:
+            return None
+        return float(seq[-1][side]) - float(seq[-2][side])
+
+    out = []
+    for side, label in (("P", "Put"), ("C", "Call")):
+        for i in range(min(2, len(exps) - 1)):
+            a = str(exps[i].get("expiration"))
+            b = str(exps[i + 1].get("expiration"))
+            da, db = delta(a, side), delta(b, side)
+            if da is None or db is None or da >= -500 or db <= 500:
+                continue
+            ratio = min(abs(da), abs(db)) / max(abs(da), abs(db))
+            if ratio >= 0.4:
+                out.append(
+                    f"🔁 **疑似移仓：{_exp_short(a)} → {_exp_short(b)} {label}**"
+                    f"（{da / 1000:+.1f}k → {db / 1000:+.1f}k）——跨档对倒候选，未验证，不代表方向。"
+                )
+                break
+    return out[:2]
+
+
+def _constant_horizon_iv(snap: Dict[str, Any], days: float) -> Optional[float]:
+    """固定期限 IV：在总方差 σ²T 空间线性插值（需要两侧到期档）。"""
+    exps = ((snap.get("forward") or {}).get("expirations")) or []
+    pts = []
+    for e in exps:
+        try:
+            t = float(e.get("dte")) / 365.0
+            iv = float(e.get("atm_iv") or 0)
+        except (TypeError, ValueError):
+            continue
+        if t > 0 and 0 < iv < 3:
+            pts.append((t, iv))
+    if len(pts) < 2:
+        return None
+    pts.sort()
+    t_target = days / 365.0
+    if not (pts[0][0] <= t_target <= pts[-1][0]):
+        return None
+    for (t1, v1), (t2, v2) in zip(pts, pts[1:]):
+        if t1 <= t_target <= t2:
+            tv1, tv2 = v1 * v1 * t1, v2 * v2 * t2
+            tv = tv1 + (tv2 - tv1) * (t_target - t1) / (t2 - t1)
+            return (tv / t_target) ** 0.5
+    return None
+
+
+def _max_pain_curve(rows: List[Dict[str, Any]]):
+    """返回 (MaxPain, 最低成本, {strike: cost})。"""
     agg: Dict[Tuple[float, str], float] = {}
     for r in rows:
         oi = float(r.get("oi") or 0)
@@ -567,9 +623,10 @@ def _max_pain(rows: List[Dict[str, Any]]) -> Optional[float]:
         key = (float(r["s"]), str(r["right"]))
         agg[key] = agg.get(key, 0.0) + oi
     if not agg:
-        return None
+        return None, None, {}
     strikes = sorted({k for k, _ in agg})
     best_k, best_cost = None, None
+    curve: Dict[float, float] = {}
     for s in strikes:
         cost = 0.0
         for (k, right), oi in agg.items():
@@ -579,10 +636,66 @@ def _max_pain(rows: List[Dict[str, Any]]) -> Optional[float]:
                 cost += (k - s) * oi
         if best_cost is None or cost < best_cost:
             best_cost, best_k = cost, s
-    return best_k
+        curve[s] = cost
+    return best_k, best_cost, curve
 
 
-def _zero_dte_lines(zero: Optional[Dict[str, Any]], spot: Any) -> List[str]:
+def _max_pain(rows: List[Dict[str, Any]]) -> Optional[float]:
+    """MaxPain：让期权买方总内在价值最小的结算价（OI 口径）。"""
+    k, _c, _curve = _max_pain_curve(rows)
+    return k
+
+
+def _gamma_center(rows: List[Dict[str, Any]], spot: Any) -> Optional[float]:
+    """Dollar-Gamma 中心：Σ(OI×gamma)×spot² 最大的 strike。"""
+    if not rows or not spot:
+        return None
+    g: Dict[float, float] = {}
+    for r in rows:
+        try:
+            k = float(r["s"])
+            g[k] = g.get(k, 0.0) + float(r.get("oi") or 0) * float(r.get("gamma") or 0)
+        except (TypeError, ValueError):
+            continue
+    g = {k: v for k, v in g.items() if v > 0}
+    return max(g, key=lambda k: g[k]) if g else None
+
+
+def _oi_centroid(rows: List[Dict[str, Any]]) -> Optional[float]:
+    """OI 重心：Σ(OI×strike)/Σ(OI)。"""
+    tot = 0.0
+    num = 0.0
+    for r in rows:
+        try:
+            oi = float(r.get("oi") or 0)
+            k = float(r["s"])
+        except (TypeError, ValueError):
+            continue
+        if oi > 0:
+            tot += oi
+            num += oi * k
+    return (num / tot) if tot > 0 else None
+
+
+def _quote_ok(r: Optional[Dict[str, Any]], max_spread: float = 0.15) -> bool:
+    """ATM 报价质量门禁：bid>0、ask>bid、mid>0、spread/mid ≤ 阈值。"""
+    if not r:
+        return False
+    try:
+        bid = float(r.get("bid") or 0)
+        ask = float(r.get("ask") or 0)
+        mid = float(r.get("mid") or 0)
+    except (TypeError, ValueError):
+        return False
+    if bid <= 0 or ask <= bid or mid <= 0:
+        return False
+    return (ask - bid) / mid <= max_spread
+
+
+def _zero_dte_lines(
+    zero: Optional[Dict[str, Any]], spot: Any,
+    exp_label: str = "", snap_time: str = "",
+) -> List[str]:
     """0DTE 区块：规模、近端结构、尾部通道、成交量通道、双 MaxPain、ATM 隐含波动。"""
     if not zero:
         return []
@@ -651,35 +764,55 @@ def _zero_dte_lines(zero: Optional[Dict[str, Any]], spot: Any) -> List[str]:
                 )
                 + "**——当日活跃档，OI 尚未更新。"
             )
-        mp_all = _max_pain(all_rows)
-        use_delta = any(abs(float(r.get("delta") or 0)) >= 0.05 for r in all_rows)
-        if use_delta:
-            near_scope = [r for r in all_rows if abs(float(r.get("delta") or 0)) >= 0.05]
-            scope_txt = "近端(delta≥0.05)"
-        else:
-            near_scope = near_rows
-            scope_txt = "近端(±10%)"
-        mp_near = _max_pain(near_scope)
+        # delta 质量未审计（09-10 曾出现 515/400 异常），暂用 ±10% 距离口径
+        mp_all, cmin, curve = _max_pain_curve(all_rows)
+        mp_near = _max_pain(near_rows)
         if mp_all is not None:
             near_txt = f"{mp_near:.0f}" if mp_near is not None else "N/A"
             diff = f"｜差值 {abs(mp_near - mp_all):.0f}" if mp_near is not None else ""
+            zone = [s for s, c in curve.items() if cmin and c <= 1.05 * cmin]
+            zone_txt = f"{min(zone):.0f}–{max(zone):.0f}（{len(zone)}档）" if zone else "N/A"
+            sharp = None
+            ks = sorted(curve)
+            if mp_all in curve and len(ks) > 1:
+                i = ks.index(mp_all)
+                nb = [ks[j] for j in (i - 1, i + 1) if 0 <= j < len(ks)]
+                if nb and cmin:
+                    sharp = min(curve[s] / cmin for s in nb if s in curve)
+            sharp_txt = f"｜锐度 {sharp:.2f}" if sharp else ""
+            gc = _gamma_center(all_rows, spot_f)
+            cent = _oi_centroid(all_rows)
+            extra = (f"｜Gamma中心 {gc:.0f}" if gc is not None else "")
+            extra += (f"｜OI重心 {cent:.0f}" if cent is not None else "")
             lines.append(
-                f"- **MaxPain：全档 {mp_all:.0f} ｜ {scope_txt} {near_txt}{diff}**"
-                "——全档为市场惯例口径，近端为到期钉住参考（OI 滞后一日，仅机制参考）。"
+                f"- **MaxPain：全档 {mp_all:.0f} ｜ 近端(±10%) {near_txt}{diff}"
+                f"｜平坦区 {zone_txt}{sharp_txt}{extra}**"
+                "——全档为惯例口径，近端为到期钉住参考；delta 过滤暂停（质量未审计）；OI 滞后一日，仅机制参考。"
             )
         strikes = sorted({k[0] for k in best}, key=lambda s: abs(s / spot_f - 1))[:3]
+        atm_done = False
         for s in strikes:
             c = best.get((s, "CALL"))
             p = best.get((s, "PUT"))
-            if c and p and c.get("mid") and p.get("mid"):
+            if _quote_ok(c) and _quote_ok(p):
                 imp = (float(c["mid"]) + float(p["mid"])) / spot_f * 100
                 ivs = [float(x["iv"]) for x in (c, p) if x.get("iv")]
                 iv_txt = f"｜ATM IV {sum(ivs) / len(ivs) * 100:.1f}%" if ivs else ""
+                meta = f"（expiry {exp_label or '今日'}"
+                if snap_time:
+                    meta += f"｜快照 {snap_time}"
+                meta += "｜构造=straddle mid｜质量=VALID）"
                 lines.append(
-                    f"- **ATM {s:.0f}｜Straddle 隐含波动 ±{imp:.2f}%{iv_txt}**"
+                    f"- **ATM {s:.0f}｜Straddle 隐含波动 ±{imp:.2f}%{iv_txt}**{meta}"
                     "——当日波动定价（事实；不构成方向）。"
                 )
+                atm_done = True
                 break
+        if not atm_done:
+            lines.append(
+                "- **ATM 隐含波动：N/A（无有效报价）**——报价质量不足（bid/ask/spread 未过门禁），"
+                "拒绝输出伪精确数字（数据不足 ≠ 中性）。"
+            )
     lines.append("- 到期后失效：上述 0DTE 集中位今日收盘后全部失效（机制参考）。")
     return lines
 
@@ -692,7 +825,8 @@ _PCR_STATS = {
 
 
 def _signal_layer(
-    snap: Dict[str, Any], chain: Optional[Dict[str, Any]], ticker: str
+    snap: Dict[str, Any], chain: Optional[Dict[str, Any]], ticker: str,
+    session: str = "morning",
 ) -> List[str]:
     """📶 信号层：仅 QQQ/SPY（有同口径历史）。其他标的直接返回空，只保留事实层。"""
     t = ticker.upper()
@@ -751,7 +885,7 @@ def _signal_layer(
             )
     # 事件层：0DTE / OI 轨迹（候选，未验证）
     zero = (chain or {}).get("_0dte")
-    if zero and (zero.get("C") or zero.get("P")):
+    if session == "morning" and zero and (zero.get("C") or zero.get("P")):
         lines.append(
             "- **事件层（候选，未验证）**：0DTE 规模与近端 OI 见上方 ⏱ 区块——"
             "到期日钉住/磁吸属机制参考，未做历史验证，不建议据此下单。"
@@ -848,12 +982,14 @@ def _pending_signals(
         if len(seq) >= 2:
             vals = [float(x["P"]) for x in seq]
             ds = [vals[i + 1] - vals[i] for i in range(len(vals) - 1)]
-            if len(ds) >= 2 and ds[-1] > 0 and ds[-2] < 0:
+            thr = max(500.0, 0.05 * float(e.get("put_oi") or 0))
+            if len(ds) >= 2 and ds[-1] >= thr and ds[-2] < 0:
                 exp = str(e.get("expiration", ""))
                 signals.append({
                     "ticker": ticker,
                     "expiry": exp,
                     "kind": "put_reclaim_continuation",
+                    "rule_version": 2,
                     "created": (snap.get("created_at") or "")[:10],
                     "chain_date": str(seq[-1]["date"]),
                     "last_delta": ds[-1],
@@ -874,10 +1010,14 @@ def _eval_prior_signals(
     lines: List[str] = []
     resolved: List[str] = []
     confirmed: List[str] = []
+    today = _parse_created(snap.get("created_at"))[0]
     for key, st in (prior_state.get("signals") or {}).items():
         if st.get("ticker") != ticker:
             continue
         exp = st.get("expiry")
+        if today and exp and str(exp) < today:
+            resolved.append(key)  # 到期清理：过期档的待确认项直接作废
+            continue
         info = chain.get(exp) or {}
         seq = info.get("seq") or []
         base_date = st.get("chain_date")
@@ -898,8 +1038,15 @@ def _eval_prior_signals(
         if nxt is None:
             continue  # 数据未到，保持待定
         d = float(nxt["P"]) - base_val
-        resolved.append(key)
         exp_txt = _exp_short(exp)
+        thr = max(500.0, 0.05 * base_val)
+        if abs(d) < thr:
+            lines.append(
+                f"⚠️ **上日候选未确认：{exp_txt} Put 无变化（{d / 1000:+.1f}k，"
+                f"低于噪音阈值 {thr:.0f}）**——维持待定，下一入账日再看（非结论）。"
+            )
+            continue
+        resolved.append(key)
         if st.get("expect") == "increase" and d > 0:
             confirmed.append(exp)
             lines.append(
@@ -1098,6 +1245,15 @@ def _full_block_parts(
     date_str, _ts = _parse_created(snap.get("created_at"))
     sess_zh = "晨" if session == "morning" else "晚"
     lines = [f"### {ticker}｜{sess_zh}简报 {date_str}", "", _one_line(snap), ""]
+    exps0 = ((snap.get("forward") or {}).get("expirations")) or []
+    info0 = ((chain or {}).get(str(exps0[0].get("expiration")))) if exps0 else None
+    seq0 = (info0 or {}).get("seq") or []
+    if seq0:
+        lines.append(
+            f"数据血缘：链快照 {seq0[-1]['date']}（OI 为前一交易日终值，OCC 滞后）"
+            f"｜报价/成交量为当日 {_ts or 'N/A'}。"
+        )
+        lines.append("")
     lines += _structural_map(snap)
     lines.append("")
     lines += _conditional_path(snap)
@@ -1121,10 +1277,25 @@ def _full_block_parts(
     top3 = _near_top3_lines(snap, chain, ticker)
     if top3:
         lines += [""] + top3
-    zero_lines = _zero_dte_lines((chain or {}).get("_0dte"), spot)
-    if zero_lines:
-        lines += [""] + zero_lines
-    sig_lines = _signal_layer(snap, chain, ticker)
+    roll = _roll_lines(snap, chain)
+    if roll:
+        lines += ["", "## 🔁 移仓候选（未验证）"] + [f"- {x}" for x in roll]
+    iv_pts = []
+    for d in (7, 30):
+        iv = _constant_horizon_iv(snap, d)
+        if iv is not None:
+            iv_pts.append(f"{d}D {iv * 100:.1f}%")
+    if iv_pts:
+        lines += ["", "## 📐 固定期限 IV（总方差插值）",
+                  "- " + "｜".join(iv_pts) + "——消除期限错配，用于跨日比较（数据事实）。"]
+    if session == "morning":  # 0DTE 区块只在早报保留；晚报删除（OCC 终值未发布，晚报的 0DTE 数据不完整）
+        date_str0, ts0 = _parse_created(snap.get("created_at"))
+        zero_lines = _zero_dte_lines(
+            (chain or {}).get("_0dte"), spot, exp_label=date_str0, snap_time=ts0
+        )
+        if zero_lines:
+            lines += [""] + zero_lines
+    sig_lines = _signal_layer(snap, chain, ticker, session)
     if sig_lines:
         lines += [""] + sig_lines
     lines.append("")
