@@ -1,0 +1,49 @@
+name: OI 就绪通知
+
+on:
+  schedule:
+    # UTC 22:00-23:00, 00:00-03:00（覆盖 EDT/EST 的 19:00-23:00 ET 窗口；脚本内按多伦多时间判定）
+    - cron: "0 22-23,0-3 * * 1-6"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: oi-ready-watch
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 拉取仓库代码
+        uses: actions/checkout@v4
+
+      - name: 设置Python环境
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: 安装依赖
+        run: pip install -r requirements.txt
+
+      - name: 检测 OI 并通知（每天仅一条；已发送则跳过）
+        env:
+          DISCORD_BRIEF_WEBHOOK_URL: ${{ secrets.DISCORD_BRIEF_WEBHOOK_URL }}
+        run: python scripts/oi_ready_watch.py --runner actions
+
+      - name: 提交状态文件
+        if: always()
+        run: |
+          git config user.name "options-report-bot"
+          git config user.email "options-report-bot@users.noreply.github.com"
+          for i in 1 2 3; do
+            git pull --rebase origin main || true
+            git add data/history
+            git diff --cached --quiet && exit 0
+            git commit -m "OI 就绪状态 $(date -u +'%Y-%m-%d %H:%M')" && git push && exit 0
+            sleep 5
+          done
+          exit 1

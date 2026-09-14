@@ -142,11 +142,20 @@ def _exp_wall(crs: List[Dict[str, Any]], typ: str, spot: Optional[float],
         oi_by_k[k] = oi_by_k.get(k, 0.0) + oi
     if not oi_by_k:
         return None
-    peak_k = max(oi_by_k, key=lambda k: oi_by_k[k])
-    peak_oi = oi_by_k[peak_k]
+    remote_k = max(oi_by_k, key=lambda k: oi_by_k[k])
+    remote_oi = oi_by_k[remote_k]
+    remote_dist = (remote_k / float(spot) - 1.0) * 100.0
+    candidate = {k: v for k, v in oi_by_k.items()
+                 if abs((k / float(spot) - 1.0) * 100.0) <= cap}
+    if not candidate:
+        return None  # 全档均为远端彩票档
+    peak_k = max(candidate, key=lambda k: candidate[k])
+    peak_oi = candidate[peak_k]
     dist = (peak_k / float(spot) - 1.0) * 100.0
-    if abs(dist) > cap:
-        return None  # REMOTE：远端档过滤
+    fallback = peak_k != remote_k
+    if fallback and peak_oi < 0.20 * remote_oi:
+        return None  # 带内档位过弱：不以噪音冒充墙位
+    others = [v for k, v in candidate.items() if k != peak_k]
     others = [v for k, v in oi_by_k.items() if k != peak_k]
     dominance = peak_oi / max(others) if others else None
     vals = sorted(oi_by_k.values())
@@ -154,7 +163,10 @@ def _exp_wall(crs: List[Dict[str, Any]], typ: str, spot: Optional[float],
     median = vals[n // 2] if n % 2 else (vals[n // 2 - 1] + vals[n // 2]) / 2.0
     strong = peak_oi >= str_mult * median
     cls = "PRIMARY" if (dominance is not None and dominance >= dom_min and strong) else "WEAK"
-    return {"strike": peak_k, "oi": round(peak_oi, 0), "class": cls}
+    out = {"strike": peak_k, "oi": round(peak_oi, 0), "class": cls}
+    if fallback:
+        out["fallback_from_remote"] = {"strike": remote_k, "oi": round(remote_oi, 0), "distance_pct": round(remote_dist, 2)}
+    return out
 
 
 def build_forward_structure(

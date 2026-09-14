@@ -522,6 +522,41 @@ def _liq_tag(rows: List[Dict[str, Any]], spot: Any, band: float = 0.10) -> str:
     return "低流动性｜" if peak < 1000 else ""
 
 
+def _near_top3_lines(snap: Dict[str, Any], chain: Optional[Dict[str, Any]], ticker: str) -> List[str]:
+    """📍 近端 OI Top3（±10%｜最近到期档）：Call/Put 各按 OI 降序取前 3。"""
+    exps = ((snap.get("forward") or {}).get("expirations")) or []
+    spot = snap.get("spot")
+    if not exps or not chain or not spot:
+        return []
+    exp = str(exps[0].get("expiration"))
+    info = chain.get(exp) or {}
+    spot_f = float(spot)
+
+    def pick(key: str) -> List[Dict[str, Any]]:
+        rows = [r for r in (info.get(key) or [])
+                if float(r.get("oi") or 0) > 0 and abs(float(r["s"]) / spot_f - 1) <= 0.10]
+        top = sorted(rows, key=lambda r: float(r["oi"]), reverse=True)[:3]
+        # 展示顺序：按行权价从高到低
+        return sorted(top, key=lambda r: float(r["s"]), reverse=True)
+
+    def fmt(rows: List[Dict[str, Any]]) -> str:
+        return " / ".join(
+            f"{float(r['s']):.0f}（{float(r['oi']) / 1000:.1f}k，"
+            f"{100 * (float(r['s']) / spot_f - 1):+.0f}%）"
+            for r in rows
+        ) or "无"
+
+    calls, puts = pick("topC"), pick("topP")
+    if not calls and not puts:
+        return []
+    return [
+        f"## 📍 近端 OI Top3（±10%｜最近档 {_exp_short(exp)}）",
+        f"- **Call Top3**：{fmt(calls)}",
+        f"- **Put Top3**：{fmt(puts)}",
+        "- 口径：OI = 上一交易日终值；Top3 = 该档 ±10% 内 OI 前三（按 OI 降序）。",
+    ]
+
+
 def _max_pain(rows: List[Dict[str, Any]]) -> Optional[float]:
     """MaxPain：让期权买方总内在价值最小的结算价（OI 口径）。"""
     agg: Dict[Tuple[float, str], float] = {}
@@ -593,9 +628,9 @@ def _zero_dte_lines(zero: Optional[Dict[str, Any]], spot: Any) -> List[str]:
             f"- **{liq}近端结构（±10%）：Put {_tag(near_p)}｜Call {_tag(near_c)}**"
             "——当日盘中参考位（位置观察，非预测）。"
         )
-        tail_p = sorted([r for r in tail_rows if r["right"] == "PUT"],
+        tail_p = sorted([r for r in tail_rows if r["right"] == "PUT" and float(r["oi"]) >= 100],
                         key=lambda r: float(r["oi"]), reverse=True)[:2]
-        tail_c = sorted([r for r in tail_rows if r["right"] == "CALL"],
+        tail_c = sorted([r for r in tail_rows if r["right"] == "CALL" and float(r["oi"]) >= 100],
                         key=lambda r: float(r["oi"]), reverse=True)[:2]
         if tail_p or tail_c:
             tail_oi = sum(float(r["oi"]) for r in tail_rows)
@@ -1083,6 +1118,9 @@ def _full_block_parts(
         lines += [f"- {x}" for x in confirm_lines]
         if trend:
             lines += [f"- {x}" for x in trend]
+    top3 = _near_top3_lines(snap, chain, ticker)
+    if top3:
+        lines += [""] + top3
     zero_lines = _zero_dte_lines((chain or {}).get("_0dte"), spot)
     if zero_lines:
         lines += [""] + zero_lines
@@ -1154,14 +1192,20 @@ def _closing_line(
     if gamma in ("POSITIVE", "NEGATIVE"):
         parts.append(f"Gamma {gamma}")
     near = exps[0] if exps else None
-    if near and near.get("dte") is not None and int(near.get("dte")) <= 2:
-        parts.append(f"明日 {_exp_short(str(near.get('expiration','')))} 到期先移仓")
     if len(exps) >= 3:
         def oi_sum(e) -> float:
             return float(e.get("call_oi") or 0) + float(e.get("put_oi") or 0)
         main = max(exps[:4], key=oi_sum)
         if oi_sum(main) > 0:
-            parts.append(f"真正结构在 {_exp_short(str(main.get('expiration','')))}")
+            anchor_txt = _exp_short(str(main.get("expiration", "")))
+            if near and near.get("dte") is not None and int(near.get("dte")) <= 2:
+                near_txt = _exp_short(str(near.get("expiration", "")))
+                if near_txt != anchor_txt:
+                    parts.append(f"{near_txt} 到期后结构锚转移至 {anchor_txt}")
+                else:
+                    parts.append(f"结构锚 {anchor_txt}")
+            else:
+                parts.append(f"结构锚 {anchor_txt}")
     ref = pw or cw
     if ref:
         parts.append(f"{ref:.0f} 是观察线不是预测线")

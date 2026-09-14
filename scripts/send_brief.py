@@ -270,8 +270,8 @@ def _load_chain_history(
     out: dict = {}
     for exp, seq in hist.items():
         # 保留更多档位，供渲染层按"距现价带内"筛选（深虚值 top OI 不能当近端结构位）
-        tc = sorted(tops.get(exp, {}).get("CALL", []), key=lambda x: x[1], reverse=True)[:15]
-        tp = sorted(tops.get(exp, {}).get("PUT", []), key=lambda x: x[1], reverse=True)[:15]
+        tc = sorted(tops.get(exp, {}).get("CALL", []), key=lambda x: x[1], reverse=True)[:30]
+        tp = sorted(tops.get(exp, {}).get("PUT", []), key=lambda x: x[1], reverse=True)[:30]
         out[exp] = {
             "seq": seq,
             "topC": [{"s": s, "oi": o} for s, o in tc],
