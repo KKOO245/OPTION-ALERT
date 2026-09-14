@@ -459,45 +459,185 @@ def _fmt_k(v: Any) -> str:
         return "N/A"
 
 
+def _must_show_strikes(
+    rows: List[Dict[str, Any]], spot: Any, band: float = 0.15,
+    oi_frac: float = 0.25, topn: int = 2, right: Optional[str] = None,
+    nearest_k: int = 3,
+) -> List[Dict[str, Any]]:
+    """必展示 strike（覆盖不依赖阈值）：
+    (a) 覆盖通道：带内距现价最近的 nearest_k 个挂牌档（OI=0 也保留）；
+    (b) 规模通道：带内 OI 前 topn 档；
+    (c) 相对门槛：距现价最近且 OI ≥ oi_frac × 带内峰值 的档。
+    相对门槛只影响 (c)，不会让 (a)(b) 的档消失 → 低流动性标的同样有输出。
+    """
+    if not rows or not spot:
+        return []
+    spot_f = float(spot)
+    inband = [r for r in rows if abs(float(r["s"]) / spot_f - 1) <= band]
+    if not inband:
+        return []
+    peak = max(float(r["oi"]) for r in inband)
+
+    def _dist(r: Dict[str, Any]) -> float:
+        return abs(float(r["s"]) / spot_f - 1)
+
+    chosen = sorted(inband, key=_dist)[:nearest_k]
+    chosen += [
+        r for r in sorted(inband, key=lambda r: float(r["oi"]), reverse=True)[:topn]
+        if float(r["oi"]) > 0
+    ]
+    if peak > 0:
+        near_big = sorted(
+            [r for r in inband if float(r["oi"]) >= oi_frac * peak and float(r["oi"]) > 0],
+            key=_dist,
+        )
+        if near_big:
+            chosen.append(near_big[0])
+    seen = set()
+    out: List[Dict[str, Any]] = []
+    # 展示顺序：Call 按行权价升序（最近档在前）；Put 按行权价降序（最近档在前，125 先于 120）
+    def _order(r: Dict[str, Any]) -> Any:
+        strike = float(r["s"])
+        rt = right or r.get("right")
+        return -strike if rt == "PUT" else strike
+
+    for r in sorted(chosen, key=_order):
+        key = (float(r["s"]), right or r.get("right") or "")
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(r)
+    return out[: max(nearest_k, topn + 2)]
+
+
+def _liq_tag(rows: List[Dict[str, Any]], spot: Any, band: float = 0.10) -> str:
+    """低流动性标签：带内峰值 OI < 1000 张。只影响标签，不影响是否显示。"""
+    if not rows or not spot:
+        return ""
+    spot_f = float(spot)
+    peak = max(
+        (float(r["oi"]) for r in rows if abs(float(r["s"]) / spot_f - 1) <= band),
+        default=0.0,
+    )
+    return "低流动性｜" if peak < 1000 else ""
+
+
+def _max_pain(rows: List[Dict[str, Any]]) -> Optional[float]:
+    """MaxPain：让期权买方总内在价值最小的结算价（OI 口径）。"""
+    agg: Dict[Tuple[float, str], float] = {}
+    for r in rows:
+        oi = float(r.get("oi") or 0)
+        if oi <= 0:
+            continue
+        key = (float(r["s"]), str(r["right"]))
+        agg[key] = agg.get(key, 0.0) + oi
+    if not agg:
+        return None
+    strikes = sorted({k for k, _ in agg})
+    best_k, best_cost = None, None
+    for s in strikes:
+        cost = 0.0
+        for (k, right), oi in agg.items():
+            if right == "CALL" and k <= s:
+                cost += (s - k) * oi
+            elif right == "PUT" and k >= s:
+                cost += (k - s) * oi
+        if best_cost is None or cost < best_cost:
+            best_cost, best_k = cost, s
+    return best_k
+
+
 def _zero_dte_lines(zero: Optional[Dict[str, Any]], spot: Any) -> List[str]:
-    """0DTE（今日到期）区块：规模、近端集中、ATM 隐含波动。仅事实 + 机制参考。"""
+    """0DTE 区块：规模、近端结构、尾部通道、成交量通道、双 MaxPain、ATM 隐含波动。"""
     if not zero:
         return []
     rows = zero.get("rows") or []
     if not rows and not (zero.get("C") or zero.get("P")):
         return []
     best: Dict[Tuple[float, str], Dict[str, Any]] = {}
+    volbest: Dict[Tuple[float, str], Dict[str, Any]] = {}
     for r in rows:
         key = (float(r["s"]), str(r["right"]))
-        if r["oi"] > best.get(key, {}).get("oi", -1):
+        if float(r["oi"]) > float(best.get(key, {}).get("oi", -1)):
             best[key] = r
+        if float(r.get("vol") or 0) > float(volbest.get(key, {}).get("vol", -1)):
+            volbest[key] = r
     ck = float(zero.get("C") or 0)
     pk = float(zero.get("P") or 0)
     ratio = (pk / ck) if ck else None
     lines = ["## ⏱ 0DTE（今日到期）"]
     scale = f"C {_fmt_k(ck)} / P {_fmt_k(pk)}" + (f"（P/C {ratio:.2f}）" if ratio else "")
     lines.append(f"- **规模：{scale}**——当日到期的 Gamma/钉住行为由该档主导（OI 存量事实）。")
-    if spot:
-        def _top(right: str) -> str:
-            items = sorted(
-                (v for v in best.values() if v["right"] == right),
-                key=lambda x: x["oi"], reverse=True,
-            )[:2]
-            return " / ".join(
-                f"{x['s']:.0f}（{_fmt_k(x['oi'])}，{100 * (x['s'] / float(spot) - 1):+.0f}%）"
-                for x in items
-            ) or "无"
 
+    def _tag(items: List[Dict[str, Any]]) -> str:
+        return " / ".join(
+            f"{x['s']:.0f}（OI {_fmt_k(x['oi'])}，{100 * (x['s'] / float(spot) - 1):+.0f}%）"
+            for x in items
+        ) or "无"
+
+    if spot:
+        spot_f = float(spot)
+        all_rows = list(best.values())
+        near_rows = [r for r in all_rows if abs(float(r["s"]) / spot_f - 1) <= 0.10]
+        tail_rows = [r for r in all_rows if abs(float(r["s"]) / spot_f - 1) > 0.10]
+        liq = _liq_tag(all_rows, spot, band=0.10)
+        near_p = _must_show_strikes(
+            [r for r in near_rows if r["right"] == "PUT"], spot,
+            band=0.10, oi_frac=0.25, topn=2, right="PUT",
+        )
+        near_c = _must_show_strikes(
+            [r for r in near_rows if r["right"] == "CALL"], spot,
+            band=0.10, oi_frac=0.25, topn=2, right="CALL",
+        )
         lines.append(
-            f"- **近端集中（±15%）：Put {_top('PUT')}｜Call {_top('CALL')}**"
+            f"- **{liq}近端结构（±10%）：Put {_tag(near_p)}｜Call {_tag(near_c)}**"
             "——当日盘中参考位（位置观察，非预测）。"
         )
-        strikes = sorted({k[0] for k in best}, key=lambda s: abs(s / float(spot) - 1))[:3]
+        tail_p = sorted([r for r in tail_rows if r["right"] == "PUT"],
+                        key=lambda r: float(r["oi"]), reverse=True)[:2]
+        tail_c = sorted([r for r in tail_rows if r["right"] == "CALL"],
+                        key=lambda r: float(r["oi"]), reverse=True)[:2]
+        if tail_p or tail_c:
+            tail_oi = sum(float(r["oi"]) for r in tail_rows)
+            total_oi = sum(float(r["oi"]) for r in all_rows) or 1.0
+            lines.append(
+                f"- **尾部通道（>±10%，保护/彩票/对冲，非结构位）："
+                f"Put {_tag(tail_p)}｜Call {_tag(tail_c)}**"
+                f"｜尾部 OI 占比 {100 * tail_oi / total_oi:.0f}%"
+            )
+        vtop = [r for r in sorted(volbest.values(), key=lambda r: float(r.get("vol") or 0), reverse=True)[:3]
+                if float(r.get("vol") or 0) > 0]
+        if vtop:
+            lines.append(
+                "- **成交量通道（当日成交前 3；OI 为昨日终值）："
+                + " / ".join(
+                    f"{r['right'][0]}{r['s']:.0f}（vol {_fmt_k(r.get('vol'))}，OI {_fmt_k(r['oi'])}）"
+                    for r in vtop
+                )
+                + "**——当日活跃档，OI 尚未更新。"
+            )
+        mp_all = _max_pain(all_rows)
+        use_delta = any(abs(float(r.get("delta") or 0)) >= 0.05 for r in all_rows)
+        if use_delta:
+            near_scope = [r for r in all_rows if abs(float(r.get("delta") or 0)) >= 0.05]
+            scope_txt = "近端(delta≥0.05)"
+        else:
+            near_scope = near_rows
+            scope_txt = "近端(±10%)"
+        mp_near = _max_pain(near_scope)
+        if mp_all is not None:
+            near_txt = f"{mp_near:.0f}" if mp_near is not None else "N/A"
+            diff = f"｜差值 {abs(mp_near - mp_all):.0f}" if mp_near is not None else ""
+            lines.append(
+                f"- **MaxPain：全档 {mp_all:.0f} ｜ {scope_txt} {near_txt}{diff}**"
+                "——全档为市场惯例口径，近端为到期钉住参考（OI 滞后一日，仅机制参考）。"
+            )
+        strikes = sorted({k[0] for k in best}, key=lambda s: abs(s / spot_f - 1))[:3]
         for s in strikes:
             c = best.get((s, "CALL"))
             p = best.get((s, "PUT"))
             if c and p and c.get("mid") and p.get("mid"):
-                imp = (float(c["mid"]) + float(p["mid"])) / float(spot) * 100
+                imp = (float(c["mid"]) + float(p["mid"])) / spot_f * 100
                 ivs = [float(x["iv"]) for x in (c, p) if x.get("iv")]
                 iv_txt = f"｜ATM IV {sum(ivs) / len(ivs) * 100:.1f}%" if ivs else ""
                 lines.append(
@@ -519,8 +659,10 @@ _PCR_STATS = {
 def _signal_layer(
     snap: Dict[str, Any], chain: Optional[Dict[str, Any]], ticker: str
 ) -> List[str]:
-    """📶 信号层：环境/结构/事件三层，全部标"建议，非指令"，含证据与置信度。"""
+    """📶 信号层：仅 QQQ/SPY（有同口径历史）。其他标的直接返回空，只保留事实层。"""
     t = ticker.upper()
+    if t not in _BACKTEST:
+        return []
     exps = ((snap.get("forward") or {}).get("expirations")) or []
     lines = ["## 📶 信号层（建议，非指令）"]
 
@@ -792,11 +934,12 @@ def _expiry_trend_lines(
 
         conc = []
         if spot_v:
-            near_p = [x for x in top_p if abs(float(x["s"]) / float(spot_v) - 1) <= band][:2]
-            near_c = [x for x in top_c if abs(float(x["s"]) / float(spot_v) - 1) <= band][:2]
+            near_p = _must_show_strikes(top_p, spot_v, band=band, oi_frac=0.25, topn=2, right="PUT")
+            near_c = _must_show_strikes(top_c, spot_v, band=band, oi_frac=0.25, topn=2, right="CALL")
+            liq = _liq_tag(list(top_p) + list(top_c), spot_v, band=band)
             far_p = [x for x in top_p if abs(float(x["s"]) / float(spot_v) - 1) > band][:2]
             far_c = [x for x in top_c if abs(float(x["s"]) / float(spot_v) - 1) > band][:2]
-            conc.append("近端 Put 集中 " + (_tag(near_p) if near_p else "±12% 内无显著集中"))
+            conc.append(f"近端 Put 集中 {liq}" + (_tag(near_p) if near_p else "±12% 内无显著集中"))
             conc.append("近端 Call 集中 " + (_tag(near_c) if near_c else "±12% 内无显著集中"))
             if far_p or far_c:
                 tail = []

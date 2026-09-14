@@ -255,20 +255,23 @@ def _load_chain_history(
                         try:
                             mid = float(r.get("mid") or 0)
                             iv = float(r.get("iv") or 0)
+                            vol = float(r.get("volume") or 0)
+                            delta = float(r.get("delta") or 0)
                         except (TypeError, ValueError):
-                            mid, iv = 0.0, 0.0
+                            mid, iv, vol, delta = 0.0, 0.0, 0.0, 0.0
                         if typ in ("CALL", "PUT") and strike is not None:
-                            if spot is None or abs(strike / float(spot) - 1) <= 0.15:
-                                zero["rows"].append({
-                                    "s": strike, "right": typ, "oi": oi, "mid": mid, "iv": iv,
-                                })
+                            # 0DTE 抓全档（含深虚值尾部/零 OI 档）：用于尾部通道、成交量通道、双 MaxPain
+                            zero["rows"].append({
+                                "s": strike, "right": typ, "oi": oi, "mid": mid,
+                                "iv": iv, "vol": vol, "delta": delta,
+                            })
         for exp, v in per.items():
             hist.setdefault(exp, []).append({"date": date, "C": v["C"], "P": v["P"]})
     out: dict = {}
     for exp, seq in hist.items():
         # 保留更多档位，供渲染层按"距现价带内"筛选（深虚值 top OI 不能当近端结构位）
-        tc = sorted(tops.get(exp, {}).get("CALL", []), key=lambda x: x[1], reverse=True)[:8]
-        tp = sorted(tops.get(exp, {}).get("PUT", []), key=lambda x: x[1], reverse=True)[:8]
+        tc = sorted(tops.get(exp, {}).get("CALL", []), key=lambda x: x[1], reverse=True)[:15]
+        tp = sorted(tops.get(exp, {}).get("PUT", []), key=lambda x: x[1], reverse=True)[:15]
         out[exp] = {
             "seq": seq,
             "topC": [{"s": s, "oi": o} for s, o in tc],
