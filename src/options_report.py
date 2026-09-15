@@ -537,6 +537,25 @@ def main():
                         snap["zero_dte"] = metrics_mod.zero_dte_summary(contracts, spot, prev)
                     except Exception as e:
                         print(f"[警告] {ticker} 0DTE 汇总失败（不影响报告）: {e}")
+                # 数据来源日期：Forward ΔOI 全 0 说明 CBOE 未推进（沿用上一交易日），否则已更新到当天
+                exps = ((forward or {}).get("expirations")) or []
+                updated = any(
+                    (e.get("call_delta_oi") or 0) != 0
+                    or (e.get("put_delta_oi") or 0) != 0
+                    or (e.get("call_new_oi") or 0) != 0
+                    or (e.get("put_new_oi") or 0) != 0
+                    for e in exps
+                )
+                prev_date = None
+                if prev is not None:
+                    try:
+                        if hasattr(prev, "empty") and not prev.empty and "snapshot_date" in prev.columns:
+                            vals = prev["snapshot_date"].dropna().unique()
+                            if len(vals):
+                                prev_date = str(vals[0])
+                    except Exception:
+                        prev_date = None
+                snap["data_as_of"] = now.date().isoformat() if updated else prev_date
                 SnapshotStore(BASE_DIR).store(snap)
             except Exception as e:
                 print(f"[警告] {ticker} 快照入库失败（不影响报告发送）: {e}")

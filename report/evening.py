@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional
 from report.format import fmt
 from report.morning import (
     _activity_block,
+    _data_as_of_line,
     _data_quality_line,
     _day_range,
     _event_differential_lines,
@@ -178,6 +179,7 @@ def render_evening(
         if isinstance(snap_ve, dict):
             market = {**market, "vol_environment": snap_ve}
         lines += market_block(market)
+        lines += _data_as_of_line(snapshot)
     if calendar:
         lines += calendar_block(calendar)
     from report.highlight import build_highlights, highlights_section

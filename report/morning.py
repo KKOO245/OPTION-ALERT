@@ -596,6 +596,17 @@ def market_block(market: Optional[Dict[str, Any]]) -> List[str]:
     return out
 
 
+def _data_as_of_line(snapshot: Dict[str, Any]) -> List[str]:
+    """数据来源日期行（市场环境块之后）：区分 CBOE 是否已推进到最新结算。"""
+    v = snapshot.get("data_as_of")
+    if not v:
+        return []
+    snap_day = (snapshot.get("created_at") or "")[:10]
+    if str(v) == snap_day:
+        return [f"📌 数据来源：全部更新自 {v}", ""]
+    return [f"📌 数据来源：无更新，来源自 {v}", ""]
+
+
 def calendar_block(calendar: Optional[List[str]]) -> List[str]:
     """宏观日历块（整份报告只出现一次）。"""
     if not calendar:
@@ -1035,6 +1046,7 @@ def render_morning(
         if isinstance(snap_ve, dict):
             market = {**market, "vol_environment": snap_ve}
         lines += market_block(market)
+        lines += _data_as_of_line(snapshot)
     if calendar:
         lines += calendar_block(calendar)
     from report.highlight import build_highlights, highlights_section
