@@ -140,6 +140,10 @@ def ticker_evening(
             lines.append(spread)
     lines += _structure_block(snapshot, gex=gex, gex_change=gex_change, prev_snapshot=morning)
     lines += _structure_interpretation(snapshot)
+    # 晚报：0DTE 已结算，剔除到期日 == 快照日的 Activity 事件（早报保留）
+    if activity:
+        snap_day = (snapshot.get("created_at") or "")[:10]
+        activity = [ev for ev in activity if (ev.get("expiration") or "")[:10] != snap_day]
     lines += _activity_block(activity, snapshot=snapshot)
     lines += _forward_block(snapshot)
     lines += _event_differential_lines(snapshot, event_dates)

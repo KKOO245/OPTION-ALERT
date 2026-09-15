@@ -224,7 +224,7 @@ def cmd_build_snapshot(args) -> int:
     row = day_rows[-1]
     date = row["date"]
     created_at = args.created_at or (
-        f"{date}T10:15:00-04:00" if sess == "morning" else f"{date}T16:30:00-04:00"
+        f"{date}T10:15:00-04:00" if sess == "morning" else f"{date}T20:00:00-04:00"
     )
     thresholds = yaml_mini.load(Path(args.config_root) / "thresholds.yaml")
     snap = build_snapshot(

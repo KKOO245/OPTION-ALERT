@@ -2,7 +2,7 @@
 """
 期权日报主入口（v3）
 -------------------
-调度：多伦多时间 10:15（早报）/ 16:30（晚报），周一至周五。
+调度：多伦多时间 10:15（早报）/ 20:00（晚报），周一至周五。
 GitHub Actions 每小时触发一次，脚本自行判断是否命中目标时段；
 命中才抓数据、算指标、生成报告并推送 Discord；否则几十秒内跳过。
 
@@ -48,10 +48,10 @@ TORONTO_TZ = ZoneInfo("America/Toronto")
 # (会话名, 目标小时, 目标分钟, 单向容差分钟) —— 只准迟到、不许早到
 TARGET_SESSIONS = [
     ("早报", 10, 15, 135),   # 10:15–12:30
-    ("晚报", 16, 30, 180),   # 16:30–19:30（配合 23:00 UTC 槽兜底）
+    ("晚报", 20, 0, 180),    # 20:00–23:00
 ]
 # 与工作流 timecheck 的单向窗口保持一致（早报 135 / 晚报 180 分钟），
-# 否则 12:00/18:00/19:00 的兜底 cron 会通过工作流检查、却在这里被挡掉。
+# 否则工作流检查通过、却在这里被挡掉。
 
 DISCLAIMER = ("-# 数据来源: CBOE 延迟数据 / Yahoo Finance，可能有延迟；"
               "本报告由规则计算 + AI 辅助生成，仅供研究参考，不构成投资建议。")
@@ -275,7 +275,7 @@ def build_llm_payload(date_str, session, market_line, summaries, calendar_sectio
 def main():
     session_name, now = get_current_session()
     if session_name is None:
-        print(f"当前多伦多时间 {now.strftime('%Y-%m-%d %H:%M %Z')} 不在预定时段(10:15/16:30)内，跳过本次运行。")
+        print(f"当前多伦多时间 {now.strftime('%Y-%m-%d %H:%M %Z')} 不在预定时段(10:15/20:00)内，跳过本次运行。")
         return
 
     is_forced = os.environ.get("FORCE_SEND", "false").lower() == "true"

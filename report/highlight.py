@@ -25,7 +25,6 @@ _HL_DEFAULTS = {
     "event_diff_critical_pp": 15.0,
     "event_diff_watch_pp": 10.0,
     "near_level_pct": 5.0,
-    "day_move_pct": 2.0,
     "concentration_min_pct": 10.0,
 }
 _ED_DEFAULTS = {"min_diff_pp": 5.0}
@@ -133,7 +132,6 @@ def build_highlights(
     diff = event_differential(snapshot, event_dates)
 
     items: List[Dict[str, str]] = []
-    m = snapshot.get("momentum") or {}
     loc = snapshot.get("location") or {}
     fwd = snapshot.get("forward") or {}
     exps = fwd.get("expirations") or []
@@ -184,14 +182,6 @@ def build_highlights(
         })
 
     # 🟡 关注级
-    pm = _num(m.get("price_momentum"))
-    if pm is not None and abs(pm) * 100.0 >= float(h.get("day_move_pct", 2.0)):
-        items.append({
-            "level": "WATCH",
-            "title": "单日价格波动",
-            "detail": f"{pm * 100.0:+.1f}%（vs 前收盘）",
-            "reason": "价格变动超阈值；纯事实，不解释方向",
-        })
     if diff is not None and diff["diff_pp"] >= float(h.get("event_diff_watch_pp", 10.0)):
         if not any(it["title"] == "事件差分" for it in items):
             items.append({
