@@ -140,7 +140,11 @@ def main() -> int:
     payload = json.dumps({"content": msg + "\n" + detail[:1500]}).encode("utf-8")
     req = urllib.request.Request(
         args.webhook_url, data=payload,
-        headers={"Content-Type": "application/json"},
+        headers={
+            "Content-Type": "application/json",
+            # Discord/Cloudflare 会拒绝默认的 Python-urllib UA（403），必须带 UA
+            "User-Agent": "Mozilla/5.0 (option-alert-oi-watch/1.0)",
+        },
         method="POST",
     )
     with urllib.request.urlopen(req, timeout=30) as resp:
