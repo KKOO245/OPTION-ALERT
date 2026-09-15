@@ -1,10 +1,10 @@
-# 期权晨报 2026-09-15（快照 10:20 ET）
+# 期权晨报 2026-09-15（快照 11:20 ET）
 
 📊 市场环境
 
-SPY $759.03 ｜ QQQ $706.34
-VIX 17.08 ↓0.1%（5D +8.7%） ｜ Vol Regime: NORMAL
-CNN 恐惧贪婪 30.6（fear）
+SPY $756.82 ｜ QQQ $705.54
+VIX 17.68 ↑3.4%（5D +12.5%） ｜ Vol Regime: NORMAL
+CNN 恐惧贪婪 29.1（fear）
 全市场 P/C OI（OCC 结算 08-28，2023-06 以来）: Equity 0.75（分位 12%） ｜ Index 0.94（分位 11%）
 ⇒ 全市场个股期权存量 Put/Call = 0.75，Call 侧明显更重，815 个结算日中只高于 12% 的交易日，处于历史低位区间
 ⇒ 全市场指数期权存量 Put/Call = 0.94，接近均衡略偏 Call，815 个结算日中只高于 11% 的交易日，处于历史低位区间
@@ -29,7 +29,7 @@ CNN 恐惧贪婪 30.6（fear）
 ## ISRG
 
 📋 昨日晚报 → 今日晨报（只列关键项，低于阈值不单列）
-ISRG  昨收 377.94 → 今开 374.16（-1.0%） | 较昨收变动（含盘初走势） ｜ 今日高 375.38 ｜ 低 369.78
+ISRG  昨收 377.94 → 今开 374.16（-1.0%） | 较昨收变动（含盘初走势） ｜ 今日高 375.38 ｜ 低 368.85
 
 Options: P/C成交量 1.60 | OI比 0.92 | ATM IV 44.8% | Skew 10.3pp | Term 0.78 | ExpMove ±3.8%（近端） | Rank — (历史不足)
 量化视角： 期限结构倒挂（Term 0.78，近月 IV 高于远月）｜保护溢价显著（Skew 10.3pp，Put 明显贵于 Call）｜当日成交偏 Put（P/C量 1.60）——观察点，非方向信号
@@ -37,15 +37,15 @@ Options: P/C成交量 1.60 | OI比 0.92 | ATM IV 44.8% | Skew 10.3pp | Term 0.78
    ⇒ Put/Call OI: 0.92×（两侧接近均衡）
    ⇒ 当日成交 vs 存量仓位：当日成交偏 Put，存量接近均衡
    ExpMove 期限化（expmove_v1）: 09-18（3D）±3.8% ｜ 09-25（10D）±5.2% ｜ 10-02（17D）±5.6% ｜ 10-09（24D）±9.9%
-   ⇒ IV–VIX Spread: +27.7pp*（*近月 ATM IV − VIX；期限未对齐，仅作相对波动率 Proxy，不直接代表期权定价贵/便宜）
+   ⇒ IV–VIX Spread: +27.1pp*（*近月 ATM IV − VIX；期限未对齐，仅作相对波动率 Proxy，不直接代表期权定价贵/便宜）
 🔧 结构（未验证研究层：Mechanism Scenario A/B——OI 开仓方向不可观测）
-Gamma Regime: NEGATIVE（模型分类） | GEX(存量) -2,510,655 | GEX Change vs 上次快照 -2,088,049 | Flip: Primary Flip: 378.82（PRIMARY，全链重定价 + 覆盖达标）
+Gamma Regime: NEGATIVE（模型分类） | GEX(存量) -2,504,450 | GEX Change vs 上次快照 -2,081,843 | Flip: Primary Flip: 378.82（PRIMARY，全链重定价 + 覆盖达标）
 🔎 测量完整性: GEX 符号契约 gex_sign_v1（Model A: Call+ / Put−）｜ Gamma 口径 全链重定价 ｜ Effective GEX 覆盖: 91%（带内） ｜ IV 有效性: VALID 307 / LOW 196 / INVALID 431
    ⇒ 全链负Gamma，波动易被放大（模型层）
 结构观察区: Primary Flip 378.82（全链重定价，覆盖 91%）
 Put Wall 350（弱结构｜现价高于该位 6.0%） | Call Wall 400（弱结构｜现价低于该位 7.3%）
 最近结构参考: Flip 379（现价低于该位 2.1%）
-量化视角： 负 Gamma（251万，无历史分位）｜负 Gamma 加深（209万）｜现价位于 Flip 下方 2.10%｜⚠️ 重点观察：负 Gamma 且日内加深——观察点，非方向信号
+量化视角： 负 Gamma（250万，无历史分位）｜负 Gamma 加深（208万）｜现价位于 Flip 下方 2.10%｜⚠️ 重点观察：负 Gamma 且日内加深——观察点，非方向信号
 🧭 结构解读（全部依赖上方假设）
 • 支撑/压力参考：下方 350（Put Wall，弱结构）；上方 372（MaxPain，仅结算参考） / 400（Call Wall，弱结构）。
 • Gamma 区域：切换参考 379（全链重定价，覆盖 91%）。
