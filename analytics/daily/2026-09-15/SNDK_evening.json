@@ -1,9 +1,9 @@
 {
   "schema_version": "snapshot_v1",
   "data_version": "snapshot_v1",
-  "created_at": "2026-09-15T16:40:35-04:00",
+  "created_at": "2026-09-15T18:31:21-04:00",
   "session": "evening",
-  "source": "yfinance",
+  "source": "cboe",
   "ticker": "SNDK",
   "spot": 1530.89501953125,
   "regime": {
@@ -15,14 +15,21 @@
     "transition": "SWITCH"
   },
   "location": {
-    "price_location": null,
-    "flip_levels": null,
-    "flip_status": "NO_CROSS",
-    "flip_candidates": null,
-    "flip_primary": null,
-    "flip_reason": "no_sign_change_in_band",
+    "price_location": "below_flip",
+    "flip_levels": [
+      1595.2457
+    ],
+    "flip_status": "PRIMARY",
+    "flip_candidates": [
+      1595.2457
+    ],
+    "flip_primary": 1595.2457,
+    "flip_reason": "full_chain_reprice_gate_pass",
     "flip_source": "full_chain",
-    "spot_vs_primary_flip": null,
+    "spot_vs_primary_flip": {
+      "distance_pct": -4.03,
+      "side": "BELOW"
+    },
     "call_wall": null,
     "put_wall": 1500.0,
     "walls_v1": {
@@ -66,40 +73,40 @@
   "p3": {
     "schema_version": "p3_collect_v1",
     "gex": {
-      "net_gex": NaN,
-      "abs_gex": NaN,
-      "n_used": 2530,
-      "n_skipped": 217,
-      "spot_zone": "ZERO"
+      "net_gex": -6614934.64,
+      "abs_gex": 6614934.64,
+      "n_used": 2492,
+      "n_skipped": 884,
+      "spot_zone": "NEGATIVE"
     },
     "coverage": {
       "schema_version": "coverage_v1",
-      "total_contracts": 2747,
+      "total_contracts": 3376,
       "iv_valid": {
-        "VALID": 2064,
-        "LOW_LIQUIDITY": 466,
-        "INVALID": 217
+        "VALID": 2020,
+        "LOW_LIQUIDITY": 472,
+        "INVALID": 884
       },
-      "strike_coverage_pct": 92.1,
-      "oi_coverage_pct": null,
-      "valid_only_oi_coverage_pct": null,
-      "band_oi_coverage_pct": null,
-      "effective_gex_coverage_pct": null
+      "strike_coverage_pct": 73.8,
+      "oi_coverage_pct": 99.3,
+      "valid_only_oi_coverage_pct": 76.8,
+      "band_oi_coverage_pct": 100.0,
+      "effective_gex_coverage_pct": 100.0
     },
     "second_order": {
       "schema_version": "second_order_v1",
-      "net_vanna": NaN,
-      "net_charm": NaN,
-      "n_used": 2530,
+      "net_vanna": 1999213.0,
+      "net_charm": 46674867.0,
+      "n_used": 2492,
       "min_dte": 3,
       "vanna_gate": true,
       "charm_gate": true
     },
     "iv_rv": {
-      "atm_iv_near": 0.629032030029297,
-      "rv_5d": 0.4773,
+      "atm_iv_near": 0.72075,
+      "rv_5d": 0.419,
       "rv_20d": null,
-      "ratio_5d": 1.318,
+      "ratio_5d": 1.72,
       "ratio_20d": null
     },
     "event_overlap": null,
@@ -116,28 +123,28 @@
     }
   },
   "momentum": {
-    "iv_momentum": -0.985,
-    "iv_momentum_1d": -7.867,
+    "iv_momentum": -0.737,
+    "iv_momentum_1d": 1.305,
     "iv_level": "NORMAL",
-    "iv_rank": 19.2,
-    "skew_momentum": 0.775,
-    "skew": -1.441300826581049,
-    "term_structure_momentum": 0.0926,
-    "pc_ratio": 0.796,
-    "pc_oi_ratio": 1.1556607130150145,
-    "oi_flow": "put_building",
-    "price_momentum": -0.0136,
+    "iv_rank": 26.5,
+    "skew_momentum": 0.813,
+    "skew": -1.4026227051329943,
+    "term_structure_momentum": -0.0292,
+    "pc_ratio": 0.768,
+    "pc_oi_ratio": 1.1481664722997726,
+    "oi_flow": "call_building",
+    "price_momentum": -0.0205,
     "volume_ratio": null,
-    "atm_iv": 0.629032030029297,
+    "atm_iv": 0.72075,
     "expected_move_pct": 5.251829744969577,
-    "term_ratio": 1.0668835185032743
+    "term_ratio": 0.9451266042317031
   },
   "confirmation": {
-    "iv_surge": false,
+    "iv_surge": true,
     "skew_surge": true,
     "volume_surge": null,
     "put_buy_flow": null,
-    "price_break": null
+    "price_break": false
   },
   "price_extreme": null,
   "protection_divergence": null,
@@ -150,7 +157,7 @@
     "vol_environment": {
       "vix": {
         "value": 17.200000762939453,
-        "timestamp": "2026-09-15T16:40:35-04:00",
+        "timestamp": "2026-09-15T18:31:21-04:00",
         "basis": "close",
         "prior_close": 17.100000381469727,
         "change_1d_pct": 0.58,
@@ -198,12 +205,10 @@
   "data_sufficiency": {
     "momentum.volume_ratio": "INSUFFICIENT_DATA",
     "location.call_wall": "INSUFFICIENT_DATA",
-    "location.flip_levels": "NO_CROSS",
-    "location.price_location": "INSUFFICIENT_DATA",
     "confirmation.volume_surge": "INSUFFICIENT_DATA",
     "confirmation.put_buy_flow": "INSUFFICIENT_DATA"
   },
   "zero_dte": null,
-  "data_as_of": "2026-09-14",
-  "snapshot_hash": "49c1a348d742d128e1a30391d553409e4aeca51d9097155a9459977f79ba8fd8"
+  "data_as_of": "2026-09-15",
+  "snapshot_hash": "451ed1ef6958c8d490cdbe1dbb72412e2520fc3e29fc60382cd02ba61d885c96"
 }
