@@ -1,8 +1,8 @@
-# 期权晚报 2026-09-15（快照 16:40 ET）
+# 期权晚报 2026-09-15（快照 18:31 ET）
 
 📊 市场环境
 
-SPY $757.39 ｜ QQQ $704.54
+SPY $757.39 ｜ QQQ $nan
 VIX 17.20 ↑0.6%（5D +9.4%） ｜ Vol Regime: NORMAL
 CNN 恐惧贪婪 28.7（fear）
 全市场 P/C OI（OCC 结算 08-28，2023-06 以来）: Equity 0.75（分位 12%） ｜ Index 0.94（分位 11%）
@@ -65,30 +65,21 @@ Put Wall 15（弱结构｜现价高于该位 2.7%）
 量化视角： 5 个事件合计 ΔOI ≈ 4,055 张（Put 929 / Call 3,126），跨 3 个期限｜有实质成本保护 1 档（权利金 >$1，买/卖方向不可观测）｜Put 增仓为主（孤立/局部，暂不构成模式推断）——方向未知，观察连续性，观察点，非方向信号
 📆 Forward Expiration Structure
 
-09-18  C -0.6k / P -0.5k ｜ Activity MEDIUM △ ｜ 3D
-09-25  C +1.9k / P +1.7k ｜ Activity HIGH ｜ 10D
-10-02  C +1.6k / P +43 ｜ Activity HIGH ｜ 17D
-10-09  C +0.4k / P +86 ｜ Activity MEDIUM △ ｜ 24D
+09-18  C +0 / P +0 ｜ Activity LOW ｜ 3D
+09-25  C +0 / P +0 ｜ Activity LOW ｜ 10D
+10-02  C +0 / P +0 ｜ Activity LOW ｜ 17D
+10-09  C +0 / P +0 ｜ Activity LOW ｜ 24D
 
 📆 09-18 Forward Structure
-存量OI: C 122.2k / P 66.2k，今日变化ΔOI: C -0.6k / P -0.5k，平值价格ATM: C $0.42 / P $0.50 ｜ ATM IV 81.8%，净 delta 敞口 131k shares
-Top ΔOI: P 17 -935
+存量OI: C 122.2k / P 66.2k，今日变化ΔOI: C +0 / P +0，平值价格ATM: C $0.42 / P $0.50 ｜ ATM IV 81.8%，净 delta 敞口 0 shares
 仓位参考: Max Pain 19 ｜ Put Wall 15（-2.6%，弱）（OI 9.5k）
-量化解读： 存量 Call 重｜⚠️ 背离：存量 Call 重但当日 Put 增仓更多｜ATM IV 81.8%｜历史 Rank 4%（近端代理）｜期限倒挂（近端 IV > 远月）｜净 delta 敞口 正 131,217 股
+量化解读： 存量 Call 重｜ATM IV 81.8%｜历史 Rank 4%（近端代理）｜期限倒挂（近端 IV > 远月）｜净 delta 敞口 正 0 股
 
-📆 09-25 Forward Structure
-存量OI: C 13.4k / P 6.2k，今日变化ΔOI: C +1.9k / P +1.7k，平值价格ATM: C $0.73 / P $0.82 ｜ ATM IV 76.2%，净 delta 敞口 -64k shares
-Top ΔOI: P 17 +929 ｜ P 14 +460
-仓位参考: Max Pain 17 ｜ Call Wall 16.5（+7.1%，弱）（OI 1.1k） ｜ Put Wall 15（-2.6%，弱）（OI 0.9k）
-量化解读： 存量 Call 重｜ATM IV 76.2%｜历史 Rank 4%（近端代理）｜净 delta 敞口 负 64,252 股
+09-25（Activity LOW）仓位参考: Max Pain 17 ｜ Call Wall 16.5（+7.1%，弱）（OI 1.1k） ｜ Put Wall 15（-2.6%，弱）（OI 0.9k）
 
-📆 10-02 Forward Structure
-存量OI: C 9.4k / P 3.3k，今日变化ΔOI: C +1.6k / P +43，平值价格ATM: C $0.99 / P $1.05 ｜ ATM IV 78.6%，净 delta 敞口 15k shares
-Top ΔOI: P 16 +63
-仓位参考: Max Pain 18 ｜ Put Wall 16（+3.9%，弱）（OI 0.6k）
-量化解读： 存量 Call 重｜ATM IV 78.6%｜历史 Rank 4%（近端代理）｜期限倒挂（近端 IV > 远月）｜净 delta 敞口 正 15,152 股
+10-02（Activity LOW）仓位参考: Max Pain 18 ｜ Put Wall 16（+3.9%，弱）（OI 0.6k）
 
-10-09（MEDIUM △）仓位参考: Max Pain 18 ｜ Put Wall 16（+3.9%）（OI 1.2k）
+10-09（Activity LOW）仓位参考: Max Pain 18 ｜ Put Wall 16（+3.9%）（OI 1.2k）
 
 📅 事件差分（观察，非因果）: 09-18（3D）ATM IV 81.8% vs 09-25 76.2%（差 +5.5pp）——覆盖 零售销售 MoM、美联储利率决议 Decision、美联储议息会议 Economic Projections、Fed Press Conference、新屋开工、建筑许可 Prel
    符合'覆盖事件的期权溢价更高'（美联储 IFDP 1376 实证；单日截面，需连续多日确认）

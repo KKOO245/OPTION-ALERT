@@ -1,8 +1,8 @@
-# 期权晚报 2026-09-15（快照 16:40 ET）
+# 期权晚报 2026-09-15（快照 18:31 ET）
 
 📊 市场环境
 
-SPY $757.39 ｜ QQQ $704.54
+SPY $757.39 ｜ QQQ $nan
 VIX 17.20 ↑0.6%（5D +9.4%） ｜ Vol Regime: NORMAL
 CNN 恐惧贪婪 28.7（fear）
 全市场 P/C OI（OCC 结算 08-28，2023-06 以来）: Equity 0.75（分位 12%） ｜ Index 0.94（分位 11%）
@@ -63,28 +63,21 @@ Put Wall 450（弱结构｜现价高于该位 10.9%）
 量化视角： 5 个事件合计 ΔOI ≈ 12,576 张（Put 12,576 / Call 0），跨 2 个期限｜近端保护（1 档，距现价 ≤5%，权利金合计约 $8M，买/卖方向不可观测）｜多期限 Put 集中加仓呈尾部对冲特征（买/卖方向不可观测）——方向未知，观察连续性，观察点，非方向信号
 📆 Forward Expiration Structure
 
-09-18  C +1.9k / P +4.1k ｜ Activity HIGH ｜ 3D
-09-25  C +0.4k / P +1.4k ｜ Activity MEDIUM △ ｜ 10D
-10-02  C +0.1k / P +0.7k ｜ Activity MEDIUM △ ｜ 17D
-10-09  C +0.2k / P +0.3k ｜ Activity HIGH ｜ 24D
+09-18  C +0 / P +0 ｜ Activity LOW ｜ 3D
+09-25  C +0 / P +0 ｜ Activity LOW ｜ 10D
+10-02  C +0 / P +0 ｜ Activity LOW ｜ 17D
+10-09  C +0 / P +0 ｜ Activity LOW ｜ 24D
 
 📆 09-18 Forward Structure
-存量OI: C 102.0k / P 97.9k，今日变化ΔOI: C +1.9k / P +4.1k，平值价格ATM: C $6.76 / P $8.10 ｜ ATM IV 40.0%，净 delta 敞口 -2k shares
-Top ΔOI: P 457 +2,394 ｜ P 455 +1,729 ｜ P 500 -1,476
+存量OI: C 102.0k / P 97.9k，今日变化ΔOI: C +0 / P +0，平值价格ATM: C $6.76 / P $8.10 ｜ ATM IV 40.0%，净 delta 敞口 0 shares
 仓位参考: Max Pain 525 ｜ Call Wall 535（+7.2%，弱）（OI 3.6k） ｜ Put Wall 450（-9.8%，弱）（OI 11.5k）
-量化解读： 存量两侧均衡｜⚠️ 背离：存量 Call 重但当日 Put 增仓更多｜ATM IV 40.0%｜历史 Rank 70%（近端代理）｜IV/RV 1.15×（近似）｜期限倒挂（近端 IV > 远月）｜净 delta 敞口 负 2,309 股
+量化解读： 存量两侧均衡｜ATM IV 40.0%｜历史 Rank 70%（近端代理）｜IV/RV 1.15×（近似）｜期限倒挂（近端 IV > 远月）｜净 delta 敞口 正 0 股
 
-09-25（MEDIUM △）Top ΔOI: 510P +301 ｜ 450P +222
-09-25（MEDIUM △）仓位参考: Max Pain 522 ｜ Put Wall 480（-3.8%，弱）（OI 2.0k）
+09-25（Activity LOW）仓位参考: Max Pain 522 ｜ Put Wall 480（-3.8%，弱）（OI 2.0k）
 
-10-02（MEDIUM △）Top ΔOI: 470P +211 ｜ 465P +177
-10-02（MEDIUM △）仓位参考: Max Pain 515 ｜ Call Wall 542.5（+8.8%，弱）（OI 2.8k） ｜ Put Wall 470（-5.8%）（OI 3.0k）
+10-02（Activity LOW）仓位参考: Max Pain 515 ｜ Call Wall 542.5（+8.8%，弱）（OI 2.8k） ｜ Put Wall 470（-5.8%）（OI 3.0k）
 
-📆 10-09 Forward Structure
-存量OI: C 3.2k / P 1.7k，今日变化ΔOI: C +0.2k / P +0.3k，平值价格ATM: C $18.53 / P $18.12 ｜ ATM IV 36.8%，净 delta 敞口 -7k shares
-Top ΔOI: P 485 +190
-仓位参考: Max Pain 510 ｜ Call Wall 525（+5.2%）（OI 1.6k） ｜ Put Wall 465（-6.8%）（OI 0.4k）
-量化解读： 存量 Call 重｜⚠️ 背离：存量 Call 重但当日 Put 增仓更多｜ATM IV 36.8%｜历史 Rank 70%（近端代理）｜IV/RV 1.05×（近似）｜净 delta 敞口 负 7,216 股
+10-09（Activity LOW）仓位参考: Max Pain 510 ｜ Call Wall 525（+5.2%）（OI 1.6k） ｜ Put Wall 465（-6.8%）（OI 0.4k）
 
 数据质量: 行情 A ｜ 期权结构 A ｜ 流向 C ｜ 做市商机制 C —— Flow 相关层（Activity 连续性、做市商机制解读）置信度受限。
 Setup: 今日无 Setup 触发（机械检查全部 Setup）

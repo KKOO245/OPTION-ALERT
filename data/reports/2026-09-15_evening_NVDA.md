@@ -1,8 +1,8 @@
-# 期权晚报 2026-09-15（快照 16:40 ET）
+# 期权晚报 2026-09-15（快照 18:31 ET）
 
 📊 市场环境
 
-SPY $757.39 ｜ QQQ $704.54
+SPY $757.39 ｜ QQQ $nan
 VIX 17.20 ↑0.6%（5D +9.4%） ｜ Vol Regime: NORMAL
 CNN 恐惧贪婪 28.7（fear）
 全市场 P/C OI（OCC 结算 08-28，2023-06 以来）: Equity 0.75（分位 12%） ｜ Index 0.94（分位 11%）
@@ -11,7 +11,7 @@ CNN 恐惧贪婪 28.7（fear）
 
 ⇒ VIX ↑ = SPX 期权隐含的近 30 日预期波动率上升；不判方向，不进入 Direction Edge。
 
-📌 数据来源：无更新，来源自 2026-09-14
+📌 数据来源：全部更新自 2026-09-15
 
 ## 📅 本周重要美国宏观日历（仅【高】，美东时间）
 - 周三 09-16 08:30　【高】零售销售 MoM　预测 0.8 ｜ 实际 待公布 ｜ 前值 -0.6
@@ -30,21 +30,21 @@ CNN 恐惧贪婪 28.7（fear）
 NVDA: 今开 213.09 → 收盘 212.17（-0.4%） ｜ 今日高 213.94 ｜ 低 211.16 ｜ 昨收 210.96 → 收盘 212.17（+0.6%）
 Target 状态: 无待验证 Target（今日无 Setup 触发）
 
-Options: P/C成交量 0.46 | OI比 0.77 | ATM IV 29.3% | Skew 1.7pp | Term 1.14 | ExpMove ±1.7% | Rank 6%
-量化视角： IV 历史低位（Rank 6%，期权偏便宜）｜期限结构正常（Term 1.14）｜保护溢价薄（Skew 1.7pp）｜存量 Call 偏重（OI比 0.77）——观察点，非方向信号
-   ⇒ Put/Call Volume: 0.46×（Call 成交量高于 Put）→ 方向 Unknown
-   ⇒ Put/Call OI: 0.77×（存量 Call 仓位高于 Put）→ 存量 Call-dominant
-   ⇒ 两者结构一致
-   ⇒ 当日成交 vs 存量仓位：当日成交偏 Call，存量Call-dominant
+Options: P/C成交量 0.43 | OI比 0.85 | ATM IV 40.7% | Skew 3.7pp | Term 0.83 | ExpMove ±1.7% | Rank 41%
+量化视角： IV 中性（Rank 41%）｜期限结构倒挂（Term 0.83，近月 IV 高于远月）｜保护溢价中性（Skew 3.7pp）｜当日成交与存量接近均衡——观察点，非方向信号
+   ⇒ Put/Call Volume: 0.43×（Call 成交量高于 Put）→ 方向 Unknown
+   ⇒ Put/Call OI: 0.85×（两侧接近均衡）
+   ⇒ 当日成交 vs 存量仓位：当日成交偏 Call，存量接近均衡
 🔧 结构（未验证研究层：Mechanism Scenario A/B——OI 开仓方向不可观测）
-Gamma Regime: POSITIVE（模型分类） | GEX(存量) nan | GEX Change vs 上次快照 nan | Flip: NO_CROSS
-🔎 测量完整性: GEX 符号契约 gex_sign_v1（Model A: Call+ / Put−）｜ Gamma 口径 全链重定价 ｜ Effective GEX 覆盖: 100%（带内） ｜ IV 有效性: VALID 728 / LOW 167 / INVALID 72
-结构观察区: NO_CROSS
+Gamma Regime: POSITIVE（模型分类） | GEX(存量) 142,108,229 | GEX Change vs 上次快照 12,428,569 | Flip: Primary Flip: 209.05（PRIMARY，全链重定价 + 覆盖达标）
+🔎 测量完整性: GEX 符号契约 gex_sign_v1（Model A: Call+ / Put−）｜ Gamma 口径 全链重定价 ｜ Effective GEX 覆盖: 99%（带内） ｜ IV 有效性: VALID 724 / LOW 190 / INVALID 586
+结构观察区: Primary Flip 209.05（全链重定价，覆盖 99%）
 Put Wall 200（现价高于该位 6.1%）
-最近结构参考: Put Wall 200（现价高于该位 6.1%）
-量化视角： 正 Gamma（nan万，无历史分位）｜GEX 变化（nan万）——观察点，非方向信号
+最近结构参考: Flip 209（现价高于该位 1.5%）
+量化视角： 正 Gamma（1.42亿，无历史分位）｜正 Gamma 增强（+1243万）｜现价位于 Flip 上方 1.49%——观察点，非方向信号
 🧭 结构解读（全部依赖上方假设）
 • 支撑/压力参考：下方 200（Put Wall）；上方 212（MaxPain，仅结算参考）。
+• Gamma 区域：切换参考 209（全链重定价，覆盖 99%）。
 • 做市商（条件机制）：若 Scenario A + 负 Gamma 成立，跌破关键位下方可能对应顺周期卖出压力增加；实际做市商对冲流量不可观测。Scenario B → 方向相反。不进入方向决策。
 • 失效参考：跌破关键位结构参考失效（结构性参考，非预测）。
 🔺 Activity（事实层，方向 Unknown）
