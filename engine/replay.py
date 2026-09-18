@@ -185,12 +185,12 @@ _LAMBDA_COLS = [
 ]
 
 
-def _gamma_day_features(grp: pd.DataFrame, spot: float) -> Optional[Dict[str, Any]]:
+def _gamma_day_features(grp: pd.DataFrame, spot: float, ticker: Optional[str] = None) -> Optional[Dict[str, Any]]:
     """lambdaclass 当日全链 → 与 live 同口径的 Gamma/Wall/P-C OI 特征。
 
     自包含实现：公式与 src/metrics.gamma_structure 逐项一致（GEX = γ×OI×100×S×sign；
     Vanna/Charm 用纯 math 实现 norm.pdf，与 scipy 双精度公式一致），Wall 质量参数
-    从 config/thresholds.yaml 读取（与 metrics.WALL_QUALITY_V1 同源）。这样本地无
+    从 config/thresholds.yaml 读取（与 metrics.WALL_QUALITY_V2 同源）。这样本地无
     scipy 也能跑，且与每日报告口径一致。
     """
     from src.data_fetcher import RISK_FREE_RATE
@@ -265,7 +265,7 @@ def _gamma_day_features(grp: pd.DataFrame, spot: float) -> Optional[Dict[str, An
     put_oi = g[g["type"] == "put"].groupby("strike")["open_interest"].sum()
     call_wall_raw = float(call_oi.idxmax()) if not call_oi.empty else None
     put_wall_raw = float(put_oi.idxmax()) if not put_oi.empty else None
-    params = _wall_quality_params()
+    params = _wall_quality_params(ticker)
     call_q = _classify_wall_replay(call_oi, call_wall_raw, spot, params)
     put_q = _classify_wall_replay(put_oi, put_wall_raw, spot, params)
     call_wall = call_q["strike"] if call_q and call_q["classification"] != "REMOTE" else None
@@ -295,18 +295,22 @@ def _gamma_day_features(grp: pd.DataFrame, spot: float) -> Optional[Dict[str, An
     }
 
 
-def _wall_quality_params() -> Dict[str, float]:
-    """Wall 质量参数：优先 config/thresholds.yaml（与 metrics.WALL_QUALITY_V1 同源）。"""
+def _wall_quality_params(ticker=None) -> Dict[str, float]:
+    """Wall 质量参数：优先 config/thresholds.yaml（wall_quality_v2，按标的 distance_cap_pct）。"""
     defaults = {"distance_cap_pct": 10.0, "dominance_min": 1.5, "strength_median_mult": 3.0}
     try:
         from engine.yaml_mini import load
 
         cfg = load(REPO_ROOT / "config" / "thresholds.yaml")
-        wq = (cfg or {}).get("wall_quality_v1") or {}
+        wq = (cfg or {}).get("wall_quality_v2") or {}
         for k in defaults:
             v = wq.get(k)
             if v is not None:
                 defaults[k] = float(v)
+        t = (ticker or "").upper()
+        by_ticker = wq.get("distance_cap_by_ticker") or {}
+        if t in by_ticker:
+            defaults["distance_cap_pct"] = float(by_ticker[t])
     except Exception:  # noqa: BLE001
         pass
     return defaults
@@ -370,7 +374,7 @@ def _oi_layer(ticker: str, start: Optional[str], end: Optional[str]) -> List[Dic
         oc = _outcome(closes, idx)
         if oc is None:
             continue
-        feats = _gamma_day_features(grp, spot)
+        feats = _gamma_day_features(grp, spot, ticker)
         if feats is None:
             continue
         # 扩张口径 IV 百分位（只用截至 T 的 ATM IV，无未来泄漏）
@@ -434,7 +438,7 @@ def write_oi_history(tickers: List[str], start: Optional[str] = None,
                 continue
             if d not in close_by_date:
                 continue
-            feats = _gamma_day_features(grp, close_by_date[d])
+            feats = _gamma_day_features(grp, close_by_date[d], ticker)
             if feats is None:
                 continue
             av = feats.get("atm_iv")

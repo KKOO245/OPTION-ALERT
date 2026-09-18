@@ -119,7 +119,8 @@ def _exp_max_pain(crs: List[Dict[str, Any]]) -> Optional[float]:
 
 
 def _exp_wall(crs: List[Dict[str, Any]], typ: str, spot: Optional[float],
-              wq: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
+              wq: Optional[Dict[str, Any]] = None,
+              ticker: Optional[str] = None) -> Optional[Dict[str, Any]]:
     """该期限单侧 Wall（与 metrics.walls_v1 同口径，墙位候选参数一致）：
       - 距离过滤：|Wall 距现价| > distance_cap_pct → REMOTE（彩票式远端档），返回 None 不进报告；
       - dominance：Wall OI / 次强非零 OI ≥ dominance_min；
@@ -128,7 +129,10 @@ def _exp_wall(crs: List[Dict[str, Any]], typ: str, spot: Optional[float],
     if spot is None:
         return None
     wq = wq or {}
-    cap = float(wq.get("distance_cap_pct", 10.0))
+    t = (ticker or "").upper()
+    cap = float((wq.get("distance_cap_by_ticker") or {}).get(
+        t, wq.get("distance_cap_pct", 10.0)
+    ))
     dom_min = float(wq.get("dominance_min", 1.5))
     str_mult = float(wq.get("strength_median_mult", 3.0))
     oi_by_k: Dict[float, float] = {}
@@ -175,6 +179,7 @@ def build_forward_structure(
     spot: Optional[float],
     as_of_date: Optional[datetime.date] = None,
     config_root: Optional[str] = None,
+    ticker: Optional[str] = None,
 ) -> Dict[str, Any]:
     cfg = _load_cfg(config_root)
     fs = cfg.get("forward_structure") or _DEFAULTS
@@ -365,9 +370,9 @@ def build_forward_structure(
                     significant.append(t)
 
         exp_mp = _exp_max_pain(crs)
-        wq = (cfg.get("wall_quality_v1") or {}) if isinstance(cfg, dict) else {}
-        exp_cw = _exp_wall(crs, "call", spot, wq)
-        exp_pw = _exp_wall(crs, "put", spot, wq)
+        wq = (cfg.get("wall_quality_v2") or {}) if isinstance(cfg, dict) else {}
+        exp_cw = _exp_wall(crs, "call", spot, wq, ticker=ticker)
+        exp_pw = _exp_wall(crs, "put", spot, wq, ticker=ticker)
         expirations.append({
             "expiration": exp,
             "dte": int(dte),

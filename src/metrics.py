@@ -16,15 +16,28 @@ from scipy.stats import norm
 
 from data_fetcher import RISK_FREE_RATE
 
-# Wall 质量分级 v1（候选参数，待历史校准；正式登记见 config/thresholds.yaml）
+# Wall 质量分级 v2（正式登记见 config/thresholds.yaml；distance_cap_pct 按标的分层）
 #  - distance_cap_pct：距现价超过该值 → REMOTE（后台保留，不进主报告结构解读）
 #  - dominance_min：Wall OI / 次强非零 OI 的比值门槛
 #  - strength_median_mult：Wall OI ≥ 该倍数 × 非零行权价 OI 中位数 → Strength HIGH
-WALL_QUALITY_V1 = {
+WALL_QUALITY_V2 = {
     "distance_cap_pct": 10.0,
+    "distance_cap_by_ticker": {
+        "QQQ": 3.0, "SPY": 3.0,
+        "SOXX": 6.5, "XBI": 6.5, "GDX": 6.5,
+    },
     "dominance_min": 1.5,
     "strength_median_mult": 3.0,
 }
+
+
+def _wall_params_for_ticker(ticker):
+    """按标的返回 wall_quality_v2 参数（distance_cap_pct 分层）。"""
+    t = (ticker or "").upper()
+    cap = float(WALL_QUALITY_V2.get("distance_cap_by_ticker", {}).get(
+        t, WALL_QUALITY_V2.get("distance_cap_pct", 10.0)
+    ))
+    return {**WALL_QUALITY_V2, "distance_cap_pct": cap}
 
 
 def _frame(contracts):
@@ -432,7 +445,7 @@ def _classify_wall(oi_series, wall_strike, spot, params):
     }
 
 
-def gamma_structure(df, spot, top_n=3):
+def gamma_structure(df, spot, top_n=3, ticker=None):
     """
     按行权价聚合 Gamma 暴露（散户多头口径：Call 正、Put 负，×100×spot）。
     返回 Call/Put Wall、Gamma Flip（零交叉）、Top Gamma 行权价、Net GEX、
@@ -462,9 +475,10 @@ def gamma_structure(df, spot, top_n=3):
     put_oi = g[g["type"] == "put"].groupby("strike")["open_interest"].sum()
     call_wall_raw = float(call_oi.idxmax()) if not call_oi.empty else None
     put_wall_raw = float(put_oi.idxmax()) if not put_oi.empty else None
+    params = _wall_params_for_ticker(ticker)
     walls_v1 = {
-        "call": _classify_wall(call_oi, call_wall_raw, spot, WALL_QUALITY_V1),
-        "put": _classify_wall(put_oi, put_wall_raw, spot, WALL_QUALITY_V1),
+        "call": _classify_wall(call_oi, call_wall_raw, spot, params),
+        "put": _classify_wall(put_oi, put_wall_raw, spot, params),
     }
     # 显示口径：REMOTE 不进报告（call_wall/put_wall 置 None），PRIMARY/WEAK 保留值并带分级
     call_wall = (
@@ -614,7 +628,7 @@ def zero_dte_summary(contracts, spot, prev=None):
 
 def compute_metrics(contracts, spot, prev=None,
                     fetch_window=40, anomaly_window=35,
-                    min_volume=500, vol_oi_min=1.0, top_n=5):
+                    min_volume=500, vol_oi_min=1.0, top_n=5, ticker=None):
     """主入口：输入合约列表 + 现价，输出全部指标 dict"""
     df = _frame(contracts)
     if df.empty:
@@ -646,9 +660,9 @@ def compute_metrics(contracts, spot, prev=None,
     window_calls, window_puts = top_oi_rows(df, window_exps)
     surge_df = oi_surge(df, prev, window_days=anomaly_window, top_n=top_n)
     surge = surge_rows(surge_df)
-    structure = gamma_structure(df, spot)
-    structure_near = gamma_structure(df[df["dte"] <= 7], spot)
-    structure_monthly = (gamma_structure(df[df["expiration"] == far_exp], spot)
+    structure = gamma_structure(df, spot, ticker=ticker)
+    structure_near = gamma_structure(df[df["dte"] <= 7], spot, ticker=ticker)
+    structure_monthly = (gamma_structure(df[df["expiration"] == far_exp], spot, ticker=ticker)
                          if far_exp else None)
     new_gex, new_delta = _new_position_exposure(df, _prev_lookup(prev), spot)
 

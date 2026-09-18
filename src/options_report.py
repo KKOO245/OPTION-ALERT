@@ -2,7 +2,7 @@
 """
 期权日报主入口（v3）
 -------------------
-调度：多伦多时间 10:15（早报）/ 20:00（晚报），周一至周五。
+调度：多伦多时间 10:00（早报）/ 20:00（晚报），周一至周五。
 GitHub Actions 每小时触发一次，脚本自行判断是否命中目标时段；
 命中才抓数据、算指标、生成报告并推送 Discord；否则几十秒内跳过。
 
@@ -47,7 +47,7 @@ VOL_OI_MIN = 1.0          # 异动候选的最低量/OI 比
 TORONTO_TZ = ZoneInfo("America/Toronto")
 # (会话名, 目标小时, 目标分钟, 单向容差分钟) —— 只准迟到、不许早到
 TARGET_SESSIONS = [
-    ("早报", 10, 15, 135),   # 10:15–12:30
+    ("早报", 10, 0, 135),    # 10:00–12:15
     ("晚报", 20, 0, 180),    # 20:00–23:00
 ]
 # 与工作流 timecheck 的单向窗口保持一致（早报 135 / 晚报 180 分钟），
@@ -275,7 +275,7 @@ def build_llm_payload(date_str, session, market_line, summaries, calendar_sectio
 def main():
     session_name, now = get_current_session()
     if session_name is None:
-        print(f"当前多伦多时间 {now.strftime('%Y-%m-%d %H:%M %Z')} 不在预定时段(10:15/20:00)内，跳过本次运行。")
+        print(f"当前多伦多时间 {now.strftime('%Y-%m-%d %H:%M %Z')} 不在预定时段(10:00/20:00)内，跳过本次运行。")
         return
 
     is_forced = os.environ.get("FORCE_SEND", "false").lower() == "true"
@@ -359,6 +359,7 @@ def main():
                 fetch_window=FETCH_WINDOW_DAYS,
                 anomaly_window=ANOMALY_WINDOW_DAYS,
                 min_volume=MIN_VOLUME, vol_oi_min=VOL_OI_MIN, top_n=TOP_N,
+                ticker=ticker,
             )
             m["price"] = price
             m["prev_close"] = prev_close
@@ -392,6 +393,7 @@ def main():
                         contracts, prev, spot,
                         as_of_date=now.date(),
                         config_root=os.path.join(BASE_DIR, "config"),
+                        ticker=ticker,
                     )
                 except Exception as e:
                     print(f"[警告] forward structure 构建失败（快照将缺失该层）: {e}")

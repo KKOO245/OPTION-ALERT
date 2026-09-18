@@ -1159,9 +1159,9 @@ def _expiry_trend_lines(
         top_c = info.get("topC") or []
         notes = []
         if not pw.get("strike"):
-            notes.append("PW 无（wall_quality_v1 阈值未达标）")
+            notes.append("PW 无（wall_quality_v2 阈值未达标）")
         if not cw.get("strike"):
-            notes.append("CW 无（wall_quality_v1 阈值未达标）")
+            notes.append("CW 无（wall_quality_v2 阈值未达标）")
         band = 0.12
 
         def _tag(items):
