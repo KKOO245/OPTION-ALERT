@@ -22,6 +22,14 @@ _BACKTEST = {
 }
 
 
+_BAND_BY_TICKER = {"QQQ": 0.03, "SPY": 0.03, "SOXX": 0.065, "XBI": 0.065, "GDX": 0.065}
+
+
+def _band_for(ticker: str) -> float:
+    """近端带宽：QQQ/SPY ±3%；SOXX/XBI/GDX ±6.5%；其他 ±10%。"""
+    return _BAND_BY_TICKER.get(ticker.upper(), 0.10)
+
+
 def _parse_created(created: Any) -> Tuple[str, str]:
     """快照 created_at 兼容 US 格式与 ISO 格式；返回 (date_str, ts_text)。"""
     if not created:
@@ -523,7 +531,7 @@ def _liq_tag(rows: List[Dict[str, Any]], spot: Any, band: float = 0.10) -> str:
 
 
 def _near_top3_lines(snap: Dict[str, Any], chain: Optional[Dict[str, Any]], ticker: str) -> List[str]:
-    """📍 近端 OI Top3（±10%｜最近到期档）：Call/Put 各按 OI 降序取前 3。"""
+    """📍 近端 OI Top3（带宽分标的｜最近到期档）：Call/Put 各按 OI 降序取前 3。"""
     exps = ((snap.get("forward") or {}).get("expirations")) or []
     spot = snap.get("spot")
     if not exps or not chain or not spot:
@@ -531,17 +539,26 @@ def _near_top3_lines(snap: Dict[str, Any], chain: Optional[Dict[str, Any]], tick
     exp = str(exps[0].get("expiration"))
     info = chain.get(exp) or {}
     spot_f = float(spot)
+    band = _band_for(ticker)
+
+    def _in_band(r: Dict[str, Any]) -> bool:
+        return float(r.get("oi") or 0) > 0 and abs(float(r["s"]) / spot_f - 1) <= band
 
     def pick(key: str) -> List[Dict[str, Any]]:
-        rows = [r for r in (info.get(key) or [])
-                if float(r.get("oi") or 0) > 0 and abs(float(r["s"]) / spot_f - 1) <= 0.10]
+        rows = [r for r in (info.get(key) or []) if _in_band(r)]
         top = sorted(rows, key=lambda r: float(r["oi"]), reverse=True)[:3]
         # 展示顺序：按行权价从高到低
         return sorted(top, key=lambda r: float(r["s"]), reverse=True)
 
+    dual = {
+        float(r["s"]) for r in (info.get("topC") or []) if _in_band(r)
+    } & {
+        float(r["s"]) for r in (info.get("topP") or []) if _in_band(r)
+    }
+
     def fmt(rows: List[Dict[str, Any]]) -> str:
         return " / ".join(
-            f"{float(r['s']):.0f}（{float(r['oi']) / 1000:.1f}k，"
+            f"{'⟷' if float(r['s']) in dual else ''}{float(r['s']):.0f}（{float(r['oi']) / 1000:.1f}k，"
             f"{100 * (float(r['s']) / spot_f - 1):+.0f}%）"
             for r in rows
         ) or "无"
@@ -550,11 +567,50 @@ def _near_top3_lines(snap: Dict[str, Any], chain: Optional[Dict[str, Any]], tick
     if not calls and not puts:
         return []
     return [
-        f"## 📍 近端 OI Top3（±10%｜最近档 {_exp_short(exp)}）",
+        f"## 📍 近端 OI Top3（±{band * 100:.1f}%｜最近档 {_exp_short(exp)}）",
         f"- **Call Top3**：{fmt(calls)}",
         f"- **Put Top3**：{fmt(puts)}",
-        "- 口径：OI = 上一交易日终值；Top3 = 该档 ±10% 内 OI 前三（按 OI 降序）。",
+        f"- 口径：OI = 上一交易日终值；Top3 = 该档 ±{band * 100:.1f}% 内 OI 前三（按 OI 降序）；⟷ = 双侧同价。",
     ]
+
+
+def _dual_side_lines(snap: Dict[str, Any], chain: Optional[Dict[str, Any]], ticker: str) -> List[str]:
+    """双侧同价集中：同一 strike 同时出现在近端 Call 与 Put 集中（两侧均≥20%×该侧峰值）。"""
+    exps = ((snap.get("forward") or {}).get("expirations")) or []
+    spot = snap.get("spot")
+    if not chain or not exps or not spot:
+        return []
+    spot_f = float(spot)
+    band = _band_for(ticker)
+    out = []
+    for e in exps[:2]:  # 最近档 + 结构锚的候选范围（前两档）
+        exp = str(e.get("expiration"))
+        info = chain.get(exp) or {}
+
+        def _collect(key: str) -> Dict[float, float]:
+            d = {}
+            for r in info.get(key) or []:
+                try:
+                    s, oi = float(r["s"]), float(r.get("oi") or 0)
+                except (TypeError, ValueError):
+                    continue
+                if oi > 0 and abs(s / spot_f - 1) <= band:
+                    d[s] = d.get(s, 0.0) + oi
+            return d
+
+        cp, pp = _collect("topC"), _collect("topP")
+        if not cp or not pp:
+            continue
+        cmax, pmax = max(cp.values()), max(pp.values())
+        for s in sorted(set(cp) & set(pp), key=lambda k: -(cp[k] + pp[k])):
+            if cp[s] >= 0.2 * cmax and pp[s] >= 0.2 * pmax:
+                out.append(
+                    f"⚖️ **双侧同价集中：{s:.0f}（Call {cp[s] / 1000:.1f}k / Put {pp[s] / 1000:.1f}k，"
+                    f"{100 * (s / spot_f - 1):+.0f}%，{_exp_short(exp)} 档）**——双面布局/钉住候选"
+                    "（机制参考，未验证，不代表方向）。"
+                )
+                break
+    return out[:2]
 
 
 def _roll_lines(snap: Dict[str, Any], chain: Optional[Dict[str, Any]]) -> List[str]:
@@ -694,7 +750,7 @@ def _quote_ok(r: Optional[Dict[str, Any]], max_spread: float = 0.15) -> bool:
 
 def _zero_dte_lines(
     zero: Optional[Dict[str, Any]], spot: Any,
-    exp_label: str = "", snap_time: str = "",
+    exp_label: str = "", snap_time: str = "", ticker: str = "",
 ) -> List[str]:
     """0DTE 区块：规模、近端结构、尾部通道、成交量通道、双 MaxPain、ATM 隐含波动。"""
     if not zero:
@@ -725,20 +781,21 @@ def _zero_dte_lines(
 
     if spot:
         spot_f = float(spot)
+        band = _band_for(ticker) if ticker else 0.10
         all_rows = list(best.values())
-        near_rows = [r for r in all_rows if abs(float(r["s"]) / spot_f - 1) <= 0.10]
+        near_rows = [r for r in all_rows if abs(float(r["s"]) / spot_f - 1) <= band]
         tail_rows = [r for r in all_rows if abs(float(r["s"]) / spot_f - 1) > 0.10]
-        liq = _liq_tag(all_rows, spot, band=0.10)
+        liq = _liq_tag(all_rows, spot, band=band)
         near_p = _must_show_strikes(
             [r for r in near_rows if r["right"] == "PUT"], spot,
-            band=0.10, oi_frac=0.25, topn=2, right="PUT",
+            band=band, oi_frac=0.25, topn=2, right="PUT",
         )
         near_c = _must_show_strikes(
             [r for r in near_rows if r["right"] == "CALL"], spot,
-            band=0.10, oi_frac=0.25, topn=2, right="CALL",
+            band=band, oi_frac=0.25, topn=2, right="CALL",
         )
         lines.append(
-            f"- **{liq}近端结构（±10%）：Put {_tag(near_p)}｜Call {_tag(near_c)}**"
+            f"- **{liq}近端结构（±{band * 100:.1f}%）：Put {_tag(near_p)}｜Call {_tag(near_c)}**"
             "——当日盘中参考位（位置观察，非预测）。"
         )
         tail_p = sorted([r for r in tail_rows if r["right"] == "PUT" and float(r["oi"]) >= 100],
@@ -1224,8 +1281,6 @@ def render_brief(snap: Dict[str, Any], session: str = "morning", ticker: str = "
     lines += _expiration_clock(snap, session=session)
     lines.append("")
     lines += _structural_map(snap)
-    lines.append("")
-    lines += _conditional_path(snap)
     spot = snap.get("spot")
     lines.append("")
     lines += _risk_items(snap)
@@ -1255,18 +1310,16 @@ def _full_block_parts(
         )
         lines.append("")
     lines += _structural_map(snap)
-    lines.append("")
-    lines += _conditional_path(snap)
     spot = snap.get("spot")
     confirm_lines, resolved, confirmed = _eval_prior_signals(snap, chain, prior_state, ticker)
     trend = _expiry_trend_lines(snap, chain, session, force_exps=confirmed)
     pending = _pending_signals(snap, chain, session, ticker, force_exps=confirmed)
     generic = _risk_opportunity(snap, session=session, ticker=ticker)
-    if chain:
-        generic = [
-            g for g in generic
-            if not any(k in g for k in ("信息缺口", "明日 ", "结构锚"))
-        ]
+    generic = [
+        g for g in generic
+        if not any(k in g for k in ("信息缺口", "明日 ", "结构锚", "Regime", "GEX", "Flip"))
+    ]
+    dual = _dual_side_lines(snap, chain, ticker)
     if confirm_lines or trend:
         lines.append("")
         lines.append("## 🎯 四档专题")
@@ -1291,7 +1344,7 @@ def _full_block_parts(
     if session == "morning":  # 0DTE 区块只在早报保留；晚报删除（OCC 终值未发布，晚报的 0DTE 数据不完整）
         date_str0, ts0 = _parse_created(snap.get("created_at"))
         zero_lines = _zero_dte_lines(
-            (chain or {}).get("_0dte"), spot, exp_label=date_str0, snap_time=ts0
+            (chain or {}).get("_0dte"), spot, exp_label=date_str0, snap_time=ts0, ticker=ticker
         )
         if zero_lines:
             lines += [""] + zero_lines
@@ -1300,6 +1353,7 @@ def _full_block_parts(
         lines += [""] + sig_lines
     lines.append("")
     lines.append("## 🔴 风险 / 🟢 机会")
+    lines += [f"- {x}" for x in dual]
     lines += [f"- {x}" for x in generic]
     lines.append("")
     lines.append(f"**一句话：{_closing_line(snap, session, ticker)}**")
@@ -1322,8 +1376,6 @@ def render_ticker_block_with_state(
     sess_zh = "晨" if session == "morning" else "晚"
     lines = [f"### {ticker}｜{sess_zh}简报 {date_str}", "", _one_line(snap), ""]
     lines += _structural_map(snap)
-    lines.append("")
-    lines += _conditional_path(snap)
     risk = _risk_items(snap)
     if len(risk) > 1:
         lines.append("")
@@ -1380,6 +1432,16 @@ def _closing_line(
     ref = pw or cw
     if ref:
         parts.append(f"{ref:.0f} 是观察线不是预测线")
+    if spot is not None:
+        ups = [l for l in (cw, flip) if l is not None and l > spot]
+        downs = [l for l in (pw, flip) if l is not None and l < spot]
+        if ups or downs:
+            seg = []
+            if ups:
+                seg.append(f"站上 {min(ups):.2f}")
+            if downs:
+                seg.append(f"跌破 {max(downs):.2f}")
+            parts.append("触发 " + " / ".join(seg))
     base = "；".join(parts) + "。" if parts else "今日结构数据不足。"
     st = _BACKTEST.get(ticker.upper())
     if gamma == "NEGATIVE" and gex is not None and float(gex) < 0:
