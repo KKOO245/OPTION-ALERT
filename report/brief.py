@@ -1213,7 +1213,8 @@ def _expiry_trend_lines(
             cls_txt = "（PRIMARY）" if cw.get("class") == "PRIMARY" else "（WEAK）"
             parts.append(f"CW {_fmt(cw.get('strike'), 0)}{cls_txt}")
         if pw.get("strike"):
-            parts.append(f"PW {_fmt(pw.get('strike'), 0)}（WEAK）")
+            cls_txt_p = "（PRIMARY）" if pw.get("class") == "PRIMARY" else "（WEAK）"
+            parts.append(f"PW {_fmt(pw.get('strike'), 0)}{cls_txt_p}")
         elif wall_notes:
             parts.append(wall_notes.split("；")[0] if "PW" in wall_notes else wall_notes)
         if conc_txt:
