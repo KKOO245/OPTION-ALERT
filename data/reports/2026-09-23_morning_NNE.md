@@ -2,7 +2,7 @@
 
 📊 市场环境
 
-SPY $773.38 ｜ QQQ $741.21
+SPY $773.38 ｜ QQQ $nan
 VIX 14.54 ↓2.2%（5D -15.5%） ｜ Vol Regime: LOW
 CNN 恐惧贪婪 34.7（fear）
 全市场 P/C OI（OCC 结算 08-28，2023-06 以来）: Equity 0.75（分位 12%） ｜ Index 0.94（分位 11%）
@@ -14,7 +14,7 @@ CNN 恐惧贪婪 34.7（fear）
 📌 数据来源：全部更新自 2026-09-23
 
 ## 📅 本周重要美国宏观日历（仅【高】，美东时间）
-- 周三 09-23 20:00　【高】President Trump and President Xi Summit　实际 待公布　⏰ 今日
+- 周三 09-23 20:00　【高】President Trump and President Xi Summit　实际 待公布　✅ 今日已公布
 - 周五 09-25 08:30　【高】耐用品订单 Orders MoM　预测 -0.4 ｜ 实际 待公布 ｜ 前值 1.1
 
 🔍 重点速览

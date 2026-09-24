@@ -1,8 +1,8 @@
-# 期权晚报 2026-09-23（快照 16:40 ET）
+# 期权晚报 2026-09-23（快照 21:00 ET）
 
 📊 市场环境
 
-SPY $767.81 ｜ QQQ $741.21
+SPY $767.81 ｜ QQQ $nan
 VIX 15.18 ↑2.1%（5D -11.7%） ｜ Vol Regime: NORMAL
 CNN 恐惧贪婪 34.7（fear）
 全市场 P/C OI（OCC 结算 08-28，2023-06 以来）: Equity 0.75（分位 12%） ｜ Index 0.94（分位 11%）
@@ -14,7 +14,7 @@ CNN 恐惧贪婪 34.7（fear）
 📌 数据来源：全部更新自 2026-09-23
 
 ## 📅 本周重要美国宏观日历（仅【高】，美东时间）
-- 周三 09-23 20:00　【高】President Trump and President Xi Summit　实际 待公布　⏰ 今日
+- 周三 09-23 20:00　【高】President Trump and President Xi Summit　实际 待公布　✅ 今日已公布
 - 周五 09-25 08:30　【高】耐用品订单 Orders MoM　预测 -0.4 ｜ 实际 待公布 ｜ 前值 1.1
 
 🔍 重点速览
@@ -35,14 +35,14 @@ Options: P/C成交量 0.52 | OI比 0.86 | ATM IV 87.5% | Skew -2.6pp | Term 0.91
    ⇒ 当日成交 vs 存量仓位：当日成交偏 Call，存量接近均衡
    ExpMove 期限化（expmove_v1）: 09-25（2D）±7.3% ｜ 10-02（9D）±11.3% ｜ 10-09（16D）±14.2% ｜ 10-16（23D）±17.2%
 🔧 结构（未验证研究层：Mechanism Scenario A/B——OI 开仓方向不可观测）
-Gamma Regime: POSITIVE（模型分类） | GEX(存量) 7,660,056 | GEX Change vs 上次快照 -8,450,337 | Flip: Primary Flip: 219.12（PRIMARY，全链重定价 + 覆盖达标）
+Gamma Regime: POSITIVE（模型分类） | GEX(存量) 8,626,817 | GEX Change vs 上次快照 -7,483,575 | Flip: Primary Flip: 220.02（PRIMARY，全链重定价 + 覆盖达标）
 🔎 测量完整性: GEX 符号契约 gex_sign_v1（Model A: Call+ / Put−）｜ Gamma 口径 全链重定价 ｜ Effective GEX 覆盖: 99%（带内） ｜ IV 有效性: VALID 541 / LOW 36 / INVALID 149
-结构观察区: Primary Flip 219.12（全链重定价，覆盖 99%）
-最近结构参考: Flip 219（现价高于该位 3.4%）
-量化视角： 正 Gamma（766万，无历史分位）｜正 Gamma 减弱（845万）｜现价位于 Flip 上方 3.42%｜⚠️ 重点观察：正 Gamma 由正转负（结构切换）——观察点，非方向信号
+结构观察区: Primary Flip 220.02（全链重定价，覆盖 99%）
+最近结构参考: Flip 220（现价高于该位 3.0%）
+量化视角： 正 Gamma（863万，无历史分位）｜正 Gamma 减弱（748万）｜现价位于 Flip 上方 3.00%｜⚠️ 重点观察：正 Gamma 由正转负（结构切换）——观察点，非方向信号
 🧭 结构解读（全部依赖上方假设）
 • 支撑/压力参考：下方 220（MaxPain，仅结算参考）。
-• Gamma 区域：切换参考 219（全链重定价，覆盖 99%）。
+• Gamma 区域：切换参考 220（全链重定价，覆盖 99%）。
 • 做市商（条件机制）：若 Scenario A + 负 Gamma 成立，跌破关键位下方可能对应顺周期卖出压力增加；实际做市商对冲流量不可观测。Scenario B → 方向相反。不进入方向决策。
 • 失效参考：跌破关键位结构参考失效（结构性参考，非预测）。
 🔺 Activity（事实层，方向 Unknown）
