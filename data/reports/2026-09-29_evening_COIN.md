@@ -1,8 +1,8 @@
-# 期权晚报 2026-09-29（快照 16:40 ET）
+# 期权晚报 2026-09-29（快照 21:00 ET）
 
 📊 市场环境
 
-SPY $764.20 ｜ QQQ $737.93
+SPY $764.20 ｜ QQQ $nan
 VIX 16.04 ↓0.2%（5D +12.9%） ｜ Vol Regime: NORMAL
 CNN 恐惧贪婪 31.6（fear）
 全市场 P/C OI（OCC 结算 08-28，2023-06 以来）: Equity 0.75（分位 12%） ｜ Index 0.94（分位 11%）
@@ -40,49 +40,36 @@ Options: P/C成交量 0.51 | OI比 0.60 | ATM IV 72.4% | Skew -4.1pp | Term 0.88
    ⇒ 当日成交 vs 存量仓位：当日成交偏 Call，存量Call-dominant
    ExpMove 期限化（expmove_v1）: 10-02（3D）±5.3% ｜ 10-09（10D）±8.6% ｜ 10-16（17D）±10.7% ｜ 10-23（24D）±12.7%
 🔧 结构（未验证研究层：Mechanism Scenario A/B——OI 开仓方向不可观测）
-Gamma Regime: POSITIVE（模型分类） | GEX(存量) 16,327,679 | GEX Change vs 上次快照 -4,399,172 | Flip: Primary Flip: 177.96（PRIMARY，全链重定价 + 覆盖达标）
+Gamma Regime: POSITIVE（模型分类） | GEX(存量) 14,751,705 | GEX Change vs 上次快照 -5,975,146 | Flip: Primary Flip: 180.48（PRIMARY，全链重定价 + 覆盖达标）
 🔎 测量完整性: GEX 符号契约 gex_sign_v1（Model A: Call+ / Put−）｜ Gamma 口径 全链重定价 ｜ Effective GEX 覆盖: 100%（带内） ｜ IV 有效性: VALID 515 / LOW 118 / INVALID 251
-结构观察区: Primary Flip 177.96（全链重定价，覆盖 100%）
+结构观察区: Primary Flip 180.48（全链重定价，覆盖 100%）
 Call Wall 202（弱结构｜现价低于该位 6.2%）
-最近结构参考: Call Wall 202（现价低于该位 6.2%）
-量化视角： 正 Gamma（1633万，无历史分位）｜正 Gamma 减弱（440万）｜现价位于 Flip 上方 6.78%｜⚠️ 重点观察：正 Gamma 由正转负（结构切换）——观察点，非方向信号
+最近结构参考: Flip 180（现价高于该位 5.3%）
+量化视角： 正 Gamma（1475万，无历史分位）｜正 Gamma 减弱（598万）｜现价位于 Flip 上方 5.28%｜⚠️ 重点观察：正 Gamma 由正转负（结构切换）——观察点，非方向信号
 🧭 结构解读（全部依赖上方假设）
 • 支撑/压力参考：下方 190（MaxPain，仅结算参考）；上方 202（Call Wall，弱结构）。
-• Gamma 区域：切换参考 178（全链重定价，覆盖 100%）。
+• Gamma 区域：切换参考 180（全链重定价，覆盖 100%）。
 • 做市商（条件机制）：若 Scenario A + 负 Gamma 成立，跌破关键位下方可能对应顺周期卖出压力增加；实际做市商对冲流量不可观测。Scenario B → 方向相反。不进入方向决策。
 • 失效参考：跌破关键位结构参考失效（结构性参考，非预测）。
 🔺 Activity（事实层，方向 Unknown）
 - 无中高变动事件（全部低等级）
 📆 Forward Expiration Structure
 
-10-02  C +5.5k / P +2.5k ｜ Activity HIGH ｜ 3D
-10-09  C +1.1k / P +1.1k ｜ Activity HIGH ｜ 10D
-10-16  C +0.5k / P +0.9k ｜ Activity HIGH ｜ 17D
-10-23  C +0.6k / P +0.6k ｜ Activity HIGH ｜ 24D
+10-02  C +0 / P +0 ｜ Activity LOW ｜ 3D
+10-09  C +0 / P +0 ｜ Activity LOW ｜ 10D
+10-16  C +0 / P +0 ｜ Activity LOW ｜ 17D
+10-23  C +0 / P +0 ｜ Activity LOW ｜ 24D
 
 📆 10-02 Forward Structure
-存量OI: C 71.3k / P 42.9k，今日变化ΔOI: C +5.5k / P +2.5k，平值价格ATM: C $5.10 / P $4.95 ｜ ATM IV 72.4%，净 delta 敞口 43k shares
-Top ΔOI: C 205 +709
+存量OI: C 71.3k / P 42.9k，今日变化ΔOI: C +0 / P +0，平值价格ATM: C $5.10 / P $4.95 ｜ ATM IV 72.4%，净 delta 敞口 0 shares
 仓位参考: Max Pain 190 ｜ Call Wall 202.5（+6.6%，弱）（OI 16.1k） ｜ Put Wall 190（-0.0%，弱）（OI 1.9k）
-量化解读： 存量 Call 重｜ATM IV 72.4%｜历史 Rank 38%（近端代理）｜IV/RV 0.96×（近似）｜期限倒挂（近端 IV > 远月）｜净 delta 敞口 正 42,668 股
+量化解读： 存量 Call 重｜ATM IV 72.4%｜历史 Rank 38%（近端代理）｜IV/RV 0.96×（近似）｜期限倒挂（近端 IV > 远月）｜净 delta 敞口 正 0 股
 
-📆 10-09 Forward Structure
-存量OI: C 8.7k / P 21.0k，今日变化ΔOI: C +1.1k / P +1.1k，平值价格ATM: C $8.07 / P $8.33 ｜ ATM IV 62.5%，净 delta 敞口 14k shares
-Top ΔOI: C 200 +364
-仓位参考: Max Pain 190 ｜ Call Wall 200（+5.3%）（OI 1.8k）
-量化解读： 存量 Put 重｜ATM IV 62.5%｜历史 Rank 38%（近端代理）｜IV/RV 0.83×（近似）｜期限倒挂（近端 IV > 远月）｜净 delta 敞口 正 14,001 股
+10-09（Activity LOW）仓位参考: Max Pain 190 ｜ Call Wall 200（+5.3%）（OI 1.8k）
 
-📆 10-16 Forward Structure
-存量OI: C 83.1k / P 74.5k，今日变化ΔOI: C +0.5k / P +0.9k，平值价格ATM: C $10.30 / P $10.00 ｜ ATM IV 61.9%，净 delta 敞口 -12k shares
-Top ΔOI: P 180 +265
-仓位参考: Max Pain 175 ｜ Call Wall 200（+5.3%，弱）（OI 6.3k） ｜ Put Wall 200（+5.3%，弱）（OI 3.9k）
-量化解读： 存量两侧均衡｜⚠️ 背离：存量 Call 重但当日 Put 增仓更多｜ATM IV 61.9%｜历史 Rank 38%（近端代理）｜IV/RV 0.82×（近似）｜期限倒挂（近端 IV > 远月）｜净 delta 敞口 负 12,121 股
+10-16（Activity LOW）仓位参考: Max Pain 175 ｜ Call Wall 200（+5.3%，弱）（OI 6.3k） ｜ Put Wall 200（+5.3%，弱）（OI 3.9k）
 
-📆 10-23 Forward Structure
-存量OI: C 5.1k / P 4.9k，今日变化ΔOI: C +0.6k / P +0.6k，平值价格ATM: C $11.80 / P $12.40 ｜ ATM IV 61.8%，净 delta 敞口 7k shares
-Top ΔOI: C 187 +355 ｜ P 192 +349
-仓位参考: Max Pain 190 ｜ Call Wall 187.5（-1.3%，弱）（OI 0.4k） ｜ Put Wall 192.5（+1.3%，弱）（OI 0.4k）
-量化解读： 存量两侧均衡｜⚠️ 背离：存量 Call 重但当日 Put 增仓更多｜ATM IV 61.8%｜历史 Rank 38%（近端代理）｜IV/RV 0.82×（近似）｜净 delta 敞口 正 7,141 股
+10-23（Activity LOW）仓位参考: Max Pain 190 ｜ Call Wall 187.5（-1.3%，弱）（OI 0.4k） ｜ Put Wall 192.5（+1.3%，弱）（OI 0.4k）
 
 📅 事件差分（观察，非因果）: 10-02（3D）ATM IV 72.4% vs 10-09 62.5%（差 +9.9pp）——覆盖 职位空缺(JOLTS) Job Openings、GDP 增速 Rate QoQ Final 等
    符合'覆盖事件的期权溢价更高'（美联储 IFDP 1376 实证；单日截面，需连续多日确认）
