@@ -1,8 +1,8 @@
-# 期权晚报 2026-09-30（快照 16:40 ET）
+# 期权晚报 2026-09-30（快照 21:00 ET）
 
 📊 市场环境
 
-SPY $762.63 ｜ QQQ $739.77
+SPY $762.63 ｜ QQQ $nan
 VIX 16.34 ↑1.9%（5D +7.6%） ｜ Vol Regime: NORMAL
 CNN 恐惧贪婪 30.8（fear）
 全市场 P/C OI（OCC 结算 08-28，2023-06 以来）: Equity 0.75（分位 12%） ｜ Index 0.94（分位 11%）
@@ -41,44 +41,35 @@ Options: P/C成交量 0.44 | OI比 0.68 | ATM IV 90.8% | Skew -2.2pp | Term 0.88
    ⇒ 当日成交 vs 存量仓位：当日成交偏 Call，存量Call-dominant
    ExpMove 期限化（expmove_v1）: 10-02（2D）±5.4% ｜ 10-09（9D）±9.8% ｜ 10-16（16D）±12.8% ｜ 10-23（23D）±15.2%
 🔧 结构（未验证研究层：Mechanism Scenario A/B——OI 开仓方向不可观测）
-Gamma Regime: POSITIVE（模型分类） | GEX(存量) 11,067,612 | GEX Change vs 上次快照 -5,501,696 | Flip: Primary Flip: 225.32（PRIMARY，全链重定价 + 覆盖达标）
+Gamma Regime: POSITIVE（模型分类） | GEX(存量) 12,387,663 | GEX Change vs 上次快照 -4,181,646 | Flip: Primary Flip: 226.48（PRIMARY，全链重定价 + 覆盖达标）
 🔎 测量完整性: GEX 符号契约 gex_sign_v1（Model A: Call+ / Put−）｜ Gamma 口径 全链重定价 ｜ Effective GEX 覆盖: 99%（带内） ｜ IV 有效性: VALID 546 / LOW 33 / INVALID 119
-结构观察区: Primary Flip 225.32（全链重定价，覆盖 99%）
-最近结构参考: Flip 225（现价高于该位 4.7%）
-量化视角： 正 Gamma（1107万，无历史分位）｜正 Gamma 减弱（550万）｜现价位于 Flip 上方 4.69%｜⚠️ 重点观察：正 Gamma 由正转负（结构切换）——观察点，非方向信号
+结构观察区: Primary Flip 226.48（全链重定价，覆盖 99%）
+最近结构参考: Flip 226（现价高于该位 4.2%）
+量化视角： 正 Gamma（1239万，无历史分位）｜正 Gamma 减弱（418万）｜现价位于 Flip 上方 4.15%｜⚠️ 重点观察：正 Gamma 由正转负（结构切换）——观察点，非方向信号
 🧭 结构解读（全部依赖上方假设）
 • 支撑/压力参考：下方 230（MaxPain，仅结算参考）。
-• Gamma 区域：切换参考 225（全链重定价，覆盖 99%）。
+• Gamma 区域：切换参考 226（全链重定价，覆盖 99%）。
 • 做市商（条件机制）：若 Scenario A + 负 Gamma 成立，跌破关键位下方可能对应顺周期卖出压力增加；实际做市商对冲流量不可观测。Scenario B → 方向相反。不进入方向决策。
 • 失效参考：跌破关键位结构参考失效（结构性参考，非预测）。
 🔺 Activity（事实层，方向 Unknown）
 - 无中高变动事件（全部低等级）
 📆 Forward Expiration Structure
 
-10-02  C +7.1k / P +2.1k ｜ Activity HIGH ｜ 2D
-10-09  C +3.0k / P -0.1k ｜ Activity HIGH ｜ 9D
-10-16  C +0.2k / P -0.7k ｜ Activity MEDIUM △ ｜ 16D
-10-23  C +1.8k / P -62 ｜ Activity HIGH ｜ 23D
+10-02  C +0 / P +0 ｜ Activity LOW ｜ 2D
+10-09  C +0 / P +0 ｜ Activity LOW ｜ 9D
+10-16  C +0 / P +0 ｜ Activity LOW ｜ 16D
+10-23  C +0 / P +0 ｜ Activity LOW ｜ 23D
 
 📆 10-02 Forward Structure
-存量OI: C 64.9k / P 44.4k，今日变化ΔOI: C +7.1k / P +2.1k，平值价格ATM: C $6.90 / P $5.85 ｜ ATM IV 90.8%，净 delta 敞口 -59k shares
-Top ΔOI: C 250 +769
+存量OI: C 64.9k / P 44.4k，今日变化ΔOI: C +0 / P +0，平值价格ATM: C $6.90 / P $5.85 ｜ ATM IV 90.8%，净 delta 敞口 0 shares
 仓位参考: Max Pain 230 ｜ Call Wall 235（-0.4%，弱）（OI 7.2k） ｜ Put Wall 220（-6.7%，弱）（OI 4.7k）
-量化解读： 存量 Call 重｜ATM IV 90.8%｜历史 Rank 27%（近端代理）｜IV/RV 1.57×（近似）｜期限倒挂（近端 IV > 远月）｜净 delta 敞口 负 58,912 股
+量化解读： 存量 Call 重｜ATM IV 90.8%｜历史 Rank 27%（近端代理）｜IV/RV 1.57×（近似）｜期限倒挂（近端 IV > 远月）｜净 delta 敞口 正 0 股
 
-📆 10-09 Forward Structure
-存量OI: C 20.6k / P 16.3k，今日变化ΔOI: C +3.0k / P -0.1k，平值价格ATM: C $12.21 / P $10.80 ｜ ATM IV 77.4%，净 delta 敞口 14k shares
-仓位参考: Max Pain 225 ｜ Call Wall 240（+1.7%，弱）（OI 2.1k） ｜ Put Wall 225（-4.6%，弱）（OI 1.0k）
-量化解读： 存量 Call 重｜ATM IV 77.4%｜历史 Rank 27%（近端代理）｜IV/RV 1.34×（近似）｜期限倒挂（近端 IV > 远月）｜净 delta 敞口 正 14,204 股
+10-09（Activity LOW）仓位参考: Max Pain 225 ｜ Call Wall 240（+1.7%，弱）（OI 2.1k） ｜ Put Wall 225（-4.6%，弱）（OI 1.0k）
 
-10-16（MEDIUM △）Top ΔOI: 250C -654 ｜ 232C +324
-10-16（MEDIUM △）仓位参考: Max Pain 220 ｜ Call Wall 240（+1.7%，弱）（OI 5.2k） ｜ Put Wall 220（-6.7%，弱）（OI 3.2k）
+10-16（Activity LOW）仓位参考: Max Pain 220 ｜ Call Wall 240（+1.7%，弱）（OI 5.2k） ｜ Put Wall 220（-6.7%，弱）（OI 3.2k）
 
-📆 10-23 Forward Structure
-存量OI: C 7.1k / P 9.3k，今日变化ΔOI: C +1.8k / P -62，平值价格ATM: C $18.96 / P $16.87 ｜ ATM IV 77.0%，净 delta 敞口 55k shares
-Top ΔOI: C 350 +491 ｜ C 230 +354
-仓位参考: Max Pain 225 ｜ Call Wall 230（-2.5%，弱）（OI 0.5k） ｜ Put Wall 220（-6.7%，弱）（OI 0.3k）
-量化解读： 存量 Put 重｜⚠️ 背离：存量 Put 重但当日 Call 增仓更多｜ATM IV 77.0%｜历史 Rank 27%（近端代理）｜IV/RV 1.33×（近似）｜净 delta 敞口 正 54,584 股
+10-23（Activity LOW）仓位参考: Max Pain 225 ｜ Call Wall 230（-2.5%，弱）（OI 0.5k） ｜ Put Wall 220（-6.7%，弱）（OI 0.3k）
 
 📅 事件差分（观察，非因果）: 10-02（2D）ATM IV 90.8% vs 10-09 77.4%（差 +13.4pp）——覆盖 PCE 物价 Price Index MoM、GDP 增速 Rate QoQ Final 等
    符合'覆盖事件的期权溢价更高'（美联储 IFDP 1376 实证；单日截面，需连续多日确认）

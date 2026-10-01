@@ -1,8 +1,8 @@
-# 期权晚报 2026-09-30（快照 16:40 ET）
+# 期权晚报 2026-09-30（快照 21:00 ET）
 
 📊 市场环境
 
-SPY $762.63 ｜ QQQ $739.77
+SPY $762.63 ｜ QQQ $nan
 VIX 16.34 ↑1.9%（5D +7.6%） ｜ Vol Regime: NORMAL
 CNN 恐惧贪婪 30.8（fear）
 全市场 P/C OI（OCC 结算 08-28，2023-06 以来）: Equity 0.75（分位 12%） ｜ Index 0.94（分位 11%）
@@ -22,9 +22,7 @@ CNN 恐惧贪婪 30.8（fear）
 - 周五 10-02 08:30　【高】Non Farm Payrolls　预测 90 ｜ 实际 待公布 ｜ 前值 162
 - 周五 10-02 08:30　【高】失业率　预测 4.1 ｜ 实际 待公布 ｜ 前值 4.1
 
-🔍 重点速览
-🟡 **近现价集中开仓**: 10-02 152P ΔOI +1,306（距现价 -3.3%）
-   ⇒ 高等级 OI 变化且贴近现价；方向 Unknown（买开/卖开不可观测）
+🔍 重点速览: 今日无重点项（机械检查 highlight_v1）
 
 
 ## XBI
@@ -42,13 +40,13 @@ Options: P/C成交量 5.15 | OI比 2.72 | ATM IV 38.2% | Skew -7.1pp | Term 0.82
    ExpMove 期限化（expmove_v1）: 10-02（2D）±4.1% ｜ 10-09（9D）±5.2% ｜ 10-16（16D）±6.2% ｜ 10-23（23D）±7.3%
    ⇒ IV–VIX Spread: +21.9pp*（*近月 ATM IV − VIX；期限未对齐，仅作相对波动率 Proxy，不直接代表期权定价贵/便宜）
 🔧 结构（未验证研究层：Mechanism Scenario A/B——OI 开仓方向不可观测）
-Gamma Regime: NEGATIVE（模型分类） | GEX(存量) -31,057,897 | GEX Change vs 上次快照 6,935,658 | Flip: Primary Flip: 163.35（PRIMARY，全链重定价 + 覆盖达标）
+Gamma Regime: NEGATIVE（模型分类） | GEX(存量) -28,942,858 | GEX Change vs 上次快照 9,050,697 | Flip: Primary Flip: 162.60（PRIMARY，全链重定价 + 覆盖达标）
 🔎 测量完整性: GEX 符号契约 gex_sign_v1（Model A: Call+ / Put−）｜ Gamma 口径 全链重定价 ｜ Effective GEX 覆盖: 96%（带内） ｜ IV 有效性: VALID 346 / LOW 92 / INVALID 324
    ⇒ 全链负Gamma，波动易被放大（模型层）
-结构观察区: Primary Flip 163.35（全链重定价，覆盖 96%）
+结构观察区: Primary Flip 162.60（全链重定价，覆盖 96%）
 Put Wall 150（现价高于该位 5.1%）
-最近结构参考: Flip 163（现价低于该位 3.5%）
-量化视角： 负 Gamma（3106万，无历史分位）｜负 Gamma 缓解（+694万）｜现价位于 Flip 下方 3.47%——观察点，非方向信号
+最近结构参考: Flip 163（现价低于该位 3.0%）
+量化视角： 负 Gamma（2894万，无历史分位）｜负 Gamma 缓解（+905万）｜现价位于 Flip 下方 3.03%——观察点，非方向信号
 🧭 结构解读（全部依赖上方假设）
 • 支撑/压力参考：下方 150（Put Wall） / 156（MaxPain，仅结算参考）。
 • Gamma 区域：切换参考 163（全链重定价，覆盖 96%）。
@@ -58,31 +56,21 @@ Put Wall 150（现价高于该位 5.1%）
 - 无中高变动事件（全部低等级）
 📆 Forward Expiration Structure
 
-10-02  C +0.1k / P +1.4k ｜ Activity MEDIUM △ ｜ 2D
-10-09  C +0.1k / P +0.8k ｜ Activity HIGH ｜ 9D
-10-16  C +0.5k / P +0.3k ｜ Activity HIGH ｜ 16D
-10-23  C +0.2k / P -8 ｜ Activity MEDIUM △ ｜ 23D
+10-02  C +0 / P +0 ｜ Activity LOW ｜ 2D
+10-09  C +0 / P +0 ｜ Activity LOW ｜ 9D
+10-16  C +0 / P +0 ｜ Activity LOW ｜ 16D
+10-23  C +0 / P +0 ｜ Activity LOW ｜ 23D
 
 📆 10-02 Forward Structure
-存量OI: C 12.3k / P 33.5k，今日变化ΔOI: C +0.1k / P +1.4k，平值价格ATM: C $2.58 / P $3.87 ｜ ATM IV 38.2%，净 delta 敞口 -9k shares
-Top ΔOI: P 152 +1,306 ｜ P 155 -805 ｜ P 156 +502
+存量OI: C 12.3k / P 33.5k，今日变化ΔOI: C +0 / P +0，平值价格ATM: C $2.58 / P $3.87 ｜ ATM IV 38.2%，净 delta 敞口 0 shares
 仓位参考: Max Pain 156 ｜ Call Wall 162（+2.7%，弱）（OI 1.6k） ｜ Put Wall 148（-6.1%）（OI 10.4k）
-量化解读： 存量 Put 重｜ATM IV 38.2%｜历史 Rank 78%（近端代理）｜IV/RV 1.56×（近似）｜期限倒挂（近端 IV > 远月）｜净 delta 敞口 负 8,848 股
+量化解读： 存量 Put 重｜ATM IV 38.2%｜历史 Rank 78%（近端代理）｜IV/RV 1.56×（近似）｜期限倒挂（近端 IV > 远月）｜净 delta 敞口 正 0 股
 
-📆 10-09 Forward Structure
-存量OI: C 1.0k / P 3.9k，今日变化ΔOI: C +0.1k / P +0.8k，平值价格ATM: C $4.13 / P $4.12 ｜ ATM IV 33.4%，净 delta 敞口 -12k shares
-Top ΔOI: P 155 +307 ｜ P 154 +99 ｜ P 152 +88
-仓位参考: Max Pain 156 ｜ Call Wall 158（+0.2%，弱）（OI 0.2k） ｜ Put Wall 150（-4.9%，弱）（OI 0.6k）
-量化解读： 存量 Put 重｜ATM IV 33.4%｜历史 Rank 78%（近端代理）｜IV/RV 1.37×（近似）｜期限倒挂（近端 IV > 远月）｜净 delta 敞口 负 11,538 股
+10-09（Activity LOW）仓位参考: Max Pain 156 ｜ Call Wall 158（+0.2%，弱）（OI 0.2k） ｜ Put Wall 150（-4.9%，弱）（OI 0.6k）
 
-📆 10-16 Forward Structure
-存量OI: C 38.9k / P 77.1k，今日变化ΔOI: C +0.5k / P +0.3k，平值价格ATM: C $4.73 / P $5.05 ｜ ATM IV 31.9%，净 delta 敞口 14k shares
-Top ΔOI: C 162 +385 ｜ P 152 +364 ｜ P 150 -103
-仓位参考: Max Pain 162 ｜ Call Wall 165（+4.6%，弱）（OI 2.9k） ｜ Put Wall 150（-4.9%）（OI 22.5k）
-量化解读： 存量 Put 重｜⚠️ 背离：存量 Put 重但当日 Call 增仓更多｜ATM IV 31.9%｜历史 Rank 78%（近端代理）｜IV/RV 1.31×（近似）｜净 delta 敞口 正 14,023 股
+10-16（Activity LOW）仓位参考: Max Pain 162 ｜ Call Wall 165（+4.6%，弱）（OI 2.9k） ｜ Put Wall 150（-4.9%）（OI 22.5k）
 
-10-23（MEDIUM △）Top ΔOI: 155C +73 ｜ 145P -33
-10-23（MEDIUM △）仓位参考: Max Pain 156 ｜ Call Wall 155（-1.7%，弱）（OI 78） ｜ Put Wall 153（-3.0%）（OI 0.4k）
+10-23（Activity LOW）仓位参考: Max Pain 156 ｜ Call Wall 155（-1.7%，弱）（OI 78） ｜ Put Wall 153（-3.0%）（OI 0.4k）
 
 数据质量: 行情 A ｜ 期权结构 A ｜ 流向 C ｜ 做市商机制 C —— Flow 相关层（Activity 连续性、做市商机制解读）置信度受限。
 Setup B1 v1 — Core Conditions

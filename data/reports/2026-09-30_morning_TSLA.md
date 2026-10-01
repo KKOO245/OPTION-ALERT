@@ -2,7 +2,7 @@
 
 📊 市场环境
 
-SPY $763.55 ｜ QQQ $739.77
+SPY $762.63 ｜ QQQ $nan
 VIX 15.68 ↓2.2%（5D +3.3%） ｜ Vol Regime: NORMAL
 CNN 恐惧贪婪 30.8（fear）
 全市场 P/C OI（OCC 结算 08-28，2023-06 以来）: Equity 0.75（分位 12%） ｜ Index 0.94（分位 11%）
@@ -108,9 +108,9 @@ Top ΔOI: C 355 +389 ｜ C 365 +288 ｜ C 380 +250
 Setup A v1 — Core Conditions
 Price Regime DOWN | Location below_flip | Gamma Regime NEGATIVE（模型层）
 Confirmation: ✓ 0 ｜ ✗ 3 ｜ ? 1（? put_buy_confirmation）
-验证状态: N=35 ｜ OOS Lift N/A ｜ CI 下界 N/A
+验证状态: N=38 ｜ OOS Lift N/A ｜ CI 下界 N/A
 Target: 3D_close_return <= -0.02 — PENDING（evaluation date 待窗口结束）
-Status: 实验中，样本不足（N=35）
+Status: 实验中，样本不足（N=38）
 环境: Vol NORMAL（仅环境标签，不参与计票）
 
 数据溯源：完整表见附录 / thesis / analytics/daily/2026-09-30/TSLA_morning.json
