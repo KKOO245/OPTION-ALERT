@@ -2,7 +2,7 @@
 
 📊 市场环境
 
-SPY $774.71 ｜ QQQ $756.20
+SPY $774.83 ｜ QQQ $nan
 VIX 15.75 ↑2.9%（5D -2.0%） ｜ Vol Regime: NORMAL
 CNN 恐惧贪婪 43.1（fear）
 全市场 P/C OI（OCC 结算 08-28，2023-06 以来）: Equity 0.75（分位 12%） ｜ Index 0.94（分位 11%）
@@ -95,9 +95,9 @@ Top ΔOI: P 17 +237 ｜ C 14 +159
 Setup A v1 — Core Conditions
 Price Regime DOWN | Location below_flip | Gamma Regime NEGATIVE（模型层）
 Confirmation: ✓ 0 ｜ ✗ 3 ｜ ? 1（? put_buy_confirmation）
-验证状态: N=40 ｜ OOS Lift N/A ｜ CI 下界 N/A
+验证状态: N=42 ｜ OOS Lift N/A ｜ CI 下界 N/A
 Target: 3D_close_return <= -0.02 — PENDING（evaluation date 待窗口结束）
-Status: 实验中，样本不足（N=40）
+Status: 实验中，样本不足（N=42）
 环境: Vol NORMAL（仅环境标签，不参与计票）
 
 数据溯源：完整表见附录 / thesis / analytics/daily/2026-10-05/USAR_morning.json
