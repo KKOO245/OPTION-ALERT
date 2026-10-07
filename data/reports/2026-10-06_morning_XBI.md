@@ -2,9 +2,9 @@
 
 📊 市场环境
 
-SPY $779.55 ｜ QQQ $759.66
+SPY $779.09 ｜ QQQ $759.66
 VIX 15.48 ↓0.3%（5D -3.5%） ｜ Vol Regime: NORMAL
-CNN 恐惧贪婪 47.3（neutral）
+CNN 恐惧贪婪 47.4（neutral）
 全市场 P/C OI（OCC 结算 08-28，2023-06 以来）: Equity 0.75（分位 12%） ｜ Index 0.94（分位 11%）
 ⇒ 全市场个股期权存量 Put/Call = 0.75，Call 侧明显更重，815 个结算日中只高于 12% 的交易日，处于历史低位区间
 ⇒ 全市场指数期权存量 Put/Call = 0.94，接近均衡略偏 Call，815 个结算日中只高于 11% 的交易日，处于历史低位区间
@@ -94,9 +94,9 @@ Top ΔOI: P 150 +502 ｜ P 140 +172 ｜ C 150 +75
 Setup A v1 — Core Conditions
 Price Regime DOWN | Location below_flip | Gamma Regime NEGATIVE（模型层）
 Confirmation: ✓ 1 ｜ ✗ 2 ｜ ? 1（? put_buy_confirmation）
-验证状态: N=42 ｜ OOS Lift N/A ｜ CI 下界 N/A
+验证状态: N=43 ｜ OOS Lift N/A ｜ CI 下界 N/A
 Target: 3D_close_return <= -0.02 — PENDING（evaluation date 待窗口结束）
-Status: 实验中，样本不足（N=42）
+Status: 实验中，样本不足（N=43）
 环境: Vol NORMAL（仅环境标签，不参与计票）
 
 数据溯源：完整表见附录 / thesis / analytics/daily/2026-10-06/XBI_morning.json
