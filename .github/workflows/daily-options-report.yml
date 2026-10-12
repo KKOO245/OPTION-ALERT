@@ -94,6 +94,13 @@ jobs:
         if: steps.timecheck.outputs.run_needed == 'true'
         run: python scripts/update_closes_daily.py
 
+      - name: 收盘价健康检查（不阻塞报告；异常标注警告并推 Discord）
+        if: steps.timecheck.outputs.run_needed == 'true'
+        continue-on-error: true
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: python scripts/check_closes_health.py
+
       - name: 运行期权报告脚本(非目标时段/今天已发送过会自动跳过，不发送)
         if: steps.timecheck.outputs.run_needed == 'true'
         env:
