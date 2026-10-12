@@ -10,12 +10,8 @@
   4) 把每日合约快照（data/chain_history）并入 SQLite（chain_oi_daily 表）
   5) git 提交推送（先 pull --rebase --autostash 防冲突/脏工作区）
   6) 备份：SQLite 拷贝到备份目录 + 摘要文件（保留最近 8 份）
+     + 简报链存档目录（OPTION_ALERT_CHAIN_ARCHIVE）增量镜像到备份目录（只增不删）
   7) 弹窗汇报结果（计划任务跑完可见）
-
-数据归属（重要）：data/closes 的日常维护归每日 workflow（update_closes_daily.py）。
-归档只做两件事：① 归档前用同一个脚本做【格子级缺口自愈】（只填真正空着的
-close/adj_close，保留档案 OHLCV，最多回溯 120 天）；② 把补好的文件一并提交。
-归档【不做】整表重写（那才是双写冲突的根源）；确实需要整表重建时加 --refresh-prices。
 
 用法：
   python scripts/archive_eod.py              # 正常归档
@@ -25,6 +21,8 @@ close/adj_close，保留档案 OHLCV，最多回溯 120 天）；② 把补好�
 路径（可用环境变量覆盖）：
   OPTION_ALERT_DB_DIR    默认 D:\\git\\EXTERNAL DATA\\OPTION-ALERT-DB
   OPTION_ALERT_BACKUP_DIR 默认 D:\\git\\EXTERNAL DATA\\OPTION-ALERT-BACKUP
+  OPTION_ALERT_CHAIN_ARCHIVE        默认 D:\\git\\EXTERNAL DATA\\OPTION-ALERT-CHAIN-ARCHIVE
+  OPTION_ALERT_CHAIN_ARCHIVE_BACKUP 默认 <OPTION_ALERT_BACKUP_DIR>\\chain_archive_mirror
   THETADATA_RAW_DIR       默认 D:\\git\\EXTERNAL DATA\\OPTION-ALERT-RAW（回填脚本同款逻辑）
 """
 
@@ -32,6 +30,7 @@ from __future__ import annotations
 
 import argparse
 import datetime
+import hashlib
 import os
 import shutil
 import sqlite3
@@ -60,6 +59,14 @@ BACKUP_DIR = Path(
 TICKERS_FILE = REPO_ROOT / "config" / "tickers.txt"
 PYTHON = sys.executable
 KEEP_BACKUPS = 8
+CHAIN_ARCHIVE_SRC = Path(
+    os.environ.get("OPTION_ALERT_CHAIN_ARCHIVE")
+    or r"D:\git\EXTERNAL DATA\OPTION-ALERT-CHAIN-ARCHIVE"
+)
+CHAIN_ARCHIVE_BACKUP = Path(
+    os.environ.get("OPTION_ALERT_CHAIN_ARCHIVE_BACKUP")
+    or str(BACKUP_DIR / "chain_archive_mirror")
+)
 
 
 def _log(msg: str) -> None:
@@ -474,6 +481,59 @@ def _backup(summary: str) -> str:
     return f"已备份到 {dest}（保留最近 {KEEP_BACKUPS} 份）"
 
 
+def _sha256(path: Path) -> str:
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _mirror_chain_archive() -> str:
+    """把简报"链存档"目录增量镜像到备份目录：只增不删、不覆盖已一致的文件。
+
+    - 源：`OPTION_ALERT_CHAIN_ARCHIVE`（默认 D:\\git\\EXTERNAL DATA\\OPTION-ALERT-CHAIN-ARCHIVE）
+    - 目标：`OPTION_ALERT_CHAIN_ARCHIVE_BACKUP`（默认 <BACKUP_DIR>\\chain_archive_mirror）
+    - 判定"是否需要复制"用文件大小（存档文件一经写入不再变化，且同一分钟不重复写），
+      新复制的文件再用 sha256 与源比对一次，对不上就计入 bad、下轮重试。
+    - 只读源、只写目标；**从不删除**目标里的任何文件。
+    - ⚠️ 目标与源在同一块盘时，只能防"误删 / 软件损坏"，防不住硬盘故障；
+      要异地冗余，请把 OPTION_ALERT_CHAIN_ARCHIVE_BACKUP 指到另一块盘。
+    """
+    src, dst = CHAIN_ARCHIVE_SRC, CHAIN_ARCHIVE_BACKUP
+    if not src.exists():
+        return f"链存档镜像：源不存在（{src}），跳过"
+    n_new = n_fix = n_same = n_bad = 0
+    bytes_new = 0
+    for root, _dirs, names in os.walk(src):
+        rel = Path(root).relative_to(src)
+        for name in names:
+            s = Path(root) / name
+            d = dst / rel / name
+            try:
+                if d.exists() and d.stat().st_size == s.stat().st_size:
+                    n_same += 1
+                    continue
+                existed = d.exists()
+                d.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(s, d)
+                if d.stat().st_size != s.stat().st_size or _sha256(s) != _sha256(d):
+                    n_bad += 1
+                    continue
+                if existed:
+                    n_fix += 1
+                else:
+                    n_new += 1
+                    bytes_new += d.stat().st_size
+            except OSError:
+                n_bad += 1
+    msg = (f"链存档镜像：新增 {n_new} 份（{bytes_new / 1048576:.1f} MB）"
+           f"｜补齐 {n_fix} 份｜已一致 {n_same} 份")
+    if n_bad:
+        msg += f"｜⚠️ 校验未过 {n_bad} 份（下轮重试）"
+    return msg + f" → {dst}"
+
+
 def _popup(title: str, msg: str) -> None:
     """弹窗由独立子进程显示：归档脚本立即退出，计划任务不会被阻塞。
     （阻塞弹窗会导致任务一直"运行中"，下次归档无法触发。）"""
@@ -551,7 +611,8 @@ def main() -> None:
 
     summary = " | ".join(summary_parts) if summary_parts else "（无新增）"
     bk = _backup(f"归档 {end} | {summary}\n标的: {', '.join(tickers)}\n")
-    final = f"归档完成（数据截至 {end}）\n{summary}\n{bk}"
+    cm = _mirror_chain_archive()
+    final = f"归档完成（数据截至 {end}）\n{summary}\n{bk}\n{cm}"
     _log(final)
     _popup("OPTION-ALERT 数据归档", final)
 
