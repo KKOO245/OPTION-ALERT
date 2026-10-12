@@ -5,15 +5,20 @@
 职责（全部自动）：
   1) 拉取上次归档以来的 ThetaData EOD 全链 → 写入 SQLite 研究档案
      + 保存原始分块（供 IV 转换读取，同一存储）
-  2) 刷新 yfinance 全历史价格 + 重算 data/iv_history（复用 backfill_history）
+  2) 重算 data/iv_history（复用 backfill_history --convert；现货缺口读 data/closes）
   3) 把每日合约快照（data/chain_history）并入 SQLite（chain_oi_daily 表）
-  4) git 提交推送（先 pull --rebase 防冲突）
+  4) git 提交推送（先 pull --rebase --autostash 防冲突/脏工作区）
   5) 备份：SQLite 拷贝到备份目录 + 摘要文件（保留最近 8 份）
   6) 弹窗汇报结果（计划任务跑完可见）
+
+数据归属（重要）：data/closes 由每日 workflow（update_closes_daily.py）独占维护
+——它支持缺口自愈，且不会与远端双写冲突。归档默认【不再】重写 closes；
+确实需要整表重建时，显式加 --refresh-prices。
 
 用法：
   python scripts/archive_eod.py              # 正常归档
   python scripts/archive_eod.py --backup-only # 只做备份（数据无新增时）
+  python scripts/archive_eod.py --refresh-prices  # 额外重建 data/closes 全历史（一般不用）
 
 路径（可用环境变量覆盖）：
   OPTION_ALERT_DB_DIR    默认 D:\\git\\EXTERNAL DATA\\OPTION-ALERT-DB
@@ -305,14 +310,15 @@ def _git_commit_push() -> str:
     today = datetime.date.today().isoformat()
     def _git(*args: str) -> subprocess.CompletedProcess:
         return subprocess.run(["git", *args], cwd=REPO_ROOT, capture_output=True, text=True)
-    _git("add", "data/iv_history", "data/closes", "data/oi_history")
+    # data/closes 由每日 workflow 独占维护，归档不再提交它（避免双写冲突）
+    _git("add", "data/iv_history", "data/oi_history")
     if _git("diff", "--cached", "--quiet").returncode == 0:
         return "无数据变化，跳过推送"
     if _git("commit", "-m", f"更新历史数据 {today}").returncode != 0:
         return "git commit 失败"
-    pull = _git("pull", "--rebase")
+    pull = _git("pull", "--rebase", "--autostash")
     if pull.returncode != 0:
-        return f"git pull --rebase 失败: {pull.stderr.strip()[:200]}"
+        return f"git pull --rebase --autostash 失败: {pull.stderr.strip()[:200]}"
     push = _git("push")
     if push.returncode != 0:
         return f"git push 失败: {push.stderr.strip()[:200]}"
@@ -322,10 +328,10 @@ def _git_commit_push() -> str:
 def _git_pull() -> str:
     """归档前先同步远端，确保 data/chain_history 是最新的。"""
     pull = subprocess.run(
-        ["git", "pull", "--rebase"], cwd=REPO_ROOT, capture_output=True, text=True
+        ["git", "pull", "--rebase", "--autostash"], cwd=REPO_ROOT, capture_output=True, text=True
     )
     if pull.returncode != 0:
-        return f"git pull --rebase 失败（继续，可能漏最新快照）: {pull.stderr.strip()[:200]}"
+        return f"git pull --rebase --autostash 失败（继续，可能漏最新快照）: {pull.stderr.strip()[:200]}"
     return "已同步远端"
 
 
@@ -436,6 +442,8 @@ def main() -> None:
     p = argparse.ArgumentParser(description="OPTION-ALERT 定期归档")
     p.add_argument("--backup-only", action="store_true", help="只做备份")
     p.add_argument("--no-push", action="store_true", help="不推送 git（仅本地更新）")
+    p.add_argument("--refresh-prices", action="store_true",
+                   help="额外用 yfinance 重建 data/closes 全历史（默认不做：closes 归每日 workflow）")
     args = p.parse_args()
 
     tickers = _tickers()
@@ -462,7 +470,8 @@ def main() -> None:
         )
         if fails:
             summary_parts.append(f"失败: {', '.join(fails)}")
-        _run_backfill(["prices"])
+        if args.refresh_prices:
+            _run_backfill(["prices"])
         subprocess.run(
             [PYTHON, str(REPO_ROOT / "scripts" / "backfill_history.py"), "--convert", "--force"],
             cwd=REPO_ROOT,

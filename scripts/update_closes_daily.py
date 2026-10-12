@@ -10,6 +10,9 @@
   2) 修复：历史遗留的 close/adj_close 空值（缺口驱动，最多回溯 MAX_REPAIR_DAYS），
      同一日期用新值覆盖旧空行 —— 否则一个空行会永久挡住该日期的回填。
 
+文件不存在时（新标的）用 yfinance 全历史首建；data/closes 由本脚本独占维护，
+归档脚本 archive_eod.py 默认不再重写它（避免双写冲突）。
+
 质量闸门：只接受 close 非空、>0、且落在该行 [low, high] 内的行；不合格一律跳过
 （宁缺不写半行）。失败只警告不中断（closes 是辅助数据）。
 
@@ -50,11 +53,15 @@ def _et_today() -> datetime.date:
     return pd.Timestamp.now(tz=ET_TZ).date()
 
 
-def _fetch_history(t: str, start: str):
-    """按起点抓日线（auto_adjust=False）并归一化列名；失败/列不全返回 None。"""
+def _fetch_history(t: str, start: str | None = None, period: str = "max"):
+    """抓日线（auto_adjust=False）并归一化列名；失败/列不全返回 None。
+
+    start 指定起点（日常增量）；不给 start 则用 period（新标的首建用 max）。
+    """
     import yfinance as yf
 
-    h = yf.Ticker(t).history(start=start, auto_adjust=False)
+    kwargs = {"start": start} if start else {"period": period}
+    h = yf.Ticker(t).history(auto_adjust=False, **kwargs)
     if h is None or h.empty:
         return None
     h = h.reset_index()
@@ -75,7 +82,22 @@ def update_ticker(t: str) -> tuple[int, int]:
     """更新单标的。返回 (新增行数, 修复空值行数)。"""
     path = CLOSES_DIR / f"{t}.csv"
     if not path.exists():
-        return 0, 0
+        # 新标的首建：全历史（原先由归档 backfill --prices 负责，现收归本脚本）
+        try:
+            h = _fetch_history(t, period="max")
+        except Exception as e:  # noqa: BLE001
+            print(f"[closes] {t} 首建失败: {e}", flush=True)
+            return 0, 0
+        if h is None:
+            return 0, 0
+        h = h[h["close"].notna() & (h["close"] > 0)]
+        if h.empty:
+            return 0, 0
+        h["adj_close"] = h["adj_close"].fillna(h["close"])
+        CLOSES_DIR.mkdir(parents=True, exist_ok=True)
+        h.to_csv(path, index=False)
+        print(f"[closes] {t}: 首建全历史 {len(h)} 行 → {path}", flush=True)
+        return len(h), 0
     try:
         df = pd.read_csv(path)
     except Exception as e:  # noqa: BLE001
