@@ -5,15 +5,17 @@
 职责（全部自动）：
   1) 拉取上次归档以来的 ThetaData EOD 全链 → 写入 SQLite 研究档案
      + 保存原始分块（供 IV 转换读取，同一存储）
-  2) 重算 data/iv_history（复用 backfill_history --convert；现货缺口读 data/closes）
-  3) 把每日合约快照（data/chain_history）并入 SQLite（chain_oi_daily 表）
-  4) git 提交推送（先 pull --rebase --autostash 防冲突/脏工作区）
-  5) 备份：SQLite 拷贝到备份目录 + 摘要文件（保留最近 8 份）
-  6) 弹窗汇报结果（计划任务跑完可见）
+  2) 归档前自查 data/closes：不通过就先按缺口补齐，再复检（结果进摘要与弹窗）
+  3) 重算 data/iv_history（复用 backfill_history --convert；现货缺口读 data/closes）
+  4) 把每日合约快照（data/chain_history）并入 SQLite（chain_oi_daily 表）
+  5) git 提交推送（先 pull --rebase --autostash 防冲突/脏工作区）
+  6) 备份：SQLite 拷贝到备份目录 + 摘要文件（保留最近 8 份）
+  7) 弹窗汇报结果（计划任务跑完可见）
 
-数据归属（重要）：data/closes 由每日 workflow（update_closes_daily.py）独占维护
-——它支持缺口自愈，且不会与远端双写冲突。归档默认【不再】重写 closes；
-确实需要整表重建时，显式加 --refresh-prices。
+数据归属（重要）：data/closes 的日常维护归每日 workflow（update_closes_daily.py）。
+归档只做两件事：① 归档前用同一个脚本做【格子级缺口自愈】（只填真正空着的
+close/adj_close，保留档案 OHLCV，最多回溯 120 天）；② 把补好的文件一并提交。
+归档【不做】整表重写（那才是双写冲突的根源）；确实需要整表重建时加 --refresh-prices。
 
 用法：
   python scripts/archive_eod.py              # 正常归档
@@ -306,12 +308,65 @@ def _run_backfill(steps: list[str]) -> None:
         )
 
 
+def _run_script(script: str) -> subprocess.CompletedProcess:
+    # 必须显式 utf-8：子脚本输出中文，Windows 默认用 GBK 解码会让读取线程抛
+    # UnicodeDecodeError，stdout 直接丢掉（摘要只剩 rc=0，看到也没用）。
+    return subprocess.run(
+        [PYTHON, str(REPO_ROOT / "scripts" / script)],
+        cwd=REPO_ROOT, capture_output=True, text=True,
+        encoding="utf-8", errors="replace",
+    )
+
+
+def _brief_line(text: str, markers: tuple[str, ...], fallback: str) -> str:
+    """取子脚本输出里最适合进摘要的一行：优先汇总行（按 markers 前缀匹配），
+    否则退回最后一行非空输出。"""
+    lines = [l.strip() for l in (text or "").splitlines() if l.strip()]
+    for line in lines:
+        if any(line.startswith(m) for m in markers):
+            return line
+    return lines[-1] if lines else fallback
+
+
+def _closes_selfcheck() -> tuple[bool, str]:
+    """跑 data/closes 健康检查。返回 (是否通过, 汇总行摘要)。"""
+    r = _run_script("check_closes_health.py")
+    brief = _brief_line(r.stdout, ("[closes-check] 通过", "[closes-check] 未通过"),
+                        f"rc={r.returncode}")
+    return r.returncode == 0, brief
+
+
+def _closes_precheck_repair() -> str:
+    """归档前：closes 自查 → 不通过就按缺口补齐 → 复检。返回写进摘要的一行。
+
+    修复用与每日 workflow 同一个脚本（缺口驱动、格子级、幂等）；
+    无缺口时该脚本自身走快路径，不发请求、不写文件。
+    """
+    ok_before, brief = _closes_selfcheck()
+    if ok_before:
+        _log(f"closes 自查通过：{brief}")
+        return "closes 自查：通过"
+    _log(f"closes 自查未通过：{brief}")
+    rep = _run_script("update_closes_daily.py")
+    rep_brief = _brief_line(rep.stdout, ("[closes] 完成",), f"rc={rep.returncode}")
+    _log(f"closes 缺口补齐：{rep_brief}")
+    ok_after, brief_after = _closes_selfcheck()
+    _log(f"closes 复检：{'通过' if ok_after else '仍未通过'}（{brief_after}）")
+    return (
+        f"closes 自查未通过（{brief}）→ 已补（{rep_brief}）→ "
+        f"复检{'通过' if ok_after else '仍未通过：' + brief_after}"
+    )
+
+
 def _git_commit_push() -> str:
     today = datetime.date.today().isoformat()
     def _git(*args: str) -> subprocess.CompletedProcess:
-        return subprocess.run(["git", *args], cwd=REPO_ROOT, capture_output=True, text=True)
-    # data/closes 由每日 workflow 独占维护，归档不再提交它（避免双写冲突）
-    _git("add", "data/iv_history", "data/oi_history")
+        return subprocess.run(
+            ["git", *args], cwd=REPO_ROOT, capture_output=True, text=True,
+            encoding="utf-8", errors="replace",
+        )
+    # data/closes 也提交：归档前只做格子级缺口自愈（不是整表重写），补好的数据要进仓库
+    _git("add", "data/iv_history", "data/oi_history", "data/closes")
     if _git("diff", "--cached", "--quiet").returncode == 0:
         return "无数据变化，跳过推送"
     if _git("commit", "-m", f"更新历史数据 {today}").returncode != 0:
@@ -328,7 +383,8 @@ def _git_commit_push() -> str:
 def _git_pull() -> str:
     """归档前先同步远端，确保 data/chain_history 是最新的。"""
     pull = subprocess.run(
-        ["git", "pull", "--rebase", "--autostash"], cwd=REPO_ROOT, capture_output=True, text=True
+        ["git", "pull", "--rebase", "--autostash"], cwd=REPO_ROOT,
+        capture_output=True, text=True, encoding="utf-8", errors="replace",
     )
     if pull.returncode != 0:
         return f"git pull --rebase --autostash 失败（继续，可能漏最新快照）: {pull.stderr.strip()[:200]}"
@@ -458,6 +514,7 @@ def main() -> None:
     summary_parts: list[str] = []
     if not args.backup_only:
         _log(_git_pull())
+        summary_parts.append(_closes_precheck_repair())
         client = _make_client()
         limiter = RateLimiter(20)
         opt_n, stk_n, oi_n, fails = _fetch_and_store(client, limiter, tickers, start, end)
