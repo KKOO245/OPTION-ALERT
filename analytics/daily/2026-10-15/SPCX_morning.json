@@ -1,33 +1,33 @@
 {
   "schema_version": "snapshot_v1",
   "data_version": "snapshot_v1",
-  "created_at": "2026-10-15T09:08:50-04:00",
+  "created_at": "2026-10-15T10:20:35-04:00",
   "session": "morning",
   "source": "cboe",
   "ticker": "SPCX",
-  "spot": 148.25,
+  "spot": 142.37,
   "regime": {
     "version": "regimes_v1",
     "trend": "DOWN",
-    "gamma": "POSITIVE",
-    "iv_level": "NORMAL",
+    "gamma": "NEGATIVE",
+    "iv_level": "HIGH",
     "age": 1,
-    "transition": null
+    "transition": "SWITCH"
   },
   "location": {
     "price_location": "below_flip",
     "flip_levels": [
-      153.3652
+      151.0865
     ],
     "flip_status": "PRIMARY",
     "flip_candidates": [
-      153.3652
+      151.0865
     ],
-    "flip_primary": 153.3652,
+    "flip_primary": 151.0865,
     "flip_reason": "full_chain_reprice_gate_pass",
     "flip_source": "full_chain",
     "spot_vs_primary_flip": {
-      "distance_pct": -3.34,
+      "distance_pct": -5.77,
       "side": "BELOW"
     },
     "call_wall": null,
@@ -36,7 +36,7 @@
       "call": {
         "strike": 180.0,
         "oi": 68809.0,
-        "distance_pct": 21.42,
+        "distance_pct": 26.43,
         "dominance": 1.01,
         "strength": "HIGH",
         "classification": "REMOTE"
@@ -44,7 +44,7 @@
       "put": {
         "strike": 100.0,
         "oi": 77678.0,
-        "distance_pct": -32.55,
+        "distance_pct": -29.76,
         "dominance": 1.32,
         "strength": "HIGH",
         "classification": "REMOTE"
@@ -54,99 +54,76 @@
     "put_wall_class": "REMOTE",
     "concentration": [
       {
-        "strike": 150.0,
+        "strike": 140.0,
         "type": "put",
-        "oi": 59028
+        "oi": 46117
       },
       {
-        "strike": 155.0,
+        "strike": 145.0,
         "type": "put",
-        "oi": 44201
+        "oi": 35714
       },
       {
-        "strike": 150.0,
+        "strike": 145.0,
         "type": "call",
-        "oi": 41903
+        "oi": 21558
       }
     ]
   },
   "p3": {
     "schema_version": "p3_collect_v1",
     "gex": {
-      "net_gex": -53483539.5,
-      "abs_gex": 53483539.5,
-      "n_used": 900,
-      "n_skipped": 516,
+      "net_gex": -77468729.4,
+      "abs_gex": 77468729.4,
+      "n_used": 899,
+      "n_skipped": 517,
       "spot_zone": "NEGATIVE"
     },
     "coverage": {
       "schema_version": "coverage_v1",
       "total_contracts": 1416,
       "iv_valid": {
-        "VALID": 731,
-        "LOW_LIQUIDITY": 169,
-        "INVALID": 516
+        "VALID": 699,
+        "LOW_LIQUIDITY": 200,
+        "INVALID": 517
       },
-      "strike_coverage_pct": 63.6,
-      "oi_coverage_pct": 99.1,
-      "valid_only_oi_coverage_pct": 82.9,
-      "band_oi_coverage_pct": 99.9,
-      "effective_gex_coverage_pct": 99.9
+      "strike_coverage_pct": 63.5,
+      "oi_coverage_pct": 98.1,
+      "valid_only_oi_coverage_pct": 79.7,
+      "band_oi_coverage_pct": 99.7,
+      "effective_gex_coverage_pct": 99.7
     },
     "second_order": {
       "schema_version": "second_order_v1",
-      "net_vanna": 16727921.0,
-      "net_charm": 123869519.0,
-      "n_used": 900,
+      "net_vanna": 12885546.0,
+      "net_charm": 143615276.0,
+      "n_used": 899,
       "min_dte": 1,
       "vanna_gate": true,
       "charm_gate": true
     },
     "iv_rv": {
-      "atm_iv_near": 0.57265,
+      "atm_iv_near": 0.7502500000000001,
       "rv_5d": 0.3771,
       "rv_20d": 0.5088,
-      "ratio_5d": 1.519,
-      "ratio_20d": 1.125
+      "ratio_5d": 1.99,
+      "ratio_20d": 1.475
     },
-    "event_overlap": [
-      {
-        "expiration": "2026-10-16",
-        "dte": 1,
-        "covers_event": true,
-        "events": [
-          "美联储主席讲话 Warsh Speech"
-        ]
-      },
-      {
-        "expiration": "2026-10-19",
-        "dte": 4,
-        "covers_event": false,
-        "events": []
-      },
-      {
-        "expiration": "2026-10-21",
-        "dte": 6,
-        "covers_event": false,
-        "events": []
-      },
-      {
-        "expiration": "2026-10-23",
-        "dte": 8,
-        "covers_event": false,
-        "events": []
-      }
-    ],
+    "event_overlap": null,
     "confluence": {
       "families_in_band": 1,
       "levels": [
         {
           "type": "oi",
-          "price": 150.0
+          "price": 140.0
         },
         {
           "type": "oi",
-          "price": 150.0
+          "price": 145.0
+        },
+        {
+          "type": "oi",
+          "price": 145.0
         }
       ]
     },
@@ -159,21 +136,21 @@
     }
   },
   "momentum": {
-    "iv_momentum": 0.206,
-    "iv_momentum_1d": 5.235,
-    "iv_level": "NORMAL",
-    "iv_rank": 66.2,
-    "skew_momentum": 2.127,
-    "skew": 0.7550213854987997,
-    "term_structure_momentum": -0.0332,
-    "pc_ratio": 0.598,
+    "iv_momentum": 1.882,
+    "iv_momentum_1d": 22.995,
+    "iv_level": "HIGH",
+    "iv_rank": 94.8,
+    "skew_momentum": 6.584,
+    "skew": 5.212398304967136,
+    "term_structure_momentum": -0.2073,
+    "pc_ratio": 1.046,
     "pc_oi_ratio": 0.9511814416590838,
     "oi_flow": "call_building",
-    "price_momentum": -0.053,
+    "price_momentum": -0.0905,
     "volume_ratio": null,
-    "atm_iv": 0.57265,
-    "expected_move_pct": 4.2057335581787525,
-    "term_ratio": 0.9546843621758491
+    "atm_iv": 0.7502500000000001,
+    "expected_move_pct": 3.6524548711104865,
+    "term_ratio": 0.7806064645118294
   },
   "confirmation": {
     "iv_surge": true,
@@ -198,55 +175,55 @@
         "put_delta_oi": 429.0,
         "call_new_oi": 0,
         "put_new_oi": 0,
-        "call_volume": 187931.0,
-        "put_volume": 112292.0,
+        "call_volume": 70355.0,
+        "put_volume": 73591.0,
         "has_prev": true,
         "new_listing": false,
-        "atm_strike": 148.0,
-        "atm_call_price": 5.11,
-        "atm_put_price": 0.97,
-        "atm_iv": 0.5726,
-        "expmove_pct": 4.1,
+        "atm_strike": 142.0,
+        "atm_call_price": 3.4,
+        "atm_put_price": 1.77,
+        "atm_iv": 0.7503,
+        "expmove_pct": 3.63,
         "activity": "HIGH",
-        "delta_exposure": 556196.0,
+        "delta_exposure": 176004.0,
         "top_delta_oi": [
           {
             "strike": 162.5,
             "type": "call",
             "delta_oi": 13228,
-            "last_price": 0.23,
-            "notional": 304244.0,
-            "relevance": "OK",
-            "distance_pct": 9.6,
-            "volume": 21518.0,
+            "last_price": 0.03,
+            "notional": 39684.0,
+            "relevance": "LOW",
+            "distance_pct": 14.1,
+            "volume": 1098.0,
             "magnitude": "HIGH",
-            "r1": 61.47,
+            "r1": null,
             "contract_symbol": "SPCX261016C00162500"
           },
           {
             "strike": 165.0,
             "type": "call",
             "delta_oi": 10575,
-            "last_price": 0.14,
-            "notional": 148050.00000000003,
-            "relevance": "OK",
-            "distance_pct": 11.3,
-            "volume": 26734.0,
+            "last_price": 0.02,
+            "notional": 21150.0,
+            "relevance": "LOW",
+            "distance_pct": 15.9,
+            "volume": 2339.0,
             "magnitude": "HIGH",
-            "r1": 39.56,
+            "r1": null,
             "contract_symbol": "SPCX261016C00165000"
           },
           {
             "strike": 155.0,
             "type": "call",
             "delta_oi": 4555,
-            "last_price": 1.45,
-            "notional": 660475.0,
+            "last_price": 0.13,
+            "notional": 59215.0,
             "relevance": "OK",
-            "distance_pct": 4.6,
-            "volume": 41615.0,
+            "distance_pct": 8.9,
+            "volume": 6589.0,
             "magnitude": "HIGH",
-            "r1": 10.95,
+            "r1": 69.13,
             "contract_symbol": "SPCX261016C00155000"
           }
         ],
@@ -268,30 +245,16 @@
             "confidence": "LOW"
           }
         ],
-        "significant": [
-          {
-            "strike": 165.0,
-            "type": "call",
-            "delta_oi": 10575,
-            "last_price": 0.14,
-            "notional": 148050.00000000003,
-            "relevance": "OK",
-            "distance_pct": 11.3,
-            "volume": 26734.0,
-            "magnitude": "HIGH",
-            "r1": 39.56,
-            "contract_symbol": "SPCX261016C00165000"
-          }
-        ],
+        "significant": [],
         "max_pain": 150.0,
         "call_wall": {
-          "strike": 160.0,
-          "oi": 27583.0,
+          "strike": 150.0,
+          "oi": 17566.0,
           "class": "WEAK",
           "fallback_from_remote": {
             "strike": 165.0,
             "oi": 43662.0,
-            "distance_pct": 11.3
+            "distance_pct": 15.9
           }
         },
         "put_wall": {
@@ -301,7 +264,7 @@
           "fallback_from_remote": {
             "strike": 100.0,
             "oi": 48039.0,
-            "distance_pct": -32.55
+            "distance_pct": -29.76
           }
         }
       },
@@ -316,96 +279,69 @@
         "put_delta_oi": 13458.0,
         "call_new_oi": 0,
         "put_new_oi": 0,
-        "call_volume": 36696.0,
-        "put_volume": 29836.0,
+        "call_volume": 11489.0,
+        "put_volume": 18343.0,
         "has_prev": true,
         "new_listing": false,
-        "atm_strike": 148.0,
-        "atm_call_price": 5.8,
-        "atm_put_price": 1.45,
-        "atm_iv": 0.4493,
-        "expmove_pct": 4.89,
+        "atm_strike": 142.0,
+        "atm_call_price": 4.2,
+        "atm_put_price": 2.41,
+        "atm_iv": 0.5318,
+        "expmove_pct": 4.64,
         "activity": "HIGH",
-        "delta_exposure": -148834.0,
+        "delta_exposure": -847616.0,
         "top_delta_oi": [
           {
             "strike": 148.0,
             "type": "put",
             "delta_oi": 7866,
-            "last_price": 1.45,
-            "notional": 1140570.0,
+            "last_price": 5.85,
+            "notional": 4601610.0,
             "relevance": "OK",
-            "distance_pct": -0.2,
-            "volume": 9168.0,
+            "distance_pct": 4.0,
+            "volume": 205.0,
             "magnitude": "HIGH",
-            "r1": 85.8,
+            "r1": null,
             "contract_symbol": "SPCX261019P00148000"
           },
           {
             "strike": 155.0,
             "type": "put",
             "delta_oi": 2410,
-            "last_price": 4.7,
-            "notional": 1132700.0,
+            "last_price": 12.46,
+            "notional": 3002860.0,
             "relevance": "OK",
-            "distance_pct": 4.6,
-            "volume": 3527.0,
+            "distance_pct": 8.9,
+            "volume": 160.0,
             "magnitude": "HIGH",
-            "r1": 68.33,
+            "r1": null,
             "contract_symbol": "SPCX261019P00155000"
           },
           {
             "strike": 157.5,
             "type": "call",
             "delta_oi": 2035,
-            "last_price": 1.26,
-            "notional": 256410.0,
-            "relevance": "OK",
-            "distance_pct": 6.2,
-            "volume": 8073.0,
+            "last_price": 0.16,
+            "notional": 32560.000000000004,
+            "relevance": "LOW",
+            "distance_pct": 10.6,
+            "volume": 469.0,
             "magnitude": "HIGH",
-            "r1": 25.21,
+            "r1": null,
             "contract_symbol": "SPCX261019C00157500"
           }
         ],
         "roll_candidates": [],
-        "significant": [
-          {
-            "strike": 148.0,
-            "type": "put",
-            "delta_oi": 7866,
-            "last_price": 1.45,
-            "notional": 1140570.0,
-            "relevance": "OK",
-            "distance_pct": -0.2,
-            "volume": 9168.0,
-            "magnitude": "HIGH",
-            "r1": 85.8,
-            "contract_symbol": "SPCX261019P00148000"
-          },
-          {
-            "strike": 157.5,
-            "type": "call",
-            "delta_oi": 2035,
-            "last_price": 1.26,
-            "notional": 256410.0,
-            "relevance": "OK",
-            "distance_pct": 6.2,
-            "volume": 8073.0,
-            "magnitude": "HIGH",
-            "r1": 25.21,
-            "contract_symbol": "SPCX261019C00157500"
-          }
-        ],
+        "significant": [],
         "max_pain": 157.5,
         "call_wall": {
-          "strike": 157.5,
-          "oi": 4678.0,
+          "strike": 155.0,
+          "oi": 2091.0,
           "class": "WEAK",
           "fallback_from_remote": {
             "strike": 170.0,
             "oi": 5350.0,
-            "distance_pct": 14.67
+            "distance_pct": 19.41
           }
         },
         "put_wall": {
@@ -425,71 +361,62 @@
         "put_delta_oi": 1621.0,
         "call_new_oi": 0,
         "put_new_oi": 0,
-        "call_volume": 8284.0,
-        "put_volume": 4159.0,
+        "call_volume": 8424.0,
+        "put_volume": 4798.0,
         "has_prev": true,
         "new_listing": false,
-        "atm_strike": 148.0,
-        "atm_call_price": 6.4,
-        "atm_put_price": 2.22,
-        "atm_iv": 0.4699,
-        "expmove_pct": 5.81,
+        "atm_strike": 142.0,
+        "atm_call_price": 4.91,
+        "atm_put_price": 3.7,
+        "atm_iv": 0.5558,
+        "expmove_pct": 6.05,
         "activity": "HIGH",
-        "delta_exposure": 15306.0,
+        "delta_exposure": -71694.0,
         "top_delta_oi": [
           {
             "strike": 170.0,
             "type": "call",
             "delta_oi": 633,
-            "last_price": 0.3,
-            "notional": 18990.0,
+            "last_price": 0.06,
+            "notional": 3797.9999999999995,
             "relevance": "LOW",
-            "distance_pct": 14.7,
-            "volume": 1245.0,
+            "distance_pct": 19.4,
+            "volume": 273.0,
             "magnitude": "HIGH",
-            "r1": 50.84,
+            "r1": null,
             "contract_symbol": "SPCX261021C00170000"
           },
           {
             "strike": 160.0,
             "type": "call",
             "delta_oi": 414,
-            "last_price": 1.3,
-            "notional": 53820.00000000001,
-            "relevance": "OK",
-            "distance_pct": 7.9,
-            "volume": 828.0,
-            "magnitude": "HIGH",
-            "r1": 50.0,
+            "last_price": 0.26,
+            "notional": 10764.0,
+            "relevance": "LOW",
+            "distance_pct": 12.4,
+            "volume": 386.0,
+            "magnitude": "MEDIUM",
+            "r1": null,
             "contract_symbol": "SPCX261021C00160000"
           },
           {
             "strike": 155.0,
             "type": "put",
             "delta_oi": 328,
-            "last_price": 5.4,
-            "notional": 177120.0,
+            "last_price": 13.7,
+            "notional": 449359.99999999994,
             "relevance": "OK",
-            "distance_pct": 4.6,
-            "volume": 661.0,
-            "magnitude": "HIGH",
-            "r1": 49.62,
+            "distance_pct": 8.9,
+            "volume": 96.0,
+            "magnitude": "MEDIUM",
+            "r1": null,
             "contract_symbol": "SPCX261021P00155000"
           }
         ],
         "roll_candidates": [],
         "significant": [],
         "max_pain": 157.5,
-        "call_wall": {
-          "strike": 162.5,
-          "oi": 1983.0,
-          "class": "WEAK",
-          "fallback_from_remote": {
-            "strike": 170.0,
-            "oi": 2117.0,
-            "distance_pct": 14.67
-          }
-        },
+        "call_wall": null,
         "put_wall": {
           "strike": 147.0,
           "oi": 1437.0,
@@ -507,74 +434,60 @@
         "put_delta_oi": 5536.0,
         "call_new_oi": 0,
         "put_new_oi": 0,
-        "call_volume": 44550.0,
-        "put_volume": 20060.0,
+        "call_volume": 17096.0,
+        "put_volume": 10668.0,
         "has_prev": true,
         "new_listing": false,
-        "atm_strike": 148.0,
-        "atm_call_price": 7.08,
-        "atm_put_price": 2.8,
-        "atm_iv": 0.4874,
-        "expmove_pct": 6.66,
+        "atm_strike": 142.0,
+        "atm_call_price": 5.7,
+        "atm_put_price": 4.62,
+        "atm_iv": 0.5614,
+        "expmove_pct": 7.25,
         "activity": "HIGH",
-        "delta_exposure": 194717.0,
+        "delta_exposure": -83307.0,
         "top_delta_oi": [
           {
             "strike": 155.0,
             "type": "call",
             "delta_oi": 3409,
-            "last_price": 3.35,
-            "notional": 1142015.0,
+            "last_price": 1.18,
+            "notional": 402262.0,
             "relevance": "OK",
-            "distance_pct": 4.6,
-            "volume": 8865.0,
+            "distance_pct": 8.9,
+            "volume": 1901.0,
             "magnitude": "HIGH",
-            "r1": 38.45,
+            "r1": null,
             "contract_symbol": "SPCX261023C00155000"
           },
           {
             "strike": 165.0,
             "type": "call",
             "delta_oi": 2264,
-            "last_price": 0.97,
-            "notional": 219608.0,
+            "last_price": 0.28,
+            "notional": 63392.00000000001,
             "relevance": "OK",
-            "distance_pct": 11.3,
-            "volume": 7235.0,
+            "distance_pct": 15.9,
+            "volume": 3303.0,
             "magnitude": "HIGH",
-            "r1": 31.29,
+            "r1": 68.54,
             "contract_symbol": "SPCX261023C00165000"
           },
           {
             "strike": 160.0,
             "type": "call",
             "delta_oi": 1209,
-            "last_price": 1.86,
-            "notional": 224874.00000000003,
+            "last_price": 0.58,
+            "notional": 70121.99999999999,
             "relevance": "OK",
-            "distance_pct": 7.9,
-            "volume": 5225.0,
+            "distance_pct": 12.4,
+            "volume": 2243.0,
             "magnitude": "HIGH",
-            "r1": 23.14,
+            "r1": 53.9,
             "contract_symbol": "SPCX261023C00160000"
           }
         ],
         "roll_candidates": [],
-        "significant": [
-          {
-            "strike": 165.0,
-            "type": "call",
-            "delta_oi": 2264,
-            "last_price": 0.97,
-            "notional": 219608.0,
-            "relevance": "OK",
-            "distance_pct": 11.3,
-            "volume": 7235.0,
-            "magnitude": "HIGH",
-            "r1": 31.29,
-            "contract_symbol": "SPCX261023C00165000"
-          }
-        ],
+        "significant": [],
         "max_pain": 155.0,
         "call_wall": {
           "strike": 155.0,
@@ -583,7 +496,7 @@
           "fallback_from_remote": {
             "strike": 165.0,
             "oi": 7591.0,
-            "distance_pct": 11.3
+            "distance_pct": 15.9
           }
         },
         "put_wall": {
@@ -598,15 +511,15 @@
     "spy_return": null,
     "qqq_return": null,
     "sector_relative": null,
-    "vix": 17.469999313354492,
+    "vix": 17.510000228881836,
     "vol_environment": {
       "vix": {
-        "value": 17.469999313354492,
-        "timestamp": "2026-10-15T09:08:50-04:00",
+        "value": 17.510000228881836,
+        "timestamp": "2026-10-15T10:20:35-04:00",
         "basis": "intraday",
         "prior_close": 16.8700008392334,
-        "change_1d_pct": 3.56,
-        "change_5d_pct": 13.37
+        "change_1d_pct": 3.79,
+        "change_5d_pct": 13.63
       },
       "regime": {
         "label": "NORMAL",
@@ -614,9 +527,9 @@
         "classification_type": "descriptive",
         "calibration_status": "uncalibrated",
         "inputs": {
-          "vix_level": 17.469999313354492,
-          "vix_1d_pct": 3.56,
-          "vix_5d_pct": 13.37,
+          "vix_level": 17.510000228881836,
+          "vix_1d_pct": 3.79,
+          "vix_5d_pct": 13.63,
           "vix_percentile_20d": 100.0,
           "vix_term_structure": null
         },
@@ -634,9 +547,9 @@
         "display": false
       }
     },
-    "day_high": 155.44000244140625,
-    "day_low": 151.10000610351562,
-    "day_open": 154.97999572753906,
+    "day_high": 147.55999755859375,
+    "day_low": 140.66000366210938,
+    "day_open": 146.89500427246094,
     "max_pain": 150.0,
     "max_pain_monthly": 160.0,
     "notes": null
@@ -656,5 +569,5 @@
   },
   "zero_dte": null,
   "data_as_of": "2026-10-15",
-  "snapshot_hash": "d76972f479ff6e7e7c8016bb86a5572319ff3dfd7f905804b77e3508fea8cb61"
+  "snapshot_hash": "86e227ed1b01ad8758139b82cec3cd23529427ba955ac7eb7126d815e8220e88"
 }
