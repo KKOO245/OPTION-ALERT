@@ -1,4 +1,4 @@
-# 期权晚报 2026-10-15（快照 16:40 ET）
+# 期权晚报 2026-10-15（快照 21:00 ET）
 
 📊 市场环境
 
@@ -21,10 +21,6 @@ CNN 恐惧贪婪 31.5（fear）
 🔍 重点速览
 🔴 **事件差分**: 10-16（1D）ATM IV 52.4% vs 10-19 34.3%（差 +18.1pp），覆盖 PPI 生产者物价 MoM、零售销售 MoM、美联储主席讲话 Warsh Speech
    ⇒ 覆盖【高】事件的期限隐含波动显著更高（美联储 IFDP 1376 实证；单日截面，需连续多日确认；观察，非预测）
-🟡 **近现价集中开仓**: 10-16 90C ΔOI -8,739（距现价 +4.0%）
-   ⇒ 高等级 OI 变化且贴近现价；方向 Unknown（买开/卖开不可观测）
-🔵 **期限 OI 集中**: 10-19 87C ΔOI +597 占该期限总 OI 17.4%
-   ⇒ 新增仓位相对该期限总量显著（结构观察，非资金方向）
 
 
 ## GDX
@@ -42,12 +38,12 @@ Options: P/C成交量 1.51 | OI比 0.67 | ATM IV 52.4% | Skew 5.0pp | Term 0.78 
    ExpMove 期限化（expmove_v1）: 10-16（1D）±2.2% ｜ 10-19（4D）±3.1% ｜ 10-21（6D）±3.5% ｜ 10-23（8D）±4.4%
    ⇒ IV–VIX Spread: +35.9pp*（*近月 ATM IV − VIX；期限未对齐，仅作相对波动率 Proxy，不直接代表期权定价贵/便宜）
 🔧 结构（未验证研究层：Mechanism Scenario A/B——OI 开仓方向不可观测）
-Gamma Regime: NEGATIVE（模型分类） | GEX(存量) -13,562,223 | GEX Change vs 上次快照 37,140,704 | Flip: Primary Flip: 87.52（PRIMARY，全链重定价 + 覆盖达标）
+Gamma Regime: NEGATIVE（模型分类） | GEX(存量) -13,102,109 | GEX Change vs 上次快照 37,600,818 | Flip: Primary Flip: 87.52（PRIMARY，全链重定价 + 覆盖达标）
 🔎 测量完整性: GEX 符号契约 gex_sign_v1（Model A: Call+ / Put−）｜ Gamma 口径 全链重定价 ｜ Effective GEX 覆盖: 88%（带内） ｜ IV 有效性: VALID 553 / LOW 185 / INVALID 438
    ⇒ 全链负Gamma，波动易被放大（模型层）
 结构观察区: Primary Flip 87.52（全链重定价，覆盖 88%）
 最近结构参考: Flip 88（现价低于该位 0.6%）
-量化视角： 负 Gamma（1356万，无历史分位）｜负 Gamma 缓解（+3714万）｜现价位于 Flip 下方 0.57%——观察点，非方向信号
+量化视角： 负 Gamma（1310万，无历史分位）｜负 Gamma 缓解（+3760万）｜现价位于 Flip 下方 0.57%——观察点，非方向信号
 🧭 结构解读（全部依赖上方假设）
 • 支撑/压力参考：上方 88（MaxPain，仅结算参考）。
 • Gamma 区域：切换参考 88（全链重定价，覆盖 88%）。
@@ -57,34 +53,21 @@ Gamma Regime: NEGATIVE（模型分类） | GEX(存量) -13,562,223 | GEX Change 
 - 无中高变动事件（全部低等级）
 📆 Forward Expiration Structure
 
-10-16  C -19.9k / P -13.1k ｜ Activity HIGH ｜ 1D
-10-19  C +0.9k / P +0.1k ｜ Activity HIGH ｜ 4D
-10-21  C +0.3k / P +1.3k ｜ Activity HIGH ｜ 6D
-10-23  C +4.4k / P +4.1k ｜ Activity HIGH ｜ 8D
+10-16  C +0 / P +0 ｜ Activity LOW ｜ 1D
+10-19  C +0 / P +0 ｜ Activity LOW ｜ 4D
+10-21  C +0 / P +0 ｜ Activity LOW ｜ 6D
+10-23  C +0 / P +0 ｜ Activity LOW ｜ 8D
 
 📆 10-16 Forward Structure
-存量OI: C 172.3k / P 115.2k，今日变化ΔOI: C -19.9k / P -13.1k，平值价格ATM: C $0.94 / P $0.95 ｜ ATM IV 52.4%，净 delta 敞口 1.2M shares
-Top ΔOI: C 93 -8,771 ｜ C 90 -8,739 ｜ P 95 -5,099
+存量OI: C 172.3k / P 115.2k，今日变化ΔOI: C +0 / P +0，平值价格ATM: C $0.94 / P $0.95 ｜ ATM IV 52.4%，净 delta 敞口 0 shares
 仓位参考: Max Pain 88 ｜ Call Wall 90.5（+4.0%，弱）（OI 12.8k） ｜ Put Wall 85（-2.3%，弱）（OI 10.4k）
-量化解读： 存量 Call 重｜⚠️ 背离：存量 Call 重但当日 Put 增仓更多｜ATM IV 52.4%｜历史 Rank 86%（近端代理）｜IV/RV 1.38×（近似）｜期限倒挂（近端 IV > 远月）｜净 delta 敞口 正 1,200,841 股
+量化解读： 存量 Call 重｜ATM IV 52.4%｜历史 Rank 86%（近端代理）｜IV/RV 1.38×（近似）｜期限倒挂（近端 IV > 远月）｜净 delta 敞口 正 0 股
 
-📆 10-19 Forward Structure
-存量OI: C 2.7k / P 0.8k，今日变化ΔOI: C +0.9k / P +0.1k，平值价格ATM: C $1.37 / P $1.32 ｜ ATM IV 34.3%，净 delta 敞口 48k shares
-Top ΔOI: C 87 +597 ｜ C 89 +214 ｜ C 85 +129
-仓位参考: Max Pain 87 ｜ Call Wall 90（+3.4%，弱）（OI 0.8k） ｜ Put Wall 89（+2.3%）（OI 0.2k）
-量化解读： 存量 Call 重｜ATM IV 34.3%｜历史 Rank 86%（近端代理）｜IV/RV 0.90×（近似）｜期限正常（远月高于近端）｜净 delta 敞口 正 47,933 股
+10-19（Activity LOW）仓位参考: Max Pain 87 ｜ Call Wall 90（+3.4%，弱）（OI 0.8k） ｜ Put Wall 89（+2.3%）（OI 0.2k）
 
-📆 10-21 Forward Structure
-存量OI: C 2.9k / P 3.8k，今日变化ΔOI: C +0.3k / P +1.3k，平值价格ATM: C $1.18 / P $1.85 ｜ ATM IV 37.9%，净 delta 敞口 8k shares
-Top ΔOI: P 80 +1,112 ｜ C 87 +212
-仓位参考: Max Pain 83
-量化解读： 存量 Put 重｜ATM IV 37.9%｜历史 Rank 86%（近端代理）｜IV/RV 1.00×（近似）｜净 delta 敞口 正 7,925 股
+10-21（Activity LOW）仓位参考: Max Pain 83
 
-📆 10-23 Forward Structure
-存量OI: C 15.4k / P 18.0k，今日变化ΔOI: C +4.4k / P +4.1k，平值价格ATM: C $1.80 / P $2.04 ｜ ATM IV 38.6%，净 delta 敞口 288k shares
-Top ΔOI: C 86 +3,163 ｜ P 81 +565
-仓位参考: Max Pain 86 ｜ Call Wall 86（-1.2%）（OI 3.3k） ｜ Put Wall 85（-2.3%，弱）（OI 1.3k）
-量化解读： 存量两侧均衡｜⚠️ 背离：存量 Put 重但当日 Call 增仓更多｜ATM IV 38.6%｜历史 Rank 86%（近端代理）｜IV/RV 1.02×（近似）｜净 delta 敞口 正 288,159 股
+10-23（Activity LOW）仓位参考: Max Pain 86 ｜ Call Wall 86（-1.2%）（OI 3.3k） ｜ Put Wall 85（-2.3%，弱）（OI 1.3k）
 
 📅 事件差分（观察，非因果）: 10-16（1D）ATM IV 52.4% vs 10-19 34.3%（差 +18.1pp）——覆盖 PPI 生产者物价 MoM、零售销售 MoM、美联储主席讲话 Warsh Speech
    符合'覆盖事件的期权溢价更高'（美联储 IFDP 1376 实证；单日截面，需连续多日确认）
