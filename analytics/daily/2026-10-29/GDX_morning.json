@@ -1,11 +1,11 @@
 {
   "schema_version": "snapshot_v1",
   "data_version": "snapshot_v1",
-  "created_at": "2026-10-29T09:08:42-04:00",
+  "created_at": "2026-10-29T10:20:34-04:00",
   "session": "morning",
   "source": "cboe",
   "ticker": "GDX",
-  "spot": 81.78,
+  "spot": 81.62,
   "regime": {
     "version": "regimes_v1",
     "trend": "DOWN",
@@ -17,17 +17,17 @@
   "location": {
     "price_location": "above_flip",
     "flip_levels": [
-      79.8144
+      79.6919
     ],
     "flip_status": "PRIMARY",
     "flip_candidates": [
-      79.8144
+      79.6919
     ],
-    "flip_primary": 79.8144,
+    "flip_primary": 79.6919,
     "flip_reason": "full_chain_reprice_gate_pass",
     "flip_source": "full_chain",
     "spot_vs_primary_flip": {
-      "distance_pct": 2.46,
+      "distance_pct": 2.42,
       "side": "ABOVE"
     },
     "call_wall": 85.0,
@@ -36,7 +36,7 @@
       "call": {
         "strike": 85.0,
         "oi": 35356.0,
-        "distance_pct": 3.94,
+        "distance_pct": 4.14,
         "dominance": 1.29,
         "strength": "HIGH",
         "classification": "WEAK"
@@ -44,7 +44,7 @@
       "put": {
         "strike": 80.0,
         "oi": 30299.0,
-        "distance_pct": -2.18,
+        "distance_pct": -1.98,
         "dominance": 1.07,
         "strength": "HIGH",
         "classification": "WEAK"
@@ -73,46 +73,54 @@
   "p3": {
     "schema_version": "p3_collect_v1",
     "gex": {
-      "net_gex": 63727132.82,
-      "abs_gex": 63727132.82,
-      "n_used": 646,
-      "n_skipped": 474,
+      "net_gex": 54660260.14,
+      "abs_gex": 54660260.14,
+      "n_used": 656,
+      "n_skipped": 464,
       "spot_zone": "POSITIVE"
     },
     "coverage": {
       "schema_version": "coverage_v1",
       "total_contracts": 1120,
       "iv_valid": {
-        "VALID": 513,
-        "LOW_LIQUIDITY": 133,
-        "INVALID": 474
+        "VALID": 508,
+        "LOW_LIQUIDITY": 148,
+        "INVALID": 464
       },
-      "strike_coverage_pct": 57.7,
+      "strike_coverage_pct": 58.6,
       "oi_coverage_pct": 99.2,
-      "valid_only_oi_coverage_pct": 84.9,
-      "band_oi_coverage_pct": 99.7,
-      "effective_gex_coverage_pct": 95.2
+      "valid_only_oi_coverage_pct": 84.5,
+      "band_oi_coverage_pct": 99.0,
+      "effective_gex_coverage_pct": 94.4
     },
     "second_order": {
       "schema_version": "second_order_v1",
-      "net_vanna": 8809611.0,
-      "net_charm": 258087404.0,
-      "n_used": 646,
+      "net_vanna": 9266760.0,
+      "net_charm": 374976664.0,
+      "n_used": 656,
       "min_dte": 1,
-      "vanna_gate": true,
+      "vanna_gate": false,
       "charm_gate": true
     },
     "iv_rv": {
-      "atm_iv_near": 0.44884999999999997,
+      "atm_iv_near": 0.5021,
       "rv_5d": 0.2744,
       "rv_20d": 0.3895,
-      "ratio_5d": 1.636,
-      "ratio_20d": 1.152
+      "ratio_5d": 1.83,
+      "ratio_20d": 1.289
     },
     "event_overlap": null,
     "confluence": {
-      "families_in_band": 1,
+      "families_in_band": 2,
       "levels": [
+        {
+          "type": "put_wall",
+          "price": 80.0
+        },
+        {
+          "type": "oi",
+          "price": 80.0
+        },
         {
           "type": "oi",
           "price": 82.0
@@ -128,25 +136,25 @@
     }
   },
   "momentum": {
-    "iv_momentum": 0.359,
-    "iv_momentum_1d": -5.67,
+    "iv_momentum": 0.845,
+    "iv_momentum_1d": -0.345,
     "iv_level": "NORMAL",
-    "iv_rank": 70.4,
-    "skew_momentum": -1.548,
-    "skew": 2.156437974287795,
-    "term_structure_momentum": 0.1764,
-    "pc_ratio": 0.398,
+    "iv_rank": 81.9,
+    "skew_momentum": 3.057,
+    "skew": 6.761843635208659,
+    "term_structure_momentum": 0.0339,
+    "pc_ratio": 0.422,
     "pc_oi_ratio": 0.24757309941520467,
     "oi_flow": "call_building",
-    "price_momentum": -0.0169,
+    "price_momentum": -0.0189,
     "volume_ratio": null,
-    "atm_iv": 0.44884999999999997,
-    "expected_move_pct": 3.38713621912448,
-    "term_ratio": 0.945861646429765
+    "atm_iv": 0.5021,
+    "expected_move_pct": 2.4320019603038467,
+    "term_ratio": 0.803326030671181
   },
   "confirmation": {
     "iv_surge": false,
-    "skew_surge": false,
+    "skew_surge": true,
     "volume_surge": null,
     "put_buy_flow": null,
     "price_break": false
@@ -167,40 +175,40 @@
         "put_delta_oi": 229.0,
         "call_new_oi": 0,
         "put_new_oi": 0,
-        "call_volume": 5896.0,
-        "put_volume": 2348.0,
+        "call_volume": 1419.0,
+        "put_volume": 599.0,
         "has_prev": true,
         "new_listing": false,
         "atm_strike": 82.0,
-        "atm_call_price": 2.3,
-        "atm_put_price": 0.52,
-        "atm_iv": 0.4488,
-        "expmove_pct": 3.45,
-        "activity": "HIGH",
-        "delta_exposure": 77965.0,
+        "atm_call_price": 0.74,
+        "atm_put_price": 1.23,
+        "atm_iv": 0.5021,
+        "expmove_pct": 2.41,
+        "activity": "MEDIUM",
+        "delta_exposure": 18236.0,
         "top_delta_oi": [
           {
             "strike": 85.0,
             "type": "call",
             "delta_oi": 1621,
-            "last_price": 0.79,
-            "notional": 128059.00000000001,
+            "last_price": 0.09,
+            "notional": 14588.999999999998,
             "relevance": "OK",
-            "distance_pct": 3.9,
-            "volume": 3044.0,
-            "magnitude": "HIGH",
-            "r1": 53.25,
+            "distance_pct": 4.1,
+            "volume": 922.0,
+            "magnitude": "MEDIUM",
+            "r1": null,
             "contract_symbol": "GDX261030C00085000"
           },
           {
             "strike": 87.0,
             "type": "call",
             "delta_oi": -538,
-            "last_price": 0.25,
-            "notional": -13450.0,
+            "last_price": 0.07,
+            "notional": -3766.0000000000005,
             "relevance": "OK",
-            "distance_pct": 6.4,
-            "volume": 46.0,
+            "distance_pct": 6.6,
+            "volume": 28.0,
             "magnitude": "MEDIUM",
             "r1": null,
             "contract_symbol": "GDX261030C00087000"
@@ -209,32 +217,18 @@
             "strike": 80.0,
             "type": "put",
             "delta_oi": 270,
-            "last_price": 0.16,
-            "notional": 4320.0,
+            "last_price": 0.49,
+            "notional": 13230.000000000002,
             "relevance": "OK",
-            "distance_pct": -2.2,
-            "volume": 809.0,
-            "magnitude": "HIGH",
-            "r1": 33.37,
+            "distance_pct": -2.0,
+            "volume": 45.0,
+            "magnitude": "MEDIUM",
+            "r1": null,
             "contract_symbol": "GDX261030P00080000"
           }
         ],
         "roll_candidates": [],
-        "significant": [
-          {
-            "strike": 85.0,
-            "type": "call",
-            "delta_oi": 1621,
-            "last_price": 0.79,
-            "notional": 128059.00000000001,
-            "relevance": "OK",
-            "distance_pct": 3.9,
-            "volume": 3044.0,
-            "magnitude": "HIGH",
-            "r1": 53.25,
-            "contract_symbol": "GDX261030C00085000"
-          }
-        ],
+        "significant": [],
         "max_pain": 81.0,
         "call_wall": {
           "strike": 85.0,
@@ -248,7 +242,7 @@
           "fallback_from_remote": {
             "strike": 75.0,
             "oi": 10186.0,
-            "distance_pct": -8.29
+            "distance_pct": -8.11
           }
         }
       },
@@ -263,17 +257,17 @@
         "put_delta_oi": 415.0,
         "call_new_oi": 0,
         "put_new_oi": 0,
-        "call_volume": 320.0,
-        "put_volume": 485.0,
+        "call_volume": 23.0,
+        "put_volume": 169.0,
         "has_prev": true,
         "new_listing": false,
         "atm_strike": 82.0,
-        "atm_call_price": 1.92,
+        "atm_call_price": 1.21,
         "atm_put_price": 1.07,
-        "atm_iv": 0.3632,
-        "expmove_pct": 3.66,
-        "activity": "HIGH",
-        "delta_exposure": -2387.0,
+        "atm_iv": 0.3493,
+        "expmove_pct": 2.79,
+        "activity": "MEDIUM",
+        "delta_exposure": -7295.0,
         "top_delta_oi": [
           {
             "strike": 76.0,
@@ -282,23 +276,23 @@
             "last_price": 0.11,
             "notional": 1650.0,
             "relevance": "OK",
-            "distance_pct": -7.1,
-            "volume": 150.0,
-            "magnitude": "HIGH",
-            "r1": 100.0,
+            "distance_pct": -6.9,
+            "volume": 0.0,
+            "magnitude": "MEDIUM",
+            "r1": null,
             "contract_symbol": "GDX261102P00076000"
           },
           {
             "strike": 80.0,
             "type": "put",
             "delta_oi": 56,
-            "last_price": 0.63,
-            "notional": 3528.0,
+            "last_price": 0.69,
+            "notional": 3864.0,
             "relevance": "OK",
-            "distance_pct": -2.2,
-            "volume": 63.0,
+            "distance_pct": -2.0,
+            "volume": 94.0,
             "magnitude": "HIGH",
-            "r1": 88.89,
+            "r1": 59.57,
             "contract_symbol": "GDX261102P00080000"
           },
           {
@@ -308,29 +302,15 @@
             "last_price": 0.05,
             "notional": 260.0,
             "relevance": "LOW",
-            "distance_pct": -10.7,
-            "volume": 52.0,
-            "magnitude": "MEDIUM",
-            "r1": 100.0,
+            "distance_pct": -10.6,
+            "volume": 0.0,
+            "magnitude": "LOW",
+            "r1": null,
             "contract_symbol": "GDX261102P00073000"
           }
         ],
         "roll_candidates": [],
-        "significant": [
-          {
-            "strike": 76.0,
-            "type": "put",
-            "delta_oi": 150,
-            "last_price": 0.11,
-            "notional": 1650.0,
-            "relevance": "OK",
-            "distance_pct": -7.1,
-            "volume": 150.0,
-            "magnitude": "HIGH",
-            "r1": 100.0,
-            "contract_symbol": "GDX261102P00076000"
-          }
-        ],
+        "significant": [],
         "max_pain": 84.0,
         "call_wall": {
           "strike": 86.0,
@@ -344,7 +324,7 @@
           "fallback_from_remote": {
             "strike": 76.0,
             "oi": 596.0,
-            "distance_pct": -7.07
+            "distance_pct": -6.89
           }
         }
       },
@@ -359,17 +339,17 @@
         "put_delta_oi": 12.0,
         "call_new_oi": 0,
         "put_new_oi": 0,
-        "call_volume": 41.0,
-        "put_volume": 22.0,
+        "call_volume": 6.0,
+        "put_volume": 6.0,
         "has_prev": true,
         "new_listing": false,
         "atm_strike": 82.0,
-        "atm_call_price": 2.33,
+        "atm_call_price": 1.61,
         "atm_put_price": 1.98,
-        "atm_iv": 0.4738,
-        "expmove_pct": 5.27,
-        "activity": "MEDIUM",
-        "delta_exposure": 327.0,
+        "atm_iv": 0.4242,
+        "expmove_pct": 4.4,
+        "activity": "LOW",
+        "delta_exposure": -192.0,
         "top_delta_oi": [
           {
             "strike": 85.0,
@@ -378,10 +358,10 @@
             "last_price": 1.11,
             "notional": 888.0000000000001,
             "relevance": "OK",
-            "distance_pct": 3.9,
-            "volume": 9.0,
-            "magnitude": "HIGH",
-            "r1": 88.89,
+            "distance_pct": 4.1,
+            "volume": 0.0,
+            "magnitude": "MEDIUM",
+            "r1": null,
             "contract_symbol": "GDX261104C00085000"
           },
           {
@@ -391,10 +371,10 @@
             "last_price": 1.0,
             "notional": 500.0,
             "relevance": "OK",
-            "distance_pct": -2.2,
-            "volume": 12.0,
-            "magnitude": "HIGH",
-            "r1": 41.67,
+            "distance_pct": -2.0,
+            "volume": 0.0,
+            "magnitude": "MEDIUM",
+            "r1": null,
             "contract_symbol": "GDX261104P00080000"
           },
           {
@@ -404,10 +384,10 @@
             "last_price": 2.16,
             "notional": 864.0,
             "relevance": "OK",
-            "distance_pct": 1.5,
-            "volume": 7.0,
-            "magnitude": "MEDIUM",
-            "r1": 57.14,
+            "distance_pct": 1.7,
+            "volume": 0.0,
+            "magnitude": "LOW",
+            "r1": null,
             "contract_symbol": "GDX261104C00083000"
           }
         ],
@@ -436,17 +416,17 @@
         "put_delta_oi": -22.0,
         "call_new_oi": 0,
         "put_new_oi": 0,
-        "call_volume": 3524.0,
-        "put_volume": 314.0,
+        "call_volume": 84.0,
+        "put_volume": 507.0,
         "has_prev": true,
         "new_listing": false,
         "atm_strike": 82.0,
-        "atm_call_price": 2.95,
-        "atm_put_price": 1.97,
-        "atm_iv": 0.4392,
-        "expmove_pct": 6.02,
-        "activity": "MEDIUM",
-        "delta_exposure": -15087.0,
+        "atm_call_price": 2.0,
+        "atm_put_price": 2.6,
+        "atm_iv": 0.4471,
+        "expmove_pct": 5.64,
+        "activity": "LOW",
+        "delta_exposure": -6313.0,
         "top_delta_oi": [
           {
             "strike": 85.0,
@@ -455,10 +435,10 @@
             "last_price": 1.72,
             "notional": -137256.0,
             "relevance": "OK",
-            "distance_pct": 3.9,
-            "volume": 2127.0,
+            "distance_pct": 4.1,
+            "volume": 0.0,
             "magnitude": "HIGH",
-            "r1": 37.52,
+            "r1": null,
             "contract_symbol": "GDX261106C00085000"
           },
           {
@@ -468,21 +448,21 @@
             "last_price": 0.16,
             "notional": 11536.0,
             "relevance": "LOW",
-            "distance_pct": 16.2,
-            "volume": 751.0,
+            "distance_pct": 16.4,
+            "volume": 5.0,
             "magnitude": "HIGH",
-            "r1": 96.01,
+            "r1": null,
             "contract_symbol": "GDX261106C00095000"
           },
           {
             "strike": 82.0,
             "type": "put",
             "delta_oi": -98,
-            "last_price": 1.97,
-            "notional": -19306.0,
+            "last_price": 2.6,
+            "notional": -25480.0,
             "relevance": "OK",
-            "distance_pct": 0.3,
-            "volume": 10.0,
+            "distance_pct": 0.5,
+            "volume": 2.0,
             "magnitude": "MEDIUM",
             "r1": null,
             "contract_symbol": "GDX261106P00082000"
@@ -508,15 +488,15 @@
     "spy_return": null,
     "qqq_return": null,
     "sector_relative": null,
-    "vix": 17.020000457763672,
+    "vix": 16.739999771118164,
     "vol_environment": {
       "vix": {
-        "value": 17.020000457763672,
-        "timestamp": "2026-10-29T09:08:42-04:00",
+        "value": 16.739999771118164,
+        "timestamp": "2026-10-29T10:20:34-04:00",
         "basis": "intraday",
         "prior_close": 16.90999984741211,
-        "change_1d_pct": 0.65,
-        "change_5d_pct": -10.56
+        "change_1d_pct": -1.01,
+        "change_5d_pct": -12.03
       },
       "regime": {
         "label": "NORMAL",
@@ -524,10 +504,10 @@
         "classification_type": "descriptive",
         "calibration_status": "uncalibrated",
         "inputs": {
-          "vix_level": 17.020000457763672,
-          "vix_1d_pct": 0.65,
-          "vix_5d_pct": -10.56,
-          "vix_percentile_20d": 65.0,
+          "vix_level": 16.739999771118164,
+          "vix_1d_pct": -1.01,
+          "vix_5d_pct": -12.03,
+          "vix_percentile_20d": 55.0,
           "vix_term_structure": null
         },
         "evidence_completeness": "partial",
@@ -544,9 +524,9 @@
         "display": false
       }
     },
-    "day_high": 84.0,
-    "day_low": 82.0,
-    "day_open": 82.77999877929688,
+    "day_high": 81.75,
+    "day_low": 80.97000122070312,
+    "day_open": 81.82499694824219,
     "max_pain": 81.0,
     "max_pain_monthly": 85.0,
     "notes": null
@@ -564,5 +544,5 @@
   },
   "zero_dte": null,
   "data_as_of": "2026-10-29",
-  "snapshot_hash": "d3eadef0900fabf661723ed3a7ddc644234c06f2eb6ad0188bc87d9c252ac878"
+  "snapshot_hash": "e4e3e775d961ec2f823005065238403d2539863dc7bd46c98f966cbc08d6f42f"
 }
