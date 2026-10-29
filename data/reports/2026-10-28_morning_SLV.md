@@ -2,7 +2,7 @@
 
 📊 市场环境
 
-SPY $770.35 ｜ QQQ $725.61
+SPY $772.31 ｜ QQQ $725.61
 VIX 17.36 ↓0.9%（5D +4.1%） ｜ Vol Regime: NORMAL
 CNN 恐惧贪婪 35.9（fear）
 全市场 P/C OI（OCC 结算 08-28，2023-06 以来）: Equity 0.75（分位 12%） ｜ Index 0.94（分位 11%）
@@ -17,8 +17,8 @@ CNN 恐惧贪婪 35.9（fear）
 - 周三 10-28 14:00　【高】美联储议息会议 Statement　实际 待公布　✅ 今日已公布
 - 周三 10-28 14:00　【高】美联储利率决议 Decision　预测 4 ｜ 实际 4 ｜ 前值 4　✅ 今日已公布
 - 周三 10-28 14:30　【高】Fed Press Conference　实际 待公布　✅ 今日已公布
-- 周四 10-29 08:30　【高】GDP 增速 Rate QoQ Adv　预测 3.2 ｜ 实际 待公布 ｜ 前值 2.2
 - 周四 10-29 08:30　【高】PCE 物价 Price Index MoM　预测 0.3 ｜ 实际 待公布 ｜ 前值 0.2
+- 周四 10-29 08:30　【高】GDP 增速 Rate QoQ Adv　预测 3.2 ｜ 实际 待公布 ｜ 前值 2.2
 - 周四 10-29 08:30　【高】Personal Income MoM　预测 0.3 ｜ 实际 待公布 ｜ 前值 0.2
 - 周四 10-29 08:30　【高】Personal Spending MoM　预测 0.6 ｜ 实际 待公布 ｜ 前值 0.9
 
@@ -99,7 +99,7 @@ Top ΔOI: C 50 +467
 11-06（MEDIUM △）Top ΔOI: 49C -2,323 ｜ 44P +502
 11-06（MEDIUM △）仓位参考: Max Pain 52 ｜ Put Wall 50（+2.8%，弱）（OI 2.2k）
 
-📅 事件差分（观察，非因果）: 10-30（2D）ATM IV 45.0% vs 11-02 35.1%（差 +9.9pp）——覆盖 美联储议息会议 Statement、美联储利率决议 Decision、Fed Press Conference、GDP 增速 Rate QoQ Adv、PCE 物价 Price Index MoM、Personal Income MoM、Personal Spending MoM
+📅 事件差分（观察，非因果）: 10-30（2D）ATM IV 45.0% vs 11-02 35.1%（差 +9.9pp）——覆盖 美联储议息会议 Statement、美联储利率决议 Decision、Fed Press Conference、PCE 物价 Price Index MoM、GDP 增速 Rate QoQ Adv、Personal Income MoM、Personal Spending MoM
    符合'覆盖事件的期权溢价更高'（美联储 IFDP 1376 实证；单日截面，需连续多日确认）
 
 数据质量: 行情 A ｜ 期权结构 A ｜ 流向 C ｜ 做市商机制 C —— Flow 相关层（Activity 连续性、做市商机制解读）置信度受限。

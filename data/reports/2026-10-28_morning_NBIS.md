@@ -2,7 +2,7 @@
 
 📊 市场环境
 
-SPY $770.28 ｜ QQQ $725.61
+SPY $772.31 ｜ QQQ $725.61
 VIX 17.36 ↓0.9%（5D +4.1%） ｜ Vol Regime: NORMAL
 CNN 恐惧贪婪 35.9（fear）
 全市场 P/C OI（OCC 结算 08-28，2023-06 以来）: Equity 0.75（分位 12%） ｜ Index 0.94（分位 11%）
@@ -17,13 +17,13 @@ CNN 恐惧贪婪 35.9（fear）
 - 周三 10-28 14:00　【高】美联储议息会议 Statement　实际 待公布　✅ 今日已公布
 - 周三 10-28 14:00　【高】美联储利率决议 Decision　预测 4 ｜ 实际 4 ｜ 前值 4　✅ 今日已公布
 - 周三 10-28 14:30　【高】Fed Press Conference　实际 待公布　✅ 今日已公布
-- 周四 10-29 08:30　【高】GDP 增速 Rate QoQ Adv　预测 3.2 ｜ 实际 待公布 ｜ 前值 2.2
 - 周四 10-29 08:30　【高】PCE 物价 Price Index MoM　预测 0.3 ｜ 实际 待公布 ｜ 前值 0.2
+- 周四 10-29 08:30　【高】GDP 增速 Rate QoQ Adv　预测 3.2 ｜ 实际 待公布 ｜ 前值 2.2
 - 周四 10-29 08:30　【高】Personal Income MoM　预测 0.3 ｜ 实际 待公布 ｜ 前值 0.2
 - 周四 10-29 08:30　【高】Personal Spending MoM　预测 0.6 ｜ 实际 待公布 ｜ 前值 0.9
 
 🔍 重点速览
-🔴 **事件差分**: 10-30（2D）ATM IV 110.4% vs 11-06 95.2%（差 +15.2pp），覆盖 美联储议息会议 Statement、美联储利率决议 Decision、Fed Press Conference、GDP 增速 Rate QoQ Adv、PCE 物价 Price Index MoM、Personal Income MoM、Personal Spending MoM
+🔴 **事件差分**: 10-30（2D）ATM IV 110.4% vs 11-06 95.2%（差 +15.2pp），覆盖 美联储议息会议 Statement、美联储利率决议 Decision、Fed Press Conference、PCE 物价 Price Index MoM、GDP 增速 Rate QoQ Adv、Personal Income MoM、Personal Spending MoM
    ⇒ 覆盖【高】事件的期限隐含波动显著更高（美联储 IFDP 1376 实证；单日截面，需连续多日确认；观察，非预测）
 🟡 **近现价集中开仓**: 11-06 170C ΔOI +895（距现价 -1.7%）
    ⇒ 高等级 OI 变化且贴近现价；方向 Unknown（买开/卖开不可观测）
@@ -85,7 +85,7 @@ Top ΔOI: C 195 +965 ｜ C 187 +689
 11-20（MEDIUM △）Top ΔOI: 125P +808
 11-20（MEDIUM △）仓位参考: Max Pain 195 ｜ Call Wall 180（+4.1%，弱）（OI 5.5k） ｜ Put Wall 180（+4.1%，弱）（OI 3.2k）
 
-📅 事件差分（观察，非因果）: 10-30（2D）ATM IV 110.4% vs 11-06 95.2%（差 +15.2pp）——覆盖 美联储议息会议 Statement、美联储利率决议 Decision、Fed Press Conference、GDP 增速 Rate QoQ Adv、PCE 物价 Price Index MoM、Personal Income MoM、Personal Spending MoM
+📅 事件差分（观察，非因果）: 10-30（2D）ATM IV 110.4% vs 11-06 95.2%（差 +15.2pp）——覆盖 美联储议息会议 Statement、美联储利率决议 Decision、Fed Press Conference、PCE 物价 Price Index MoM、GDP 增速 Rate QoQ Adv、Personal Income MoM、Personal Spending MoM
    符合'覆盖事件的期权溢价更高'（美联储 IFDP 1376 实证；单日截面，需连续多日确认）
 
 数据质量: 行情 A ｜ 期权结构 A ｜ 流向 C ｜ 做市商机制 C —— Flow 相关层（Activity 连续性、做市商机制解读）置信度受限。
