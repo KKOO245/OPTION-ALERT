@@ -1,14 +1,14 @@
 {
   "schema_version": "snapshot_v1",
   "data_version": "snapshot_v1",
-  "created_at": "2026-10-30T09:08:44-04:00",
+  "created_at": "2026-10-30T10:20:36-04:00",
   "session": "morning",
   "source": "cboe",
   "ticker": "XBI",
-  "spot": 156.8,
+  "spot": 156.705,
   "regime": {
     "version": "regimes_v1",
-    "trend": "RANGE",
+    "trend": "DOWN",
     "gamma": "NEGATIVE",
     "iv_level": "HIGH",
     "age": 1,
@@ -17,23 +17,26 @@
   "location": {
     "price_location": "below_flip",
     "flip_levels": [
-      158.8377
+      162.6425
     ],
-    "flip_status": "CONDITIONAL",
+    "flip_status": "PRIMARY",
     "flip_candidates": [
-      158.8377
+      162.6425
     ],
-    "flip_primary": null,
-    "flip_reason": "full_chain_reprice_gate_not_met",
+    "flip_primary": 162.6425,
+    "flip_reason": "full_chain_reprice_gate_pass",
     "flip_source": "full_chain",
-    "spot_vs_primary_flip": null,
+    "spot_vs_primary_flip": {
+      "distance_pct": -3.65,
+      "side": "BELOW"
+    },
     "call_wall": 165.0,
     "put_wall": null,
     "walls_v1": {
       "call": {
         "strike": 165.0,
         "oi": 7532.0,
-        "distance_pct": 5.23,
+        "distance_pct": 5.29,
         "dominance": 1.84,
         "strength": "HIGH",
         "classification": "PRIMARY"
@@ -41,7 +44,7 @@
       "put": {
         "strike": 130.0,
         "oi": 18314.0,
-        "distance_pct": -17.09,
+        "distance_pct": -17.04,
         "dominance": 1.0,
         "strength": "HIGH",
         "classification": "REMOTE"
@@ -70,51 +73,46 @@
   "p3": {
     "schema_version": "p3_collect_v1",
     "gex": {
-      "net_gex": -12992403.05,
-      "abs_gex": 12992403.05,
-      "n_used": 442,
-      "n_skipped": 340,
+      "net_gex": -17341974.67,
+      "abs_gex": 17341974.67,
+      "n_used": 476,
+      "n_skipped": 306,
       "spot_zone": "NEGATIVE"
     },
     "coverage": {
       "schema_version": "coverage_v1",
       "total_contracts": 782,
       "iv_valid": {
-        "VALID": 347,
-        "LOW_LIQUIDITY": 95,
-        "INVALID": 340
+        "VALID": 369,
+        "LOW_LIQUIDITY": 107,
+        "INVALID": 306
       },
-      "strike_coverage_pct": 56.5,
-      "oi_coverage_pct": 98.0,
-      "valid_only_oi_coverage_pct": 56.5,
-      "band_oi_coverage_pct": 97.6,
-      "effective_gex_coverage_pct": 78.9
+      "strike_coverage_pct": 60.9,
+      "oi_coverage_pct": 99.6,
+      "valid_only_oi_coverage_pct": 53.8,
+      "band_oi_coverage_pct": 99.6,
+      "effective_gex_coverage_pct": 80.3
     },
     "second_order": {
       "schema_version": "second_order_v1",
-      "net_vanna": 4592954.0,
-      "net_charm": 194557717.0,
-      "n_used": 442,
+      "net_vanna": 4109653.0,
+      "net_charm": 259158915.0,
+      "n_used": 476,
       "min_dte": 1,
       "vanna_gate": true,
       "charm_gate": true
     },
     "iv_rv": {
-      "atm_iv_near": 0.44884999999999997,
+      "atm_iv_near": 0.59815,
       "rv_5d": 0.1874,
       "rv_20d": 0.3064,
-      "ratio_5d": 2.395,
-      "ratio_20d": 1.465
+      "ratio_5d": 3.192,
+      "ratio_20d": 1.952
     },
     "event_overlap": null,
     "confluence": {
-      "families_in_band": 1,
-      "levels": [
-        {
-          "type": "gamma_flip",
-          "price": 158.84
-        }
-      ]
+      "families_in_band": 0,
+      "levels": []
     },
     "event_flag": {
       "flags": [
@@ -125,24 +123,24 @@
     }
   },
   "momentum": {
-    "iv_momentum": 1.309,
-    "iv_momentum_1d": -0.04,
+    "iv_momentum": 3.147,
+    "iv_momentum_1d": 14.89,
     "iv_level": "HIGH",
-    "iv_rank": 93.1,
-    "skew_momentum": -2.91,
-    "skew": 6.300486996498222,
-    "term_structure_momentum": -0.0288,
-    "pc_ratio": 4.803,
+    "iv_rank": 98.8,
+    "skew_momentum": -3.76,
+    "skew": 5.4503716344330595,
+    "term_structure_momentum": -0.2259,
+    "pc_ratio": 0.165,
     "pc_oi_ratio": 5.090542009628824,
     "oi_flow": "call_building",
-    "price_momentum": -0.0045,
+    "price_momentum": -0.0051,
     "volume_ratio": null,
-    "atm_iv": 0.44884999999999997,
-    "expected_move_pct": 1.954719387755102,
-    "term_ratio": 0.7256321711039323
+    "atm_iv": 0.59815,
+    "expected_move_pct": 1.3145719664337447,
+    "term_ratio": 0.5285463512496865
   },
   "confirmation": {
-    "iv_surge": false,
+    "iv_surge": true,
     "skew_surge": false,
     "volume_surge": null,
     "put_buy_flow": null,
@@ -164,17 +162,17 @@
         "put_delta_oi": 1116.0,
         "call_new_oi": 0,
         "put_new_oi": 0,
-        "call_volume": 1348.0,
-        "put_volume": 1741.0,
+        "call_volume": 25.0,
+        "put_volume": 3128.0,
         "has_prev": true,
         "new_listing": false,
         "atm_strike": 157.0,
         "atm_call_price": 3.44,
         "atm_put_price": 3.85,
-        "atm_iv": 0.3357,
+        "atm_iv": 0.338,
         "expmove_pct": 4.65,
         "activity": "HIGH",
-        "delta_exposure": -8547.0,
+        "delta_exposure": -12029.0,
         "top_delta_oi": [
           {
             "strike": 147.0,
@@ -183,10 +181,10 @@
             "last_price": 0.4,
             "notional": 11200.0,
             "relevance": "OK",
-            "distance_pct": -6.3,
-            "volume": 400.0,
-            "magnitude": "HIGH",
-            "r1": 70.0,
+            "distance_pct": -6.2,
+            "volume": 0.0,
+            "magnitude": "MEDIUM",
+            "r1": null,
             "contract_symbol": "XBI261106P00147000"
           },
           {
@@ -197,9 +195,9 @@
             "notional": 36046.0,
             "relevance": "OK",
             "distance_pct": -2.7,
-            "volume": 280.0,
-            "magnitude": "HIGH",
-            "r1": 96.07,
+            "volume": 0.0,
+            "magnitude": "MEDIUM",
+            "r1": null,
             "contract_symbol": "XBI261106P00152500"
           },
           {
@@ -209,10 +207,10 @@
             "last_price": 2.18,
             "notional": 43382.00000000001,
             "relevance": "OK",
-            "distance_pct": 1.4,
-            "volume": 237.0,
-            "magnitude": "HIGH",
-            "r1": 83.97,
+            "distance_pct": 1.5,
+            "volume": 0.0,
+            "magnitude": "MEDIUM",
+            "r1": null,
             "contract_symbol": "XBI261106C00159000"
           }
         ],
@@ -241,29 +239,29 @@
         "put_delta_oi": 144.0,
         "call_new_oi": 0.0,
         "put_new_oi": 0.0,
-        "call_volume": 523.0,
-        "put_volume": 172.0,
+        "call_volume": 11.0,
+        "put_volume": 2.0,
         "has_prev": true,
         "new_listing": false,
         "atm_strike": 157.0,
         "atm_call_price": 4.93,
         "atm_put_price": 12.76,
-        "atm_iv": 0.3363,
-        "expmove_pct": 11.28,
-        "activity": "HIGH",
-        "delta_exposure": 14458.0,
+        "atm_iv": 0.3452,
+        "expmove_pct": 11.29,
+        "activity": "MEDIUM",
+        "delta_exposure": 13189.0,
         "top_delta_oi": [
           {
             "strike": 158.0,
             "type": "call",
             "delta_oi": 171,
-            "last_price": 3.55,
-            "notional": 60704.99999999999,
+            "last_price": 4.29,
+            "notional": 73359.0,
             "relevance": "OK",
             "distance_pct": 0.8,
-            "volume": 189.0,
-            "magnitude": "HIGH",
-            "r1": 90.48,
+            "volume": 1.0,
+            "magnitude": "MEDIUM",
+            "r1": null,
             "contract_symbol": "XBI261113C00158000"
           },
           {
@@ -273,10 +271,10 @@
             "last_price": 2.33,
             "notional": 20271.0,
             "relevance": "OK",
-            "distance_pct": -1.8,
-            "volume": 89.0,
-            "magnitude": "HIGH",
-            "r1": 97.75,
+            "distance_pct": -1.7,
+            "volume": 0.0,
+            "magnitude": "MEDIUM",
+            "r1": null,
             "contract_symbol": "XBI261113P00154000"
           },
           {
@@ -287,28 +285,14 @@
             "notional": 11968.0,
             "relevance": "OK",
             "distance_pct": 4.0,
-            "volume": 70.0,
-            "magnitude": "HIGH",
-            "r1": 91.43,
+            "volume": 0.0,
+            "magnitude": "MEDIUM",
+            "r1": null,
             "contract_symbol": "XBI261113C00163000"
           }
         ],
         "roll_candidates": [],
-        "significant": [
-          {
-            "strike": 158.0,
-            "type": "call",
-            "delta_oi": 171,
-            "last_price": 3.55,
-            "notional": 60704.99999999999,
-            "relevance": "OK",
-            "distance_pct": 0.8,
-            "volume": 189.0,
-            "magnitude": "HIGH",
-            "r1": 90.48,
-            "contract_symbol": "XBI261113C00158000"
-          }
-        ],
+        "significant": [],
         "max_pain": 153.0,
         "call_wall": {
           "strike": 160.0,
@@ -322,7 +306,7 @@
           "fallback_from_remote": {
             "strike": 140.0,
             "oi": 416.0,
-            "distance_pct": -10.71
+            "distance_pct": -10.66
           }
         }
       },
@@ -337,29 +321,29 @@
         "put_delta_oi": 1636.0,
         "call_new_oi": 0,
         "put_new_oi": 0,
-        "call_volume": 5315.0,
-        "put_volume": 3449.0,
+        "call_volume": 1641.0,
+        "put_volume": 10.0,
         "has_prev": true,
         "new_listing": false,
         "atm_strike": 157.0,
         "atm_call_price": 5.6,
         "atm_put_price": 4.5,
-        "atm_iv": 0.3439,
-        "expmove_pct": 6.44,
+        "atm_iv": 0.3446,
+        "expmove_pct": 6.45,
         "activity": "HIGH",
-        "delta_exposure": -2835.0,
+        "delta_exposure": -6730.0,
         "top_delta_oi": [
           {
             "strike": 170.0,
             "type": "call",
             "delta_oi": 1155,
-            "last_price": 1.4,
-            "notional": 161700.0,
+            "last_price": 1.28,
+            "notional": 147840.0,
             "relevance": "OK",
-            "distance_pct": 8.4,
-            "volume": 1440.0,
+            "distance_pct": 8.5,
+            "volume": 111.0,
             "magnitude": "HIGH",
-            "r1": 80.21,
+            "r1": null,
             "contract_symbol": "XBI261120C00170000"
           },
           {
@@ -369,7 +353,7 @@
             "last_price": 3.0,
             "notional": 149700.0,
             "relevance": "OK",
-            "distance_pct": 3.3,
+            "distance_pct": 3.4,
             "volume": 511.0,
             "magnitude": "HIGH",
             "r1": 97.65,
@@ -382,10 +366,10 @@
             "last_price": 2.55,
             "notional": 111180.0,
             "relevance": "OK",
-            "distance_pct": -3.7,
-            "volume": 509.0,
-            "magnitude": "HIGH",
-            "r1": 85.66,
+            "distance_pct": -3.6,
+            "volume": 0.0,
+            "magnitude": "MEDIUM",
+            "r1": null,
             "contract_symbol": "XBI261120P00151000"
           }
         ],
@@ -404,7 +388,7 @@
           "fallback_from_remote": {
             "strike": 145.0,
             "oi": 7588.0,
-            "distance_pct": -7.53
+            "distance_pct": -7.47
           }
         }
       },
@@ -419,17 +403,17 @@
         "put_delta_oi": 105.0,
         "call_new_oi": 0,
         "put_new_oi": 0,
-        "call_volume": 34.0,
-        "put_volume": 190.0,
+        "call_volume": 9.0,
+        "put_volume": 0.0,
         "has_prev": true,
         "new_listing": false,
         "atm_strike": 157.0,
-        "atm_call_price": 5.82,
+        "atm_call_price": 6.25,
         "atm_put_price": 4.8,
-        "atm_iv": 0.3257,
-        "expmove_pct": 6.77,
-        "activity": "HIGH",
-        "delta_exposure": -6386.0,
+        "atm_iv": 0.3161,
+        "expmove_pct": 7.05,
+        "activity": "MEDIUM",
+        "delta_exposure": -6646.0,
         "top_delta_oi": [
           {
             "strike": 159.0,
@@ -438,10 +422,10 @@
             "last_price": 5.4,
             "notional": 28620.000000000004,
             "relevance": "OK",
-            "distance_pct": 1.4,
-            "volume": 53.0,
-            "magnitude": "MEDIUM",
-            "r1": 100.0,
+            "distance_pct": 1.5,
+            "volume": 0.0,
+            "magnitude": "LOW",
+            "r1": null,
             "contract_symbol": "XBI261127P00159000"
           },
           {
@@ -451,10 +435,10 @@
             "last_price": 10.45,
             "notional": 55384.99999999999,
             "relevance": "OK",
-            "distance_pct": 6.8,
-            "volume": 53.0,
-            "magnitude": "MEDIUM",
-            "r1": 100.0,
+            "distance_pct": 6.9,
+            "volume": 0.0,
+            "magnitude": "LOW",
+            "r1": null,
             "contract_symbol": "XBI261127P00167500"
           },
           {
@@ -464,10 +448,10 @@
             "last_price": 1.99,
             "notional": 1393.0,
             "relevance": "OK",
-            "distance_pct": 8.4,
-            "volume": 16.0,
-            "magnitude": "MEDIUM",
-            "r1": 43.75,
+            "distance_pct": 8.5,
+            "volume": 0.0,
+            "magnitude": "LOW",
+            "r1": null,
             "contract_symbol": "XBI261127C00170000"
           }
         ],
@@ -481,7 +465,7 @@
           "fallback_from_remote": {
             "strike": 167.5,
             "oi": 102.0,
-            "distance_pct": 6.82
+            "distance_pct": 6.89
           }
         },
         "put_wall": {
@@ -496,15 +480,15 @@
     "spy_return": null,
     "qqq_return": null,
     "sector_relative": null,
-    "vix": 18.65999984741211,
+    "vix": 18.770000457763672,
     "vol_environment": {
       "vix": {
-        "value": 18.65999984741211,
-        "timestamp": "2026-10-30T09:08:44-04:00",
+        "value": 18.770000457763672,
+        "timestamp": "2026-10-30T10:20:36-04:00",
         "basis": "intraday",
         "prior_close": 17.200000762939453,
-        "change_1d_pct": 8.49,
-        "change_5d_pct": -4.06
+        "change_1d_pct": 9.13,
+        "change_5d_pct": -3.5
       },
       "regime": {
         "label": "NORMAL",
@@ -512,9 +496,9 @@
         "classification_type": "descriptive",
         "calibration_status": "uncalibrated",
         "inputs": {
-          "vix_level": 18.65999984741211,
-          "vix_1d_pct": 8.49,
-          "vix_5d_pct": -4.06,
+          "vix_level": 18.770000457763672,
+          "vix_1d_pct": 9.13,
+          "vix_5d_pct": -3.5,
           "vix_percentile_20d": 85.0,
           "vix_term_structure": null
         },
@@ -532,9 +516,9 @@
         "display": false
       }
     },
-    "day_high": 160.2899932861328,
-    "day_low": 156.42999267578125,
-    "day_open": 157.63999938964844,
+    "day_high": 159.75999450683594,
+    "day_low": 155.22000122070312,
+    "day_open": 156.67999267578125,
     "max_pain": 155.0,
     "max_pain_monthly": 158.0,
     "notes": null
@@ -556,38 +540,38 @@
     "dte": 0,
     "call_oi": 12878,
     "put_oi": 65556,
-    "call_volume": 2518,
-    "put_volume": 12095,
+    "call_volume": 200,
+    "put_volume": 7569,
     "atm_strike": 157.0,
-    "atm_call_price": 1.67,
-    "atm_put_price": 1.395,
-    "atm_iv": 0.44884999999999997,
-    "expected_move_pct": 1.954719387755102,
+    "atm_call_price": 1.05,
+    "atm_put_price": 1.01,
+    "atm_iv": 0.59815,
+    "expected_move_pct": 1.3145719664337447,
     "max_pain": 155.0,
     "top_delta_oi": [
       {
         "strike": 158.0,
         "type": "put",
         "delta_oi": 1419,
-        "last_price": 1.675,
+        "last_price": 1.195,
         "distance_pct": 0.8
       },
       {
         "strike": 157.0,
         "type": "put",
         "delta_oi": 645,
-        "last_price": 1.395,
-        "distance_pct": 0.1
+        "last_price": 1.01,
+        "distance_pct": 0.2
       },
       {
         "strike": 162.0,
         "type": "call",
         "delta_oi": 591,
-        "last_price": 0.175,
-        "distance_pct": 3.3
+        "last_price": 0.17,
+        "distance_pct": 3.4
       }
     ]
   },
   "data_as_of": "2026-10-30",
-  "snapshot_hash": "714b03fb6eeb20afc03064035d005221bbee95087f7ef0313f76aa5ae2ec584a"
+  "snapshot_hash": "f4fdf3023644308157b72a2c33c293a0ec430e4429742cf5d7bd1b692a30e93f"
 }
