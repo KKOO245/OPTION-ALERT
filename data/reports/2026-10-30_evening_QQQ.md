@@ -1,4 +1,4 @@
-# 期权晚报 2026-10-30（快照 16:40 ET）
+# 期权晚报 2026-10-30（快照 21:00 ET）
 
 📊 市场环境
 
@@ -16,9 +16,7 @@ CNN 恐惧贪婪 26.2（fear）
 ## 📅 本周重要美国宏观日历（仅【高】，美东时间）
 - 本周剩余时间暂无【高】重要性美国数据公布
 
-🔍 重点速览
-🟡 **近现价集中开仓**: 11-04 700P ΔOI +1,307（距现价 +1.4%）
-   ⇒ 高等级 OI 变化且贴近现价；方向 Unknown（买开/卖开不可观测）
+🔍 重点速览: 今日无重点项（机械检查 highlight_v1）
 
 📌 周末待办：
 • 每周同步：cd D:\git\Option Alert-数据储存；git pull
@@ -31,59 +29,47 @@ CNN 恐惧贪婪 26.2（fear）
 QQQ: 今开 697.13 → 收盘 690.49（-1.0%） ｜ 今日高 698.63 ｜ 低 683.45 ｜ 昨收 715.34 → 收盘 690.49（-3.5%）
 Target 等待验证: 3D 收盘涨跌 <= -0.02（3D） — PENDING（评估日 ≈ 2026-11-04，窗口结束前不做对错判定）
 
-Options: P/C成交量 0.85 | OI比 1.70 | ATM IV 29.7% | Skew -0.8pp | Term 0.82 | ExpMove ±1.5%（近端） | Rank 90%
-量化视角： IV 历史高位（Rank 90%，期权偏贵）｜期限结构倒挂（Term 0.82，近月 IV 高于远月）｜Put 保护异常便宜（Skew -0.8pp，Put IV < Call IV）｜当日成交与存量接近均衡——观察点，非方向信号
-   ⇒ Put/Call Volume: 0.85×（Put 与 Call 成交量接近）→ 方向 Unknown
-   ⇒ Put/Call OI: 1.70×（存量 Put 仓位高于 Call）→ 存量 Put-dominant
+Options: P/C成交量 0.82 | OI比 1.63 | ATM IV 20.4% | Skew 2.5pp | Term 1.19 | ExpMove ±1.5%（近端） | Rank 62%
+量化视角： IV 中性（Rank 62%）｜期限结构正常偏陡（Term 1.19）｜保护溢价中性（Skew 2.5pp）｜当日成交与存量接近均衡——观察点，非方向信号
+   ⇒ Put/Call Volume: 0.82×（Put 与 Call 成交量接近）→ 方向 Unknown
+   ⇒ Put/Call OI: 1.63×（存量 Put 仓位高于 Call）→ 存量 Put-dominant
    ⇒ 当日成交 vs 存量仓位：当日成交接近均衡，存量Put-dominant
-   ⇒ 历史分位（15年 lambdaclass 全链口径）: GEX 8% ｜ P/C OI(近端) 56%
-量化视角的组合解读： Gamma 异常偏负（GEX 分位 8%）｜近端持仓结构中性（P/C OI 分位 56%）——观察点，非方向信号
+   ⇒ 历史分位（15年 lambdaclass 全链口径）: GEX 11% ｜ P/C OI(近端) 50%
+量化视角的组合解读： Gamma 异常偏负（GEX 分位 11%）｜近端持仓结构中性（P/C OI 分位 50%）——观察点，非方向信号
    ExpMove 期限化（expmove_v1）: 11-02（3D）±1.5% ｜ 11-03（4D）±2.0% ｜ 11-04（5D）±2.6% ｜ 11-05（6D）±2.9%
-   ⇒ IV–VIX Spread: +10.2pp*（*近月 ATM IV − VIX；期限未对齐，仅作相对波动率 Proxy，不直接代表期权定价贵/便宜）
+   ⇒ IV–VIX Spread: +1.0pp*（*近月 ATM IV − VIX；期限未对齐，仅作相对波动率 Proxy，不直接代表期权定价贵/便宜）
 🔧 结构（未验证研究层：Mechanism Scenario A/B——OI 开仓方向不可观测）
-Gamma Regime: NEGATIVE（模型分类） | GEX(存量) -924,064,687 | GEX Change vs 上次快照 362,619,183 | Flip: Primary Flip: 725.29（PRIMARY，全链重定价 + 覆盖达标）
-🔎 测量完整性: GEX 符号契约 gex_sign_v1（Model A: Call+ / Put−）｜ Gamma 口径 全链重定价 ｜ Effective GEX 覆盖: 82%（带内） ｜ IV 有效性: VALID 2459 / LOW 290 / INVALID 1083
+Gamma Regime: NEGATIVE（模型分类） | GEX(存量) -765,828,289 | GEX Change vs 上次快照 520,855,581 | Flip: Primary Flip: 725.92（PRIMARY，全链重定价 + 覆盖达标）
+🔎 测量完整性: GEX 符号契约 gex_sign_v1（Model A: Call+ / Put−）｜ Gamma 口径 全链重定价 ｜ Effective GEX 覆盖: 100%（带内） ｜ IV 有效性: VALID 2381 / LOW 118 / INVALID 879
    ⇒ 全链负Gamma，波动易被放大（模型层）
-结构观察区: Primary Flip 725.29（全链重定价，覆盖 82%）
-Put Wall 680（弱结构｜现价高于该位 1.5%）
+结构观察区: Primary Flip 725.92（全链重定价，覆盖 100%）
+Put Wall 680（现价高于该位 1.5%）
 最近结构参考: Put Wall 680（现价高于该位 1.5%）
-量化视角： 负 Gamma（9.24亿，历史分位偏负区，比 92% 的交易日更负）｜负 Gamma 缓解（+3.63亿）｜现价位于 Flip 下方 4.80%——观察点，非方向信号
+量化视角： 负 Gamma（7.66亿，历史分位偏负区，比 89% 的交易日更负）｜负 Gamma 缓解（+5.21亿）｜现价位于 Flip 下方 4.88%——观察点，非方向信号
 🧭 结构解读（全部依赖上方假设）
-• 支撑/压力参考：下方 680（Put Wall，弱结构）；上方 716（MaxPain，仅结算参考）。
-• Gamma 区域：切换参考 725（全链重定价，覆盖 82%）。
+• 支撑/压力参考：下方 680（Put Wall）；上方 715（MaxPain，仅结算参考）。
+• Gamma 区域：切换参考 726（全链重定价，覆盖 100%）。
 • 做市商（条件机制）：若 Scenario A + 负 Gamma 成立，跌破关键位下方可能对应顺周期卖出压力增加；实际做市商对冲流量不可观测。Scenario B → 方向相反。不进入方向决策。
 • 失效参考：跌破关键位结构参考失效（结构性参考，非预测）。
 🔺 Activity（事实层，方向 Unknown）
 - 无中高变动事件（全部低等级）
 📆 Forward Expiration Structure
 
-11-02  C +23.7k / P +50.8k ｜ Activity HIGH ｜ 3D
-11-03  C +6.6k / P +39.1k ｜ Activity HIGH ｜ 4D
-11-04  C +5.8k / P +8.9k ｜ Activity HIGH ｜ 5D
-11-05  C +3.3k / P +4.9k ｜ Activity HIGH ｜ 6D
+11-02  C +0 / P +0 ｜ Activity LOW ｜ 3D
+11-03  C +0 / P +0 ｜ Activity LOW ｜ 4D
+11-04  C +0 / P +0 ｜ Activity LOW ｜ 5D
+11-05  C +0 / P +0 ｜ Activity LOW ｜ 6D
 
 📆 11-02 Forward Structure
-存量OI: C 71.5k / P 116.4k，今日变化ΔOI: C +23.7k / P +50.8k，平值价格ATM: C $5.82 / P $4.45 ｜ ATM IV 20.4%，净 delta 敞口 -821k shares
+存量OI: C 71.5k / P 116.4k，今日变化ΔOI: C +0 / P +0，平值价格ATM: C $5.82 / P $4.45 ｜ ATM IV 20.4%，净 delta 敞口 0 shares
 仓位参考: Max Pain 715 ｜ Put Wall 695（+0.7%，弱）（OI 8.7k）
-量化解读： 存量 Put 重｜ATM IV 20.4%｜历史 Rank 90%（近端代理）｜IV/RV 1.08×（近似）｜期限正常（远月高于近端）｜净 delta 敞口 负 821,395 股
+量化解读： 存量 Put 重｜ATM IV 20.4%｜历史 Rank 62%（近端代理）｜IV/RV 1.08×（近似）｜期限正常（远月高于近端）｜净 delta 敞口 正 0 股
 
-📆 11-03 Forward Structure
-存量OI: C 29.7k / P 91.6k，今日变化ΔOI: C +6.6k / P +39.1k，平值价格ATM: C $7.86 / P $6.29 ｜ ATM IV 24.1%，净 delta 敞口 -337k shares
-Top ΔOI: P 625 +6,041 ｜ P 640 +4,329 ｜ P 635 +3,739
-仓位参考: Max Pain 713 ｜ Call Wall 710（+2.8%）（OI 2.7k） ｜ Put Wall 680（-1.5%）（OI 17.2k）
-量化解读： 存量 Put 重｜ATM IV 24.1%｜历史 Rank 90%（近端代理）｜IV/RV 1.28×（近似）｜期限正常（远月高于近端）｜净 delta 敞口 负 337,128 股
+11-03（Activity LOW）仓位参考: Max Pain 713 ｜ Call Wall 710（+2.8%）（OI 2.7k） ｜ Put Wall 680（-1.5%）（OI 17.2k）
 
-📆 11-04 Forward Structure
-存量OI: C 22.5k / P 38.2k，今日变化ΔOI: C +5.8k / P +8.9k，平值价格ATM: C $9.82 / P $8.20 ｜ ATM IV 27.3%，净 delta 敞口 -227k shares
-Top ΔOI: P 700 +1,307 ｜ P 710 +1,040 ｜ P 635 +1,021
-仓位参考: Max Pain 718 ｜ Call Wall 710（+2.8%，弱）（OI 0.6k） ｜ Put Wall 700（+1.4%，弱）（OI 4.3k）
-量化解读： 存量 Put 重｜ATM IV 27.3%｜历史 Rank 90%（近端代理）｜IV/RV 1.45×（近似）｜净 delta 敞口 负 227,152 股
+11-04（Activity LOW）仓位参考: Max Pain 718 ｜ Call Wall 710（+2.8%，弱）（OI 0.6k） ｜ Put Wall 700（+1.4%，弱）（OI 4.3k）
 
-📆 11-05 Forward Structure
-存量OI: C 14.5k / P 14.9k，今日变化ΔOI: C +3.3k / P +4.9k，平值价格ATM: C $10.87 / P $9.35 ｜ ATM IV 27.8%，净 delta 敞口 -185k shares
-Top ΔOI: P 695 +886 ｜ C 730 +803 ｜ P 700 +768
-仓位参考: Max Pain 710 ｜ Call Wall 710（+2.8%）（OI 2.6k） ｜ Put Wall 685（-0.8%，弱）（OI 1.9k）
-量化解读： 存量两侧均衡｜ATM IV 27.8%｜历史 Rank 90%（近端代理）｜IV/RV 1.47×（近似）｜净 delta 敞口 负 185,309 股
+11-05（Activity LOW）仓位参考: Max Pain 710 ｜ Call Wall 710（+2.8%）（OI 2.6k） ｜ Put Wall 685（-0.8%，弱）（OI 1.9k）
 
 数据质量: 行情 A ｜ 期权结构 A ｜ 流向 C ｜ 做市商机制 C —— Flow 相关层（Activity 连续性、做市商机制解读）置信度受限。
 Setup A v1 — Core Conditions
