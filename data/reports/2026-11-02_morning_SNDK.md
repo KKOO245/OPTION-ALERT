@@ -2,7 +2,7 @@
 
 📊 市场环境
 
-SPY $753.20 ｜ QQQ $681.09
+SPY $752.10 ｜ QQQ $681.09
 VIX 18.83 ↓3.0%（5D +2.4%） ｜ Vol Regime: NORMAL
 CNN 恐惧贪婪 22.7（extreme fear）
 全市场 P/C OI（OCC 结算 08-28，2023-06 以来）: Equity 0.75（分位 12%） ｜ Index 0.94（分位 11%）
@@ -15,7 +15,7 @@ CNN 恐惧贪婪 22.7（extreme fear）
 
 ## 📅 本周重要美国宏观日历（仅【高】，美东时间）
 - 周一 11-02 10:00　【高】ISM 制造业 PMI　预测 54.6 ｜ 实际 55.5 ｜ 前值 54.5　✅ 今日已公布
-- 周一 11-02 19:00　【高】Midterm Elections　实际 待公布　⏰ 今日
+- 周一 11-02 19:00　【高】Midterm Elections　实际 待公布　✅ 今日已公布
 - 周二 11-03 10:00　【高】职位空缺(JOLTS) Job Openings　预测 7.13 ｜ 实际 待公布 ｜ 前值 7.079
 - 周三 11-04 10:00　【高】ISM 非制造业 PMI　预测 54.8 ｜ 实际 待公布 ｜ 前值 54.9
 - 周五 11-06 08:30　【高】Non Farm Payrolls　预测 65 ｜ 实际 待公布 ｜ 前值 29
@@ -102,9 +102,9 @@ Top ΔOI: C 1300 +2,082 ｜ C 1270 +2,027 ｜ C 1290 +2,008
 Setup A v1 — Core Conditions
 Price Regime DOWN | Location below_flip | Gamma Regime NEGATIVE（模型层）
 Confirmation: ✓ 1 ｜ ✗ 2 ｜ ? 1（? put_buy_confirmation）
-验证状态: N=69 ｜ OOS Lift N/A ｜ CI 下界 N/A
+验证状态: N=72 ｜ OOS Lift N/A ｜ CI 下界 N/A
 Target: 3D_close_return <= -0.02 — PENDING（evaluation date 待窗口结束）
-Status: 实验中，样本不足（N=69）
+Status: 实验中，样本不足（N=72）
 环境: Vol NORMAL（仅环境标签，不参与计票）
 
 数据溯源：完整表见附录 / thesis / analytics/daily/2026-11-02/SNDK_morning.json
