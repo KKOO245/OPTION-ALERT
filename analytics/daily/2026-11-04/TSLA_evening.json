@@ -1,7 +1,7 @@
 {
   "schema_version": "snapshot_v1",
   "data_version": "snapshot_v1",
-  "created_at": "2026-11-04T16:40:41-05:00",
+  "created_at": "2026-11-04T21:00:39-05:00",
   "session": "evening",
   "source": "cboe",
   "ticker": "TSLA",
@@ -9,43 +9,43 @@
   "regime": {
     "version": "regimes_v1",
     "trend": "UP",
-    "gamma": "NEGATIVE",
-    "iv_level": "LOW",
+    "gamma": "POSITIVE",
+    "iv_level": "NORMAL",
     "age": 1,
-    "transition": "SWITCH"
+    "transition": null
   },
   "location": {
-    "price_location": "above_flip",
+    "price_location": "below_flip",
     "flip_levels": [
-      385.0021
+      386.3806
     ],
     "flip_status": "PRIMARY",
     "flip_candidates": [
-      385.0021
+      386.3806
     ],
-    "flip_primary": 385.0021,
+    "flip_primary": 386.3806,
     "flip_reason": "full_chain_reprice_gate_pass",
     "flip_source": "full_chain",
     "spot_vs_primary_flip": {
-      "distance_pct": 0.05,
-      "side": "ABOVE"
+      "distance_pct": -0.31,
+      "side": "BELOW"
     },
     "call_wall": 400.0,
     "put_wall": null,
     "walls_v1": {
       "call": {
         "strike": 400.0,
-        "oi": 46642.0,
+        "oi": 43653.0,
         "distance_pct": 3.84,
-        "dominance": 1.34,
+        "dominance": 1.44,
         "strength": "HIGH",
         "classification": "WEAK"
       },
       "put": {
         "strike": 250.0,
-        "oi": 47594.0,
+        "oi": 45597.0,
         "distance_pct": -35.1,
-        "dominance": 1.37,
+        "dominance": 1.31,
         "strength": "HIGH",
         "classification": "REMOTE"
       }
@@ -56,58 +56,58 @@
       {
         "strike": 400.0,
         "type": "call",
-        "oi": 46642
+        "oi": 43653
       },
       {
         "strike": 380.0,
         "type": "put",
-        "oi": 30148
+        "oi": 24904
       },
       {
         "strike": 400.0,
         "type": "put",
-        "oi": 21432
+        "oi": 17481
       }
     ]
   },
   "p3": {
     "schema_version": "p3_collect_v1",
     "gex": {
-      "net_gex": 805602.68,
-      "abs_gex": 805602.68,
-      "n_used": 1481,
-      "n_skipped": 873,
-      "spot_zone": "POSITIVE"
+      "net_gex": -4860039.18,
+      "abs_gex": 4860039.18,
+      "n_used": 1400,
+      "n_skipped": 790,
+      "spot_zone": "NEGATIVE"
     },
     "coverage": {
       "schema_version": "coverage_v1",
-      "total_contracts": 2354,
+      "total_contracts": 2190,
       "iv_valid": {
-        "VALID": 1298,
-        "LOW_LIQUIDITY": 183,
-        "INVALID": 873
+        "VALID": 1276,
+        "LOW_LIQUIDITY": 124,
+        "INVALID": 790
       },
-      "strike_coverage_pct": 62.9,
-      "oi_coverage_pct": 96.6,
-      "valid_only_oi_coverage_pct": 77.1,
-      "band_oi_coverage_pct": 96.6,
-      "effective_gex_coverage_pct": 90.2
+      "strike_coverage_pct": 63.9,
+      "oi_coverage_pct": 99.5,
+      "valid_only_oi_coverage_pct": 86.4,
+      "band_oi_coverage_pct": 99.8,
+      "effective_gex_coverage_pct": 99.8
     },
     "second_order": {
       "schema_version": "second_order_v1",
-      "net_vanna": 16539886.0,
-      "net_charm": 597648538.0,
-      "n_used": 1481,
+      "net_vanna": 13569137.0,
+      "net_charm": 228415984.0,
+      "n_used": 1400,
       "min_dte": 1,
       "vanna_gate": true,
       "charm_gate": true
     },
     "iv_rv": {
-      "atm_iv_near": 0.29564999999999997,
+      "atm_iv_near": 0.5648,
       "rv_5d": 0.141,
       "rv_20d": 0.3266,
-      "ratio_5d": 2.097,
-      "ratio_20d": 0.905
+      "ratio_5d": 4.006,
+      "ratio_20d": 1.729
     },
     "event_overlap": [
       {
@@ -144,7 +144,7 @@
       "levels": [
         {
           "type": "gamma_flip",
-          "price": 385.0
+          "price": 386.38
         },
         {
           "type": "oi",
@@ -161,28 +161,28 @@
     }
   },
   "momentum": {
-    "iv_momentum": -1.379,
-    "iv_momentum_1d": -35.08,
-    "iv_level": "LOW",
-    "iv_rank": 3.5,
-    "skew_momentum": -5.527,
-    "skew": 0.8396909234544114,
-    "term_structure_momentum": 0.7714,
-    "pc_ratio": 0.97,
-    "pc_oi_ratio": 1.1811352368395753,
-    "oi_flow": "call_building",
+    "iv_momentum": 0.013,
+    "iv_momentum_1d": -8.165,
+    "iv_level": "NORMAL",
+    "iv_rank": 64.3,
+    "skew_momentum": -2.107,
+    "skew": 4.260115199204373,
+    "term_structure_momentum": 0.0731,
+    "pc_ratio": 0.819,
+    "pc_oi_ratio": 1.5196789836438995,
+    "oi_flow": null,
     "price_momentum": 0.0196,
     "volume_ratio": null,
-    "atm_iv": 0.29564999999999997,
-    "expected_move_pct": 0.19211298198544657,
-    "term_ratio": 1.4654151868763743
+    "atm_iv": 0.5648,
+    "expected_move_pct": 3.3230353640725894,
+    "term_ratio": 0.7670856940509916
   },
   "confirmation": {
     "iv_surge": false,
     "skew_surge": false,
     "volume_surge": null,
     "put_buy_flow": null,
-    "price_break": true
+    "price_break": false
   },
   "price_extreme": null,
   "protection_divergence": null,
@@ -194,10 +194,10 @@
         "dte": 2,
         "call_oi": 170334.0,
         "put_oi": 258853.0,
-        "call_oi_prev": 158288.0,
-        "put_oi_prev": 252514.0,
-        "call_delta_oi": 12046.0,
-        "put_delta_oi": 6339.0,
+        "call_oi_prev": 170334.0,
+        "put_oi_prev": 258853.0,
+        "call_delta_oi": 0.0,
+        "put_delta_oi": 0.0,
         "call_new_oi": 0,
         "put_new_oi": 0,
         "call_volume": 256951.0,
@@ -209,49 +209,9 @@
         "atm_put_price": 6.2,
         "atm_iv": 0.5648,
         "expmove_pct": 3.35,
-        "activity": "MEDIUM",
-        "delta_exposure": -53070.0,
-        "top_delta_oi": [
-          {
-            "strike": 470.0,
-            "type": "call",
-            "delta_oi": 3510,
-            "last_price": 0.03,
-            "notional": 10530.0,
-            "relevance": "LOW",
-            "distance_pct": 22.0,
-            "volume": 121.0,
-            "magnitude": "HIGH",
-            "r1": null,
-            "contract_symbol": "TSLA261106C00470000"
-          },
-          {
-            "strike": 385.0,
-            "type": "put",
-            "delta_oi": 1243,
-            "last_price": 6.2,
-            "notional": 770660.0,
-            "relevance": "OK",
-            "distance_pct": -0.0,
-            "volume": 18165.0,
-            "magnitude": "HIGH",
-            "r1": 6.84,
-            "contract_symbol": "TSLA261106P00385000"
-          },
-          {
-            "strike": 400.0,
-            "type": "call",
-            "delta_oi": 1066,
-            "last_price": 1.55,
-            "notional": 165230.0,
-            "relevance": "OK",
-            "distance_pct": 3.8,
-            "volume": 31230.0,
-            "magnitude": "MEDIUM",
-            "r1": 3.41,
-            "contract_symbol": "TSLA261106C00400000"
-          }
-        ],
+        "activity": "LOW",
+        "delta_exposure": 0.0,
+        "top_delta_oi": [],
         "roll_candidates": [],
         "significant": [],
         "max_pain": 395.0,
@@ -276,12 +236,12 @@
         "dte": 5,
         "call_oi": 20091.0,
         "put_oi": 15281.0,
-        "call_oi_prev": 13585.0,
-        "put_oi_prev": 9559.0,
-        "call_delta_oi": 6506.0,
-        "put_delta_oi": 5722.0,
-        "call_new_oi": 0.0,
-        "put_new_oi": 0.0,
+        "call_oi_prev": 20091.0,
+        "put_oi_prev": 15281.0,
+        "call_delta_oi": 0.0,
+        "put_delta_oi": 0.0,
+        "call_new_oi": 0,
+        "put_new_oi": 0,
         "call_volume": 31686.0,
         "put_volume": 29278.0,
         "has_prev": true,
@@ -291,65 +251,11 @@
         "atm_put_price": 7.55,
         "atm_iv": 0.436,
         "expmove_pct": 4.07,
-        "activity": "HIGH",
-        "delta_exposure": -32511.0,
-        "top_delta_oi": [
-          {
-            "strike": 255.0,
-            "type": "put",
-            "delta_oi": 1128,
-            "last_price": 0.03,
-            "notional": 3383.9999999999995,
-            "relevance": "LOW",
-            "distance_pct": -33.8,
-            "volume": 175.0,
-            "magnitude": "HIGH",
-            "r1": null,
-            "contract_symbol": "TSLA261109P00255000"
-          },
-          {
-            "strike": 340.0,
-            "type": "put",
-            "delta_oi": 961,
-            "last_price": 0.29,
-            "notional": 27869.0,
-            "relevance": "LOW",
-            "distance_pct": -11.7,
-            "volume": 195.0,
-            "magnitude": "HIGH",
-            "r1": null,
-            "contract_symbol": "TSLA261109P00340000"
-          },
-          {
-            "strike": 420.0,
-            "type": "call",
-            "delta_oi": 609,
-            "last_price": 0.42,
-            "notional": 25578.0,
-            "relevance": "OK",
-            "distance_pct": 9.0,
-            "volume": 1440.0,
-            "magnitude": "HIGH",
-            "r1": 42.29,
-            "contract_symbol": "TSLA261109C00420000"
-          }
-        ],
+        "activity": "LOW",
+        "delta_exposure": 0.0,
+        "top_delta_oi": [],
         "roll_candidates": [],
-        "significant": [
-          {
-            "strike": 420.0,
-            "type": "call",
-            "delta_oi": 609,
-            "last_price": 0.42,
-            "notional": 25578.0,
-            "relevance": "OK",
-            "distance_pct": 9.0,
-            "volume": 1440.0,
-            "magnitude": "HIGH",
-            "r1": 42.29,
-            "contract_symbol": "TSLA261109C00420000"
-          }
-        ],
+        "significant": [],
         "max_pain": 400.0,
         "call_wall": {
           "strike": 420.0,
@@ -367,10 +273,10 @@
         "dte": 7,
         "call_oi": 10014.0,
         "put_oi": 5539.0,
-        "call_oi_prev": 7595.0,
-        "put_oi_prev": 4288.0,
-        "call_delta_oi": 2419.0,
-        "put_delta_oi": 1251.0,
+        "call_oi_prev": 10014.0,
+        "put_oi_prev": 5539.0,
+        "call_delta_oi": 0.0,
+        "put_delta_oi": 0.0,
         "call_new_oi": 0,
         "put_new_oi": 0,
         "call_volume": 18448.0,
@@ -382,65 +288,11 @@
         "atm_put_price": 9.6,
         "atm_iv": 0.4607,
         "expmove_pct": 5.13,
-        "activity": "HIGH",
-        "delta_exposure": -11139.0,
-        "top_delta_oi": [
-          {
-            "strike": 470.0,
-            "type": "call",
-            "delta_oi": 581,
-            "last_price": 0.08,
-            "notional": 4648.0,
-            "relevance": "LOW",
-            "distance_pct": 22.0,
-            "volume": 86.0,
-            "magnitude": "HIGH",
-            "r1": null,
-            "contract_symbol": "TSLA261111C00470000"
-          },
-          {
-            "strike": 410.0,
-            "type": "call",
-            "delta_oi": 484,
-            "last_price": 2.12,
-            "notional": 102608.00000000001,
-            "relevance": "OK",
-            "distance_pct": 6.4,
-            "volume": 1153.0,
-            "magnitude": "HIGH",
-            "r1": 41.98,
-            "contract_symbol": "TSLA261111C00410000"
-          },
-          {
-            "strike": 355.0,
-            "type": "put",
-            "delta_oi": 435,
-            "last_price": 1.73,
-            "notional": 75255.0,
-            "relevance": "OK",
-            "distance_pct": -7.8,
-            "volume": 515.0,
-            "magnitude": "HIGH",
-            "r1": 84.47,
-            "contract_symbol": "TSLA261111P00355000"
-          }
-        ],
+        "activity": "LOW",
+        "delta_exposure": 0.0,
+        "top_delta_oi": [],
         "roll_candidates": [],
-        "significant": [
-          {
-            "strike": 410.0,
-            "type": "call",
-            "delta_oi": 484,
-            "last_price": 2.12,
-            "notional": 102608.00000000001,
-            "relevance": "OK",
-            "distance_pct": 6.4,
-            "volume": 1153.0,
-            "magnitude": "HIGH",
-            "r1": 41.98,
-            "contract_symbol": "TSLA261111C00410000"
-          }
-        ],
+        "significant": [],
         "max_pain": 400.0,
         "call_wall": {
           "strike": 410.0,
@@ -458,10 +310,10 @@
         "dte": 9,
         "call_oi": 51160.0,
         "put_oi": 37071.0,
-        "call_oi_prev": 46740.0,
-        "put_oi_prev": 32654.0,
-        "call_delta_oi": 4420.0,
-        "put_delta_oi": 4417.0,
+        "call_oi_prev": 51160.0,
+        "put_oi_prev": 37071.0,
+        "call_delta_oi": 0.0,
+        "put_delta_oi": 0.0,
         "call_new_oi": 0,
         "put_new_oi": 0,
         "call_volume": 35303.0,
@@ -473,49 +325,9 @@
         "atm_put_price": 10.98,
         "atm_iv": 0.4695,
         "expmove_pct": 5.9,
-        "activity": "HIGH",
-        "delta_exposure": -47423.0,
-        "top_delta_oi": [
-          {
-            "strike": 407.5,
-            "type": "call",
-            "delta_oi": 1310,
-            "last_price": 3.66,
-            "notional": 479460.00000000006,
-            "relevance": "OK",
-            "distance_pct": 5.8,
-            "volume": 279.0,
-            "magnitude": "HIGH",
-            "r1": null,
-            "contract_symbol": "TSLA261113C00407500"
-          },
-          {
-            "strike": 565.0,
-            "type": "call",
-            "delta_oi": 795,
-            "last_price": 0.01,
-            "notional": 795.0,
-            "relevance": "LOW",
-            "distance_pct": 46.7,
-            "volume": 4.0,
-            "magnitude": "HIGH",
-            "r1": null,
-            "contract_symbol": "TSLA261113C00565000"
-          },
-          {
-            "strike": 140.0,
-            "type": "put",
-            "delta_oi": 598,
-            "last_price": 0.01,
-            "notional": 598.0,
-            "relevance": "LOW",
-            "distance_pct": -63.7,
-            "volume": 36.0,
-            "magnitude": "HIGH",
-            "r1": null,
-            "contract_symbol": "TSLA261113P00140000"
-          }
-        ],
+        "activity": "LOW",
+        "delta_exposure": 0.0,
+        "top_delta_oi": [],
         "roll_candidates": [],
         "significant": [],
         "max_pain": 380.0,
@@ -550,7 +362,7 @@
     "vol_environment": {
       "vix": {
         "value": 16.610000610351562,
-        "timestamp": "2026-11-04T16:40:41-05:00",
+        "timestamp": "2026-11-04T21:00:39-05:00",
         "basis": "close",
         "prior_close": 20.829999923706055,
         "change_1d_pct": -20.26,
@@ -585,7 +397,7 @@
     "day_high": 392.0400085449219,
     "day_low": 375.5000915527344,
     "day_open": 379.79998779296875,
-    "max_pain": 400.0,
+    "max_pain": 395.0,
     "max_pain_monthly": 400.0,
     "notes": null
   },
@@ -597,11 +409,12 @@
   },
   "data_sufficiency": {
     "momentum.volume_ratio": "INSUFFICIENT_DATA",
+    "momentum.oi_flow": "INSUFFICIENT_DATA",
     "location.put_wall": "INSUFFICIENT_DATA",
     "confirmation.volume_surge": "INSUFFICIENT_DATA",
     "confirmation.put_buy_flow": "INSUFFICIENT_DATA"
   },
   "zero_dte": null,
   "data_as_of": "2026-11-04",
-  "snapshot_hash": "a80f076d8ab90d5954132d5f95a2911cf2c8a5346540c1b95c8794eb9bf4c7ab"
+  "snapshot_hash": "54059e53aa16cb396964f7408bc028127333ad31039342c9ae431852f5706984"
 }
