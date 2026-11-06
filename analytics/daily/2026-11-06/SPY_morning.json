@@ -1,0 +1,751 @@
+{
+  "schema_version": "snapshot_v1",
+  "data_version": "snapshot_v1",
+  "created_at": "2026-11-06T09:08:43-05:00",
+  "session": "morning",
+  "source": "cboe",
+  "ticker": "SPY",
+  "spot": 735.39,
+  "regime": {
+    "version": "regimes_v1",
+    "trend": "DOWN",
+    "gamma": "NEGATIVE",
+    "iv_level": "HIGH",
+    "age": 1,
+    "transition": "SWITCH"
+  },
+  "location": {
+    "price_location": "below_flip",
+    "flip_levels": [
+      758.0987
+    ],
+    "flip_status": "PRIMARY",
+    "flip_candidates": [
+      758.0987
+    ],
+    "flip_primary": 758.0987,
+    "flip_reason": "full_chain_reprice_gate_pass",
+    "flip_source": "full_chain",
+    "spot_vs_primary_flip": {
+      "distance_pct": -3.0,
+      "side": "BELOW"
+    },
+    "call_wall": null,
+    "put_wall": null,
+    "walls_v1": {
+      "call": {
+        "strike": 800.0,
+        "oi": 195239.0,
+        "distance_pct": 8.79,
+        "dominance": 2.09,
+        "strength": "HIGH",
+        "classification": "REMOTE"
+      },
+      "put": {
+        "strike": 500.0,
+        "oi": 326020.0,
+        "distance_pct": -32.01,
+        "dominance": 1.6,
+        "strength": "HIGH",
+        "classification": "REMOTE"
+      }
+    },
+    "call_wall_class": "REMOTE",
+    "put_wall_class": "REMOTE",
+    "concentration": [
+      {
+        "strike": 725.0,
+        "type": "put",
+        "oi": 196923
+      },
+      {
+        "strike": 700.0,
+        "type": "put",
+        "oi": 181934
+      },
+      {
+        "strike": 740.0,
+        "type": "put",
+        "oi": 172960
+      }
+    ]
+  },
+  "p3": {
+    "schema_version": "p3_collect_v1",
+    "gex": {
+      "net_gex": -1398889439.68,
+      "abs_gex": 1398889439.68,
+      "n_used": 3487,
+      "n_skipped": 1307,
+      "spot_zone": "NEGATIVE"
+    },
+    "coverage": {
+      "schema_version": "coverage_v1",
+      "total_contracts": 4794,
+      "iv_valid": {
+        "VALID": 3198,
+        "LOW_LIQUIDITY": 289,
+        "INVALID": 1307
+      },
+      "strike_coverage_pct": 72.7,
+      "oi_coverage_pct": 100.0,
+      "valid_only_oi_coverage_pct": 94.1,
+      "band_oi_coverage_pct": 100.0,
+      "effective_gex_coverage_pct": 97.6
+    },
+    "second_order": {
+      "schema_version": "second_order_v1",
+      "net_vanna": 165660104.0,
+      "net_charm": 3054632471.0,
+      "n_used": 3487,
+      "min_dte": 1,
+      "vanna_gate": true,
+      "charm_gate": true
+    },
+    "iv_rv": {
+      "atm_iv_near": 0.4481,
+      "rv_5d": 0.3678,
+      "rv_20d": 0.2006,
+      "ratio_5d": 1.218,
+      "ratio_20d": 2.234
+    },
+    "event_overlap": [
+      {
+        "expiration": "2026-11-09",
+        "dte": 3,
+        "covers_event": true,
+        "events": [
+          "密歇根消费者信心 Consumer Sentiment Prel"
+        ]
+      },
+      {
+        "expiration": "2026-11-10",
+        "dte": 4,
+        "covers_event": false,
+        "events": []
+      },
+      {
+        "expiration": "2026-11-11",
+        "dte": 5,
+        "covers_event": false,
+        "events": []
+      },
+      {
+        "expiration": "2026-11-12",
+        "dte": 6,
+        "covers_event": false,
+        "events": []
+      }
+    ],
+    "confluence": {
+      "families_in_band": 1,
+      "levels": [
+        {
+          "type": "oi",
+          "price": 725.0
+        },
+        {
+          "type": "oi",
+          "price": 740.0
+        }
+      ]
+    },
+    "flip_context": {
+      "schema_version": "flip_context_v1",
+      "ticker": "SPY",
+      "as_of": "2026-11-06",
+      "flip_distance_pct_15y": 56.6,
+      "flip_distance_basis": "|spot/primary_flip-1| vs lambdaclass oi_history 15y（live=spot网格全链重定价；历史=行权价网格，层级略不同）",
+      "stability_5d": {
+        "n": 5,
+        "range_pct": 1.009,
+        "label": "MEDIUM",
+        "basis": "live snapshot flip_primary",
+        "dates": [
+          "2026-10-30",
+          "2026-11-02",
+          "2026-11-03",
+          "2026-11-04",
+          "2026-11-05"
+        ]
+      }
+    },
+    "event_flag": {
+      "flags": [
+        "CLEAN"
+      ],
+      "window_days": 5,
+      "note": "未来5个自然日内宏观【高】事件/财报(白名单) → IV/RV 不直接可比"
+    }
+  },
+  "momentum": {
+    "iv_momentum": 4.066,
+    "iv_momentum_1d": 24.45,
+    "iv_level": "HIGH",
+    "iv_rank": 99.3,
+    "skew_momentum": 3.852,
+    "skew": 7.222276570048313,
+    "term_structure_momentum": -0.2035,
+    "pc_ratio": 1.131,
+    "pc_oi_ratio": 0.9774887544719649,
+    "oi_flow": "put_building",
+    "price_momentum": -0.041,
+    "volume_ratio": null,
+    "atm_iv": 0.4481,
+    "expected_move_pct": 1.0572621330178544,
+    "term_ratio": 0.4563713456817675
+  },
+  "confirmation": {
+    "iv_surge": true,
+    "skew_surge": true,
+    "volume_surge": null,
+    "put_buy_flow": null,
+    "price_break": true
+  },
+  "price_extreme": "NEW_LOW",
+  "protection_divergence": false,
+  "forward": {
+    "schema_version": "forward_v1",
+    "expirations": [
+      {
+        "expiration": "2026-11-09",
+        "dte": 3,
+        "call_oi": 111251.0,
+        "put_oi": 208635.0,
+        "call_oi_prev": 50126.0,
+        "put_oi_prev": 97159.0,
+        "call_delta_oi": 61125.0,
+        "put_delta_oi": 111476.0,
+        "call_new_oi": 0,
+        "put_new_oi": 0,
+        "call_volume": 239677.0,
+        "put_volume": 367713.0,
+        "has_prev": true,
+        "new_listing": false,
+        "atm_strike": 735.0,
+        "atm_call_price": 6.73,
+        "atm_put_price": 8.84,
+        "atm_iv": 0.2354,
+        "expmove_pct": 2.12,
+        "activity": "HIGH",
+        "delta_exposure": 66768.0,
+        "top_delta_oi": [
+          {
+            "strike": 710.0,
+            "type": "put",
+            "delta_oi": 33497,
+            "last_price": 2.08,
+            "notional": 6967376.000000001,
+            "relevance": "OK",
+            "distance_pct": -3.5,
+            "volume": 35143.0,
+            "magnitude": "HIGH",
+            "r1": 95.32,
+            "contract_symbol": "SPY261109P00710000"
+          },
+          {
+            "strike": 725.0,
+            "type": "put",
+            "delta_oi": 33465,
+            "last_price": 5.08,
+            "notional": 17000220.0,
+            "relevance": "OK",
+            "distance_pct": -1.4,
+            "volume": 38186.0,
+            "magnitude": "HIGH",
+            "r1": 87.64,
+            "contract_symbol": "SPY261109P00725000"
+          },
+          {
+            "strike": 675.0,
+            "type": "put",
+            "delta_oi": 8712,
+            "last_price": 0.61,
+            "notional": 531432.0,
+            "relevance": "OK",
+            "distance_pct": -8.2,
+            "volume": 10855.0,
+            "magnitude": "HIGH",
+            "r1": 80.26,
+            "contract_symbol": "SPY261109P00675000"
+          }
+        ],
+        "roll_candidates": [
+          {
+            "type": "call",
+            "from_strike": 790.0,
+            "to_strike": 780.0,
+            "from_delta_oi": -1046,
+            "to_delta_oi": 2112,
+            "confidence": "MEDIUM"
+          },
+          {
+            "type": "put",
+            "from_strike": 745.0,
+            "to_strike": 744.0,
+            "from_delta_oi": -1078,
+            "to_delta_oi": 1104,
+            "confidence": "MEDIUM"
+          }
+        ],
+        "significant": [
+          {
+            "strike": 710.0,
+            "type": "put",
+            "delta_oi": 33497,
+            "last_price": 2.08,
+            "notional": 6967376.000000001,
+            "relevance": "OK",
+            "distance_pct": -3.5,
+            "volume": 35143.0,
+            "magnitude": "HIGH",
+            "r1": 95.32,
+            "contract_symbol": "SPY261109P00710000"
+          },
+          {
+            "strike": 725.0,
+            "type": "put",
+            "delta_oi": 33465,
+            "last_price": 5.08,
+            "notional": 17000220.0,
+            "relevance": "OK",
+            "distance_pct": -1.4,
+            "volume": 38186.0,
+            "magnitude": "HIGH",
+            "r1": 87.64,
+            "contract_symbol": "SPY261109P00725000"
+          }
+        ],
+        "max_pain": 747.0,
+        "call_wall": {
+          "strike": 750.0,
+          "oi": 5094.0,
+          "class": "WEAK",
+          "fallback_from_remote": {
+            "strike": 770.0,
+            "oi": 5912.0,
+            "distance_pct": 4.71
+          }
+        },
+        "put_wall": {
+          "strike": 725.0,
+          "oi": 35819.0,
+          "class": "WEAK"
+        }
+      },
+      {
+        "expiration": "2026-11-10",
+        "dte": 4,
+        "call_oi": 109111.0,
+        "put_oi": 77025.0,
+        "call_oi_prev": 53989.0,
+        "put_oi_prev": 65394.0,
+        "call_delta_oi": 55122.0,
+        "put_delta_oi": 11631.0,
+        "call_new_oi": 0,
+        "put_new_oi": 0,
+        "call_volume": 169015.0,
+        "put_volume": 133213.0,
+        "has_prev": true,
+        "new_listing": false,
+        "atm_strike": 735.0,
+        "atm_call_price": 8.06,
+        "atm_put_price": 10.04,
+        "atm_iv": 0.2485,
+        "expmove_pct": 2.46,
+        "activity": "HIGH",
+        "delta_exposure": 3058090.0,
+        "top_delta_oi": [
+          {
+            "strike": 740.0,
+            "type": "call",
+            "delta_oi": 11226,
+            "last_price": 5.7,
+            "notional": 6398820.0,
+            "relevance": "OK",
+            "distance_pct": 0.6,
+            "volume": 34633.0,
+            "magnitude": "HIGH",
+            "r1": 32.41,
+            "contract_symbol": "SPY261110C00740000"
+          },
+          {
+            "strike": 734.0,
+            "type": "put",
+            "delta_oi": 9701,
+            "last_price": 9.36,
+            "notional": 9080136.0,
+            "relevance": "OK",
+            "distance_pct": -0.2,
+            "volume": 33915.0,
+            "magnitude": "HIGH",
+            "r1": 28.6,
+            "contract_symbol": "SPY261110P00734000"
+          },
+          {
+            "strike": 750.0,
+            "type": "call",
+            "delta_oi": 7999,
+            "last_price": 2.28,
+            "notional": 1823771.9999999998,
+            "relevance": "OK",
+            "distance_pct": 2.0,
+            "volume": 20336.0,
+            "magnitude": "HIGH",
+            "r1": 39.33,
+            "contract_symbol": "SPY261110C00750000"
+          }
+        ],
+        "roll_candidates": [
+          {
+            "type": "put",
+            "from_strike": 758.0,
+            "to_strike": 734.0,
+            "from_delta_oi": -1478,
+            "to_delta_oi": 9701,
+            "confidence": "MEDIUM"
+          }
+        ],
+        "significant": [
+          {
+            "strike": 740.0,
+            "type": "call",
+            "delta_oi": 11226,
+            "last_price": 5.7,
+            "notional": 6398820.0,
+            "relevance": "OK",
+            "distance_pct": 0.6,
+            "volume": 34633.0,
+            "magnitude": "HIGH",
+            "r1": 32.41,
+            "contract_symbol": "SPY261110C00740000"
+          },
+          {
+            "strike": 734.0,
+            "type": "put",
+            "delta_oi": 9701,
+            "last_price": 9.36,
+            "notional": 9080136.0,
+            "relevance": "OK",
+            "distance_pct": -0.2,
+            "volume": 33915.0,
+            "magnitude": "HIGH",
+            "r1": 28.6,
+            "contract_symbol": "SPY261110P00734000"
+          }
+        ],
+        "max_pain": 741.0,
+        "call_wall": {
+          "strike": 740.0,
+          "oi": 11269.0,
+          "class": "WEAK"
+        },
+        "put_wall": {
+          "strike": 734.0,
+          "oi": 9911.0,
+          "class": "PRIMARY"
+        }
+      },
+      {
+        "expiration": "2026-11-11",
+        "dte": 5,
+        "call_oi": 58452.0,
+        "put_oi": 73080.0,
+        "call_oi_prev": 25353.0,
+        "put_oi_prev": 53165.0,
+        "call_delta_oi": 33099.0,
+        "put_delta_oi": 19915.0,
+        "call_new_oi": 0,
+        "put_new_oi": 0,
+        "call_volume": 79733.0,
+        "put_volume": 84916.0,
+        "has_prev": true,
+        "new_listing": false,
+        "atm_strike": 735.0,
+        "atm_call_price": 9.06,
+        "atm_put_price": 11.17,
+        "atm_iv": 0.2487,
+        "expmove_pct": 2.75,
+        "activity": "HIGH",
+        "delta_exposure": 604790.0,
+        "top_delta_oi": [
+          {
+            "strike": 700.0,
+            "type": "put",
+            "delta_oi": 3161,
+            "last_price": 2.68,
+            "notional": 847148.0000000001,
+            "relevance": "OK",
+            "distance_pct": -4.8,
+            "volume": 4494.0,
+            "magnitude": "HIGH",
+            "r1": 70.34,
+            "contract_symbol": "SPY261111P00700000"
+          },
+          {
+            "strike": 788.0,
+            "type": "call",
+            "delta_oi": 3056,
+            "last_price": 0.03,
+            "notional": 9168.0,
+            "relevance": "OK",
+            "distance_pct": 7.2,
+            "volume": 3273.0,
+            "magnitude": "HIGH",
+            "r1": 93.37,
+            "contract_symbol": "SPY261111C00788000"
+          },
+          {
+            "strike": 725.0,
+            "type": "put",
+            "delta_oi": 2294,
+            "last_price": 7.18,
+            "notional": 1647091.9999999998,
+            "relevance": "OK",
+            "distance_pct": -1.4,
+            "volume": 3509.0,
+            "magnitude": "HIGH",
+            "r1": 65.37,
+            "contract_symbol": "SPY261111P00725000"
+          }
+        ],
+        "roll_candidates": [
+          {
+            "type": "put",
+            "from_strike": 750.0,
+            "to_strike": 740.0,
+            "from_delta_oi": -1584,
+            "to_delta_oi": 1074,
+            "confidence": "MEDIUM"
+          }
+        ],
+        "significant": [
+          {
+            "strike": 700.0,
+            "type": "put",
+            "delta_oi": 3161,
+            "last_price": 2.68,
+            "notional": 847148.0000000001,
+            "relevance": "OK",
+            "distance_pct": -4.8,
+            "volume": 4494.0,
+            "magnitude": "HIGH",
+            "r1": 70.34,
+            "contract_symbol": "SPY261111P00700000"
+          }
+        ],
+        "max_pain": 750.0,
+        "call_wall": {
+          "strike": 738.0,
+          "oi": 1812.0,
+          "class": "WEAK",
+          "fallback_from_remote": {
+            "strike": 788.0,
+            "oi": 3403.0,
+            "distance_pct": 7.15
+          }
+        },
+        "put_wall": {
+          "strike": 720.0,
+          "oi": 6810.0,
+          "class": "WEAK"
+        }
+      },
+      {
+        "expiration": "2026-11-12",
+        "dte": 6,
+        "call_oi": 48525.0,
+        "put_oi": 50268.0,
+        "call_oi_prev": 23373.0,
+        "put_oi_prev": 26425.0,
+        "call_delta_oi": 25152.0,
+        "put_delta_oi": 23843.0,
+        "call_new_oi": 0,
+        "put_new_oi": 0,
+        "call_volume": 61625.0,
+        "put_volume": 70021.0,
+        "has_prev": true,
+        "new_listing": false,
+        "atm_strike": 735.0,
+        "atm_call_price": 9.89,
+        "atm_put_price": 11.9,
+        "atm_iv": 0.2499,
+        "expmove_pct": 2.96,
+        "activity": "HIGH",
+        "delta_exposure": 140292.0,
+        "top_delta_oi": [
+          {
+            "strike": 690.0,
+            "type": "put",
+            "delta_oi": 2702,
+            "last_price": 2.11,
+            "notional": 570121.9999999999,
+            "relevance": "OK",
+            "distance_pct": -6.2,
+            "volume": 4135.0,
+            "magnitude": "HIGH",
+            "r1": 65.34,
+            "contract_symbol": "SPY261112P00690000"
+          },
+          {
+            "strike": 701.0,
+            "type": "put",
+            "delta_oi": 2157,
+            "last_price": 3.55,
+            "notional": 765735.0,
+            "relevance": "OK",
+            "distance_pct": -4.7,
+            "volume": 2539.0,
+            "magnitude": "HIGH",
+            "r1": 84.95,
+            "contract_symbol": "SPY261112P00701000"
+          },
+          {
+            "strike": 700.0,
+            "type": "put",
+            "delta_oi": 1748,
+            "last_price": 3.2,
+            "notional": 559360.0,
+            "relevance": "OK",
+            "distance_pct": -4.8,
+            "volume": 3049.0,
+            "magnitude": "HIGH",
+            "r1": 57.33,
+            "contract_symbol": "SPY261112P00700000"
+          }
+        ],
+        "roll_candidates": [],
+        "significant": [
+          {
+            "strike": 690.0,
+            "type": "put",
+            "delta_oi": 2702,
+            "last_price": 2.11,
+            "notional": 570121.9999999999,
+            "relevance": "OK",
+            "distance_pct": -6.2,
+            "volume": 4135.0,
+            "magnitude": "HIGH",
+            "r1": 65.34,
+            "contract_symbol": "SPY261112P00690000"
+          }
+        ],
+        "max_pain": 750.0,
+        "call_wall": {
+          "strike": 750.0,
+          "oi": 2057.0,
+          "class": "WEAK",
+          "fallback_from_remote": {
+            "strike": 775.0,
+            "oi": 6585.0,
+            "distance_pct": 5.39
+          }
+        },
+        "put_wall": {
+          "strike": 715.0,
+          "oi": 4336.0,
+          "class": "PRIMARY"
+        }
+      }
+    ]
+  },
+  "context": {
+    "spy_return": null,
+    "qqq_return": null,
+    "sector_relative": null,
+    "vix": 26.40999984741211,
+    "vol_environment": {
+      "vix": {
+        "value": 26.40999984741211,
+        "timestamp": "2026-11-06T09:08:43-05:00",
+        "basis": "intraday",
+        "prior_close": 28.18000030517578,
+        "change_1d_pct": -6.28,
+        "change_5d_pct": 35.99
+      },
+      "regime": {
+        "label": "STRESS",
+        "rule_version": "vol_regime_v1",
+        "classification_type": "descriptive",
+        "calibration_status": "uncalibrated",
+        "inputs": {
+          "vix_level": 26.40999984741211,
+          "vix_1d_pct": -6.28,
+          "vix_5d_pct": 35.99,
+          "vix_percentile_20d": 95.0,
+          "vix_term_structure": null
+        },
+        "evidence_completeness": "partial",
+        "transition": {
+          "from": "STRESS",
+          "to": "STRESS",
+          "changed": false
+        }
+      },
+      "shock": {
+        "version": "vix_shock_v1",
+        "level": "NONE",
+        "value": 0,
+        "display": false
+      }
+    },
+    "day_high": 765.969970703125,
+    "day_low": 732.7100219726562,
+    "day_open": 765.469970703125,
+    "max_pain": 745.0,
+    "max_pain_monthly": 758.0,
+    "notes": null
+  },
+  "data_quality": {
+    "market_data": "A",
+    "options_structure": "A",
+    "flow": "C",
+    "dealer_mechanism": "C"
+  },
+  "data_sufficiency": {
+    "momentum.volume_ratio": "INSUFFICIENT_DATA",
+    "location.call_wall": "INSUFFICIENT_DATA",
+    "location.put_wall": "INSUFFICIENT_DATA",
+    "confirmation.volume_surge": "INSUFFICIENT_DATA",
+    "confirmation.put_buy_flow": "INSUFFICIENT_DATA"
+  },
+  "zero_dte": {
+    "expiration": "2026-11-06",
+    "dte": 0,
+    "call_oi": 495308,
+    "put_oi": 484158,
+    "call_volume": 1319999,
+    "put_volume": 1492948,
+    "atm_strike": 735.0,
+    "atm_call_price": 4.15,
+    "atm_put_price": 3.625,
+    "atm_iv": 0.4481,
+    "expected_move_pct": 1.0572621330178544,
+    "max_pain": 745.0,
+    "top_delta_oi": [
+      {
+        "strike": 750.0,
+        "type": "call",
+        "delta_oi": 21726,
+        "last_price": 0.22499999999999998,
+        "distance_pct": 2.0
+      },
+      {
+        "strike": 760.0,
+        "type": "put",
+        "delta_oi": -21073,
+        "last_price": 24.5,
+        "distance_pct": 3.3
+      },
+      {
+        "strike": 760.0,
+        "type": "call",
+        "delta_oi": 18202,
+        "last_price": 0.045,
+        "distance_pct": 3.3
+      }
+    ]
+  },
+  "data_as_of": "2026-11-06",
+  "snapshot_hash": "7dc3ff5aab8d297c1b284fa60dbb83f71d2f36522390dab7a7b91ecd5e2cf642"
+}
