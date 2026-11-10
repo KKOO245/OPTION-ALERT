@@ -1,4 +1,4 @@
-# 期权晚报 2026-11-09（快照 16:40 ET）
+# 期权晚报 2026-11-09（快照 21:00 ET）
 
 📊 市场环境
 
@@ -21,9 +21,7 @@ CNN 恐惧贪婪 31.7（fear）
 - 周四 11-12 10:00　【高】成屋销售　预测 3.85 ｜ 实际 待公布 ｜ 前值 3.99
 - 周五 11-13 08:30　【高】PPI 生产者物价 MoM　预测 0.4 ｜ 实际 待公布 ｜ 前值 1.3
 
-🔍 重点速览
-🟡 **近现价集中开仓**: 11-13 450C ΔOI +32（距现价 -2.3%）
-   ⇒ 高等级 OI 变化且贴近现价；方向 Unknown（买开/卖开不可观测）
+🔍 重点速览: 今日无重点项（机械检查 highlight_v1）
 
 
 ## ISRG
@@ -39,48 +37,36 @@ Options: P/C成交量 0.20 | OI比 1.15 | ATM IV 35.0% | Skew -3.4pp | Term 0.93
    ⇒ 当日成交 vs 存量仓位：当日成交偏 Call，存量接近均衡
    ExpMove 期限化（expmove_v1）: 11-13（4D）±3.3% ｜ 11-20（11D）±4.8% ｜ 11-27（18D）±9.6% ｜ 12-04（25D）±7.1%
 🔧 结构（未验证研究层：Mechanism Scenario A/B——OI 开仓方向不可观测）
-Gamma Regime: POSITIVE（模型分类） | GEX(存量) 3,522,981 | GEX Change vs 上次快照 380,612 | Flip: Primary Flip: 412.61（PRIMARY，全链重定价 + 覆盖达标）
+Gamma Regime: POSITIVE（模型分类） | GEX(存量) 3,593,118 | GEX Change vs 上次快照 450,749 | Flip: Primary Flip: 413.42（PRIMARY，全链重定价 + 覆盖达标）
 🔎 测量完整性: GEX 符号契约 gex_sign_v1（Model A: Call+ / Put−）｜ Gamma 口径 全链重定价 ｜ Effective GEX 覆盖: 95%（带内） ｜ IV 有效性: VALID 331 / LOW 197 / INVALID 476
-结构观察区: Primary Flip 412.61（全链重定价，覆盖 95%）
+结构观察区: Primary Flip 413.42（全链重定价，覆盖 95%）
 Call Wall 500（弱结构｜现价低于该位 7.9%）
 最近结构参考: Call Wall 500（现价低于该位 7.9%）
-量化视角： 正 Gamma（352万，无历史分位）｜正 Gamma 增强（+38万）｜现价位于 Flip 上方 11.62%——观察点，非方向信号
+量化视角： 正 Gamma（359万，无历史分位）｜正 Gamma 增强（+45万）｜现价位于 Flip 上方 11.40%——观察点，非方向信号
 🧭 结构解读（全部依赖上方假设）
 • 支撑/压力参考：下方 440（MaxPain，仅结算参考）；上方 500（Call Wall，弱结构）。
 • Gamma 区域：切换参考 413（全链重定价，覆盖 95%）。
 • 做市商（条件机制）：若 Scenario A + 负 Gamma 成立，跌破关键位下方可能对应顺周期卖出压力增加；实际做市商对冲流量不可观测。Scenario B → 方向相反。不进入方向决策。
 • 失效参考：跌破关键位结构参考失效（结构性参考，非预测）。
 🔺 Activity（事实层，方向 Unknown）
-11-13 450.0P — Vol 2 | 最新价 $3.12 | OI 19→85 (ΔOI +66张) | ΔOI/Volume N/A（量数据不完整） | Magnitude: MEDIUM | 完整度: HIGH
-   ⇒ 放量且净增66张（+347.4% vs前日OI），值得跟踪（方向未知）
-12-11 505.0C — Vol 46（Yahoo补） | 最新价 $4.05 | OI 7→51 (ΔOI +44张) | ΔOI/Volume 95.7% | Magnitude: HIGH | 完整度: HIGH
-   ⇒ 大额净增44张（+628.6% vs前日OI），连续性待观察（方向未知）
-11-13 450.0C — Vol 38（Yahoo补） | 最新价 $11.50 | OI 27→59 (ΔOI +32张) | ΔOI/Volume 84.2% | Magnitude: HIGH | 完整度: HIGH
-   ⇒ 大额净增32张（+118.5% vs前日OI），连续性待观察（方向未知）
-12-04 460.0C — Vol 1 | 最新价 $18.50 | OI 9→40 (ΔOI +31张) | ΔOI/Volume N/A（量数据不完整） | Magnitude: MEDIUM | 完整度: HIGH
-   ⇒ 放量且净增31张（+344.4% vs前日OI），值得跟踪（方向未知）
-11-20 412.5P — Vol 24（Yahoo补） | 最新价 $1.90 | OI 10→34 (ΔOI +24张) | ΔOI/Volume 100.0% | Magnitude: HIGH | 完整度: HIGH
-   ⇒ 大额净增24张（+240.0% vs前日OI），连续性待观察（方向未知）
-量化视角： 5 个事件合计 ΔOI ≈ 197 张（Put 90 / Call 107），跨 4 个期限｜近端保护（1 档，距现价 ≤5%，权利金合计约 $0M，买/卖方向不可观测）｜Put 增仓为主（孤立/局部，暂不构成模式推断）——方向未知，观察连续性，观察点，非方向信号
+- 无中高变动事件（全部低等级）
 📆 Forward Expiration Structure
 
-11-13  C +0.1k / P +93 ｜ Activity HIGH ｜ 4D
-11-20  C +0 / P +36 ｜ Activity LOW ｜ 11D
-11-27  C +2 / P +2 ｜ Activity LOW ｜ 18D
-12-04  C +60 / P +14 ｜ Activity MEDIUM △ ｜ 25D
+11-13  C +0 / P +0 ｜ Activity LOW ｜ 4D
+11-20  C +0 / P +0 ｜ Activity LOW ｜ 11D
+11-27  C +0 / P +0 ｜ Activity LOW ｜ 18D
+12-04  C +0 / P +0 ｜ Activity LOW ｜ 25D
 
 📆 11-13 Forward Structure
-存量OI: C 1.2k / P 1.4k，今日变化ΔOI: C +0.1k / P +93，平值价格ATM: C $8.55 / P $6.45 ｜ ATM IV 35.0%，净 delta 敞口 3k shares
-Top ΔOI: P 450 +66 ｜ C 450 +32 ｜ C 485 +13
+存量OI: C 1.2k / P 1.4k，今日变化ΔOI: C +0 / P +0，平值价格ATM: C $8.55 / P $6.45 ｜ ATM IV 35.0%，净 delta 敞口 0 shares
 仓位参考: Max Pain 440 ｜ Call Wall 440（-4.5%，弱）（OI 0.1k） ｜ Put Wall 462.5（+0.4%，弱）（OI 0.1k）
-量化解读： 存量两侧均衡｜⚠️ 背离：存量 Put 重但当日 Call 增仓更多｜ATM IV 35.0%｜历史 Rank 20%（近端代理）｜IV/RV 0.80×（近似）｜期限倒挂（近端 IV > 远月）｜净 delta 敞口 正 3,184 股
+量化解读： 存量两侧均衡｜ATM IV 35.0%｜历史 Rank 20%（近端代理）｜IV/RV 0.80×（近似）｜期限倒挂（近端 IV > 远月）｜净 delta 敞口 正 0 股
 
 11-20（Activity LOW）仓位参考: Max Pain 405 ｜ Call Wall 420（-8.8%，弱）（OI 0.8k） ｜ Put Wall 427.5（-7.2%，弱）（OI 0.4k）
 
 11-27（Activity LOW）仓位参考: Max Pain 430 ｜ Call Wall 430（-6.6%，弱）（OI 64）
 
-12-04（MEDIUM △）Top ΔOI: 460C +31 ｜ 465C +20
-12-04（MEDIUM △）仓位参考: Max Pain 440 ｜ Call Wall 475（+3.1%）（OI 92） ｜ Put Wall 420（-8.8%，弱）（OI 17）
+12-04（Activity LOW）仓位参考: Max Pain 440 ｜ Call Wall 475（+3.1%）（OI 92） ｜ Put Wall 420（-8.8%，弱）（OI 17）
 
 数据质量: 行情 A ｜ 期权结构 A ｜ 流向 C ｜ 做市商机制 C —— Flow 相关层（Activity 连续性、做市商机制解读）置信度受限。
 Setup: 今日无 Setup 触发（机械检查全部 Setup）
