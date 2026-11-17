@@ -2,7 +2,7 @@
 
 📊 市场环境
 
-SPY $740.36 ｜ QQQ $661.75
+SPY $739.95 ｜ QQQ $661.75
 VIX 21.57 ↑11.8%（5D +8.3%） ｜ Vol Regime: ELEVATED
 CNN 恐惧贪婪 31.0（fear）
 全市场 P/C OI（OCC 结算 08-28，2023-06 以来）: Equity 0.75（分位 12%） ｜ Index 0.94（分位 11%）
@@ -101,9 +101,9 @@ Top ΔOI: P 130 +1,301 ｜ C 140 +77
 Setup A v1 — Core Conditions
 Price Regime DOWN | Location below_flip | Gamma Regime NEGATIVE（模型层）
 Confirmation: ✓ 2 ｜ ✗ 1 ｜ ? 1（? put_buy_confirmation）
-验证状态: N=94 ｜ OOS Lift N/A ｜ CI 下界 N/A
+验证状态: N=98 ｜ OOS Lift N/A ｜ CI 下界 N/A
 Target: 3D_close_return <= -0.02 — PENDING（evaluation date 待窗口结束）
-Status: 实验中，样本不足（N=94）
+Status: 实验中，样本不足（N=98）
 环境: Vol ELEVATED（仅环境标签，不参与计票）
 
 数据溯源：完整表见附录 / thesis / analytics/daily/2026-11-16/SPCX_morning.json
