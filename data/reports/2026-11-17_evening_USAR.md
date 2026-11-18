@@ -1,8 +1,8 @@
-# 期权晚报 2026-11-17（快照 16:40 ET）
+# 期权晚报 2026-11-17（快照 21:00 ET）
 
 📊 市场环境
 
-SPY $732.44 ｜ QQQ $656.95
+SPY $732.44 ｜ QQQ $nan
 VIX 25.46 ↑11.1%（5D +30.8%） ｜ Vol Regime: STRESS
 CNN 恐惧贪婪 25.2（fear）
 全市场 P/C OI（OCC 结算 08-28，2023-06 以来）: Equity 0.75（分位 12%） ｜ Index 0.94（分位 11%）
@@ -23,8 +23,6 @@ CNN 恐惧贪婪 25.2（fear）
    ⇒ 覆盖【高】事件的期限隐含波动显著更高（美联储 IFDP 1376 实证；单日截面，需连续多日确认；观察，非预测）
 🔴 **Vol Regime 升档**: ELEVATED → STRESS（vol_regime_v1）
    ⇒ 波动环境升档仅作环境标签，不判方向、不参与 Gate
-🟡 **近现价集中开仓**: 12-04 6P ΔOI +24（距现价 -2.0%）
-   ⇒ 高等级 OI 变化且贴近现价；方向 Unknown（买开/卖开不可观测）
 
 
 ## USAR
@@ -42,12 +40,12 @@ Options: P/C成交量 2.13 | OI比 0.54 | ATM IV 123.6% | Skew 11.2pp | Term 0.8
    ExpMove 期限化（expmove_v1）: 11-20（3D）±10.1% ｜ 11-27（10D）±14.0% ｜ 12-04（17D）±19.9% ｜ 12-11（24D）±23.4%
    ⇒ IV–VIX Spread: +98.1pp*（*近月 ATM IV − VIX；期限未对齐，仅作相对波动率 Proxy，不直接代表期权定价贵/便宜）
 🔧 结构（未验证研究层：Mechanism Scenario A/B——OI 开仓方向不可观测）
-Gamma Regime: NEGATIVE（模型分类） | GEX(存量) -1,007,563 | GEX Change vs 上次快照 -1,465,545 | Flip: Primary Flip: 7.10（PRIMARY，全链重定价 + 覆盖达标）
+Gamma Regime: NEGATIVE（模型分类） | GEX(存量) -1,580,094 | GEX Change vs 上次快照 -2,038,076 | Flip: Primary Flip: 7.38（PRIMARY，全链重定价 + 覆盖达标）
 🔎 测量完整性: GEX 符号契约 gex_sign_v1（Model A: Call+ / Put−）｜ Gamma 口径 全链重定价 ｜ Effective GEX 覆盖: 100%（带内） ｜ IV 有效性: VALID 207 / LOW 108 / INVALID 117
    ⇒ 全链负Gamma，波动易被放大（模型层）
-结构观察区: Primary Flip 7.10（全链重定价，覆盖 100%）
-最近结构参考: Flip 7（现价低于该位 6.5%）
-量化视角： 负 Gamma（101万，无历史分位）｜由正转负（147万）｜现价位于 Flip 下方 6.50%｜⚠️ 重点观察：负 Gamma 且日内加深——观察点，非方向信号
+结构观察区: Primary Flip 7.38（全链重定价，覆盖 100%）
+最近结构参考: Flip 7（现价低于该位 10.1%）
+量化视角： 负 Gamma（158万，无历史分位）｜由正转负（204万）｜现价位于 Flip 下方 10.10%｜⚠️ 重点观察：负 Gamma 且日内加深——观察点，非方向信号
 🧭 结构解读（全部依赖上方假设）
 • 支撑/压力参考：上方 10（MaxPain，仅结算参考）。
 • Gamma 区域：切换参考 7（全链重定价，覆盖 100%）。
@@ -57,26 +55,21 @@ Gamma Regime: NEGATIVE（模型分类） | GEX(存量) -1,007,563 | GEX Change v
 - 无中高变动事件（全部低等级）
 📆 Forward Expiration Structure
 
-11-20  C +3.2k / P -1.4k ｜ Activity HIGH ｜ 3D
-11-27  C +3.2k / P -91 ｜ Activity HIGH ｜ 10D
-12-04  C +72 / P -76 ｜ Activity MEDIUM △ ｜ 17D
-12-11  C +13 / P +47 ｜ Activity MEDIUM △ ｜ 24D
+11-20  C +0 / P +0 ｜ Activity LOW ｜ 3D
+11-27  C +0 / P +0 ｜ Activity LOW ｜ 10D
+12-04  C +0 / P +0 ｜ Activity LOW ｜ 17D
+12-11  C +0 / P +0 ｜ Activity LOW ｜ 24D
 
 📆 11-20 Forward Structure
-存量OI: C 55.6k / P 30.0k，今日变化ΔOI: C +3.2k / P -1.4k，平值价格ATM: C $0.38 / P $0.29 ｜ ATM IV 123.6%，净 delta 敞口 176k shares
-Top ΔOI: P 13 -754 ｜ P 12 -652
+存量OI: C 55.6k / P 30.0k，今日变化ΔOI: C +0 / P +0，平值价格ATM: C $0.38 / P $0.29 ｜ ATM IV 123.6%，净 delta 敞口 0 shares
 仓位参考: Max Pain 10 ｜ Put Wall 7（+5.5%，弱）（OI 3.2k）
-量化解读： 存量 Call 重｜ATM IV 123.6%｜历史 Rank 63%（近端代理）｜IV/RV 1.09×（近似）｜期限倒挂（近端 IV > 远月）｜净 delta 敞口 正 176,091 股
+量化解读： 存量 Call 重｜ATM IV 123.6%｜历史 Rank 63%（近端代理）｜IV/RV 1.09×（近似）｜期限倒挂（近端 IV > 远月）｜净 delta 敞口 正 0 股
 
-📆 11-27 Forward Structure
-存量OI: C 16.7k / P 3.2k，今日变化ΔOI: C +3.2k / P -91，平值价格ATM: C $0.54 / P $0.39 ｜ ATM IV 107.6%，净 delta 敞口 54k shares
-仓位参考: Max Pain 8 ｜ Put Wall 7（+5.5%，弱）（OI 0.4k）
-量化解读： 存量 Call 重｜ATM IV 107.6%｜历史 Rank 63%（近端代理）｜IV/RV 0.95×（近似）｜净 delta 敞口 正 54,482 股
+11-27（Activity LOW）仓位参考: Max Pain 8 ｜ Put Wall 7（+5.5%，弱）（OI 0.4k）
 
-12-04（MEDIUM △）Top ΔOI: 6P +24
-12-04（MEDIUM △）仓位参考: Max Pain 9 ｜ Put Wall 7（+5.5%，弱）（OI 0.1k）
+12-04（Activity LOW）仓位参考: Max Pain 9 ｜ Put Wall 7（+5.5%，弱）（OI 0.1k）
 
-12-11（MEDIUM △）仓位参考: Max Pain 10 ｜ Put Wall 7（+5.5%，弱）（OI 75）
+12-11（Activity LOW）仓位参考: Max Pain 10 ｜ Put Wall 7（+5.5%，弱）（OI 75）
 
 📅 事件差分（观察，非因果）: 11-20（3D）ATM IV 123.6% vs 11-27 107.6%（差 +15.9pp）——覆盖 零售销售 MoM、新屋开工、建筑许可 Prel
    符合'覆盖事件的期权溢价更高'（美联储 IFDP 1376 实证；单日截面，需连续多日确认）
@@ -85,9 +78,9 @@ Top ΔOI: P 13 -754 ｜ P 12 -652
 Setup A v1 — Core Conditions
 Price Regime DOWN | Location below_flip | Gamma Regime NEGATIVE（模型层）
 Confirmation: ✓ 2 ｜ ✗ 1 ｜ ? 1（? put_buy_confirmation）
-验证状态: N=98 ｜ OOS Lift N/A ｜ CI 下界 N/A
+验证状态: N=104 ｜ OOS Lift N/A ｜ CI 下界 N/A
 Target: 3D_close_return <= -0.02 — PENDING（evaluation date 待窗口结束）
-Status: 实验中，样本不足（N=98）
+Status: 实验中，样本不足（N=104）
 环境: Vol STRESS（仅环境标签，不参与计票）
 
 数据溯源：完整表见附录 / thesis / analytics/daily/2026-11-17/USAR_evening.json
