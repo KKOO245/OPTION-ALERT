@@ -70,7 +70,8 @@ def _throttle():
 def official_get(url, as_json=False, timeout=30):
     _throttle()
     try:
-        r = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=timeout)
+        r = requests.get(url, headers={"User-Agent": USER_AGENT,
+                                       "Referer": "https://www.cboe.com/"}, timeout=timeout)
         r.raise_for_status()
     except requests.HTTPError as e:
         code = e.response.status_code
