@@ -1,0 +1,224 @@
+{
+  "schema_version": "snapshot_v1",
+  "data_version": "snapshot_v1",
+  "created_at": "2026-11-20T21:00:45-05:00",
+  "session": "evening",
+  "source": "cboe",
+  "ticker": "SOXX",
+  "spot": 123.4000015258789,
+  "regime": {
+    "version": "regimes_v1",
+    "trend": "DOWN",
+    "gamma": "NEGATIVE",
+    "iv_level": "HIGH",
+    "age": 1,
+    "transition": "SWITCH"
+  },
+  "location": {
+    "price_location": "below_flip",
+    "flip_levels": [
+      136.7952
+    ],
+    "flip_status": "PRIMARY",
+    "flip_candidates": [
+      136.7952
+    ],
+    "flip_primary": 136.7952,
+    "flip_reason": "full_chain_reprice_gate_pass",
+    "flip_source": "full_chain",
+    "spot_vs_primary_flip": {
+      "distance_pct": -9.79,
+      "side": "BELOW"
+    },
+    "call_wall": null,
+    "put_wall": null,
+    "walls_v1": {
+      "call": {
+        "strike": 170.0,
+        "oi": 57953.0,
+        "distance_pct": 37.76,
+        "dominance": 1.14,
+        "strength": "HIGH",
+        "classification": "REMOTE"
+      },
+      "put": {
+        "strike": 150.0,
+        "oi": 28202.0,
+        "distance_pct": 21.56,
+        "dominance": 1.23,
+        "strength": "HIGH",
+        "classification": "REMOTE"
+      }
+    },
+    "call_wall_class": "REMOTE",
+    "put_wall_class": "REMOTE",
+    "concentration": [
+      {
+        "strike": 120.0,
+        "type": "put",
+        "oi": 22911
+      },
+      {
+        "strike": 122.0,
+        "type": "put",
+        "oi": 5093
+      },
+      {
+        "strike": 125.0,
+        "type": "put",
+        "oi": 4742
+      }
+    ]
+  },
+  "p3": {
+    "schema_version": "p3_collect_v1",
+    "gex": {
+      "net_gex": -14155446.72,
+      "abs_gex": 14155446.72,
+      "n_used": 824,
+      "n_skipped": 552,
+      "spot_zone": "NEGATIVE"
+    },
+    "coverage": {
+      "schema_version": "coverage_v1",
+      "total_contracts": 1376,
+      "iv_valid": {
+        "VALID": 496,
+        "LOW_LIQUIDITY": 328,
+        "INVALID": 552
+      },
+      "strike_coverage_pct": 59.9,
+      "oi_coverage_pct": 98.7,
+      "valid_only_oi_coverage_pct": 67.7,
+      "band_oi_coverage_pct": 100.0,
+      "effective_gex_coverage_pct": 99.8
+    },
+    "second_order": {
+      "schema_version": "second_order_v1",
+      "net_vanna": 2804931.0,
+      "net_charm": 12243330.0,
+      "n_used": 824,
+      "min_dte": 6,
+      "vanna_gate": true,
+      "charm_gate": false
+    },
+    "iv_rv": {
+      "atm_iv_near": 0.90325,
+      "rv_5d": 0.4073,
+      "rv_20d": 4.3836,
+      "ratio_5d": 2.218,
+      "ratio_20d": 0.206
+    },
+    "event_overlap": null,
+    "confluence": {
+      "families_in_band": 1,
+      "levels": [
+        {
+          "type": "oi",
+          "price": 122.0
+        },
+        {
+          "type": "oi",
+          "price": 125.0
+        }
+      ]
+    },
+    "event_flag": {
+      "flags": [
+        "CLEAN"
+      ],
+      "window_days": 5,
+      "note": "未来5个自然日内宏观【高】事件/财报(白名单) → IV/RV 不直接可比"
+    }
+  },
+  "momentum": {
+    "iv_momentum": 3.464,
+    "iv_momentum_1d": 7.095,
+    "iv_level": "HIGH",
+    "iv_rank": 99.3,
+    "skew_momentum": 23.723,
+    "skew": 38.3356779661017,
+    "term_structure_momentum": 0.2213,
+    "pc_ratio": 0.691,
+    "pc_oi_ratio": 0.5788745492072853,
+    "oi_flow": "put_building",
+    "price_momentum": -0.1055,
+    "volume_ratio": null,
+    "atm_iv": 0.90325,
+    "expected_move_pct": 10.08914088010691,
+    "term_ratio": 0.9129809022972599
+  },
+  "confirmation": {
+    "iv_surge": true,
+    "skew_surge": true,
+    "volume_surge": null,
+    "put_buy_flow": null,
+    "price_break": true
+  },
+  "price_extreme": "NEW_LOW",
+  "protection_divergence": false,
+  "forward": null,
+  "context": {
+    "spy_return": null,
+    "qqq_return": null,
+    "sector_relative": null,
+    "vix": 35.88999938964844,
+    "vol_environment": {
+      "vix": {
+        "value": 35.88999938964844,
+        "timestamp": "2026-11-20T21:00:45-05:00",
+        "basis": "close",
+        "prior_close": 28.440000534057617,
+        "change_1d_pct": 26.2,
+        "change_5d_pct": 85.96
+      },
+      "regime": {
+        "label": "STRESS",
+        "rule_version": "vol_regime_v1",
+        "classification_type": "descriptive",
+        "calibration_status": "uncalibrated",
+        "inputs": {
+          "vix_level": 35.88999938964844,
+          "vix_1d_pct": 26.2,
+          "vix_5d_pct": 85.96,
+          "vix_percentile_20d": 100.0,
+          "vix_term_structure": null
+        },
+        "evidence_completeness": "partial",
+        "transition": {
+          "from": "STRESS",
+          "to": "STRESS",
+          "changed": false
+        }
+      },
+      "shock": {
+        "version": "vix_shock_v1",
+        "level": "EXTREME",
+        "value": 2,
+        "display": false
+      }
+    },
+    "day_high": 135.1999969482422,
+    "day_low": 122.19999694824219,
+    "day_open": 135.10000610351562,
+    "max_pain": 151.67,
+    "max_pain_monthly": 155.0,
+    "notes": null
+  },
+  "data_quality": {
+    "market_data": "A",
+    "options_structure": "A",
+    "flow": "C",
+    "dealer_mechanism": "C"
+  },
+  "data_sufficiency": {
+    "momentum.volume_ratio": "INSUFFICIENT_DATA",
+    "location.call_wall": "INSUFFICIENT_DATA",
+    "location.put_wall": "INSUFFICIENT_DATA",
+    "confirmation.volume_surge": "INSUFFICIENT_DATA",
+    "confirmation.put_buy_flow": "INSUFFICIENT_DATA"
+  },
+  "zero_dte": null,
+  "data_as_of": "2026-11-20",
+  "snapshot_hash": "84f98829784b6bcb40b1bed9210f1935cfd36152de3f92fa2ef19df78271fdc8"
+}
