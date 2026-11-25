@@ -1,11 +1,11 @@
 {
   "schema_version": "snapshot_v1",
   "data_version": "snapshot_v1",
-  "created_at": "2026-11-25T09:08:39-05:00",
+  "created_at": "2026-11-25T10:20:34-05:00",
   "session": "morning",
   "source": "cboe",
   "ticker": "BE",
-  "spot": 145.24,
+  "spot": 143.7,
   "regime": {
     "version": "regimes_v1",
     "trend": "DOWN",
@@ -15,21 +15,28 @@
     "transition": "SWITCH"
   },
   "location": {
-    "price_location": null,
-    "flip_levels": null,
-    "flip_status": "NO_CROSS",
-    "flip_candidates": null,
-    "flip_primary": null,
-    "flip_reason": "no_sign_change_in_band",
+    "price_location": "below_flip",
+    "flip_levels": [
+      163.7081
+    ],
+    "flip_status": "PRIMARY",
+    "flip_candidates": [
+      163.7081
+    ],
+    "flip_primary": 163.7081,
+    "flip_reason": "full_chain_reprice_gate_pass",
     "flip_source": "full_chain",
-    "spot_vs_primary_flip": null,
+    "spot_vs_primary_flip": {
+      "distance_pct": -12.22,
+      "side": "BELOW"
+    },
     "call_wall": null,
     "put_wall": 150.0,
     "walls_v1": {
       "call": {
         "strike": 200.0,
         "oi": 10440.0,
-        "distance_pct": 37.7,
+        "distance_pct": 39.18,
         "dominance": 1.28,
         "strength": "HIGH",
         "classification": "REMOTE"
@@ -37,7 +44,7 @@
       "put": {
         "strike": 150.0,
         "oi": 10377.0,
-        "distance_pct": 3.28,
+        "distance_pct": 4.38,
         "dominance": 1.17,
         "strength": "HIGH",
         "classification": "WEAK"
@@ -66,41 +73,41 @@
   "p3": {
     "schema_version": "p3_collect_v1",
     "gex": {
-      "net_gex": -9006806.45,
-      "abs_gex": 9006806.45,
-      "n_used": 755,
-      "n_skipped": 207,
+      "net_gex": -7530333.34,
+      "abs_gex": 7530333.34,
+      "n_used": 693,
+      "n_skipped": 269,
       "spot_zone": "NEGATIVE"
     },
     "coverage": {
       "schema_version": "coverage_v1",
       "total_contracts": 962,
       "iv_valid": {
-        "VALID": 655,
-        "LOW_LIQUIDITY": 100,
-        "INVALID": 207
+        "VALID": 563,
+        "LOW_LIQUIDITY": 130,
+        "INVALID": 269
       },
-      "strike_coverage_pct": 78.5,
-      "oi_coverage_pct": 100.0,
-      "valid_only_oi_coverage_pct": 87.7,
+      "strike_coverage_pct": 72.0,
+      "oi_coverage_pct": 94.1,
+      "valid_only_oi_coverage_pct": 78.3,
       "band_oi_coverage_pct": 100.0,
       "effective_gex_coverage_pct": 100.0
     },
     "second_order": {
       "schema_version": "second_order_v1",
-      "net_vanna": 134420.0,
-      "net_charm": 13798424.0,
-      "n_used": 755,
+      "net_vanna": 419462.0,
+      "net_charm": 33822051.0,
+      "n_used": 693,
       "min_dte": 2,
       "vanna_gate": true,
       "charm_gate": true
     },
     "iv_rv": {
-      "atm_iv_near": 1.3031000000000001,
+      "atm_iv_near": 1.26235,
       "rv_5d": 1.9306,
       "rv_20d": 1.3806,
-      "ratio_5d": 0.675,
-      "ratio_20d": 0.944
+      "ratio_5d": 0.654,
+      "ratio_20d": 0.914
     },
     "event_overlap": null,
     "confluence": {
@@ -116,28 +123,28 @@
     }
   },
   "momentum": {
-    "iv_momentum": 0.798,
-    "iv_momentum_1d": 7.335,
+    "iv_momentum": 0.694,
+    "iv_momentum_1d": 3.26,
     "iv_level": "NORMAL",
-    "iv_rank": 82.5,
-    "skew_momentum": 0.819,
-    "skew": 15.217018356493405,
-    "term_structure_momentum": 0.0074,
-    "pc_ratio": 0.661,
+    "iv_rank": 80.1,
+    "skew_momentum": 2.423,
+    "skew": 16.820135013966976,
+    "term_structure_momentum": 0.0593,
+    "pc_ratio": 0.486,
     "pc_oi_ratio": 0.6171319576903069,
     "oi_flow": "call_building",
-    "price_momentum": -0.1362,
+    "price_momentum": -0.1454,
     "volume_ratio": null,
-    "atm_iv": 1.3031000000000001,
-    "expected_move_pct": 11.573946571192508,
-    "term_ratio": 0.85511472642161
+    "atm_iv": 1.26235,
+    "expected_move_pct": 7.741823242867085,
+    "term_ratio": 0.9069988513486751
   },
   "confirmation": {
     "iv_surge": true,
     "skew_surge": true,
     "volume_surge": null,
     "put_buy_flow": null,
-    "price_break": null
+    "price_break": true
   },
   "price_extreme": null,
   "protection_divergence": null,
@@ -155,55 +162,55 @@
         "put_delta_oi": 1113.0,
         "call_new_oi": 0,
         "put_new_oi": 0,
-        "call_volume": 24326.0,
-        "put_volume": 16071.0,
+        "call_volume": 7445.0,
+        "put_volume": 3617.0,
         "has_prev": true,
         "new_listing": false,
-        "atm_strike": 145.0,
-        "atm_call_price": 15.12,
-        "atm_put_price": 2.69,
-        "atm_iv": 1.3031,
-        "expmove_pct": 12.26,
+        "atm_strike": 144.0,
+        "atm_call_price": 5.5,
+        "atm_put_price": 5.72,
+        "atm_iv": 1.2624,
+        "expmove_pct": 7.81,
         "activity": "HIGH",
-        "delta_exposure": 301884.0,
+        "delta_exposure": 199096.0,
         "top_delta_oi": [
           {
             "strike": 185.0,
             "type": "call",
             "delta_oi": 885,
-            "last_price": 0.35,
-            "notional": 30975.0,
+            "last_price": 0.03,
+            "notional": 2655.0,
             "relevance": "LOW",
-            "distance_pct": 27.4,
-            "volume": 2133.0,
+            "distance_pct": 28.7,
+            "volume": 145.0,
             "magnitude": "HIGH",
-            "r1": 41.49,
+            "r1": null,
             "contract_symbol": "BE261127C00185000"
           },
           {
             "strike": 175.0,
             "type": "call",
             "delta_oi": 825,
-            "last_price": 1.14,
-            "notional": 94049.99999999999,
-            "relevance": "OK",
-            "distance_pct": 20.5,
-            "volume": 3421.0,
+            "last_price": 0.12,
+            "notional": 9900.0,
+            "relevance": "LOW",
+            "distance_pct": 21.8,
+            "volume": 219.0,
             "magnitude": "HIGH",
-            "r1": 24.12,
+            "r1": null,
             "contract_symbol": "BE261127C00175000"
           },
           {
             "strike": 124.0,
             "type": "put",
             "delta_oi": 746,
-            "last_price": 0.32,
-            "notional": 23872.0,
-            "relevance": "LOW",
-            "distance_pct": -14.6,
-            "volume": 799.0,
+            "last_price": 0.73,
+            "notional": 54458.00000000001,
+            "relevance": "OK",
+            "distance_pct": -13.7,
+            "volume": 3.0,
             "magnitude": "HIGH",
-            "r1": 93.37,
+            "r1": null,
             "contract_symbol": "BE261127P00124000"
           }
         ],
@@ -217,7 +224,7 @@
           "fallback_from_remote": {
             "strike": 290.0,
             "oi": 5824.0,
-            "distance_pct": 99.67
+            "distance_pct": 101.81
           }
         },
         "put_wall": {
@@ -237,74 +244,60 @@
         "put_delta_oi": 1016.0,
         "call_new_oi": 0,
         "put_new_oi": 0,
-        "call_volume": 5800.0,
-        "put_volume": 5266.0,
+        "call_volume": 2330.0,
+        "put_volume": 2229.0,
         "has_prev": true,
         "new_listing": false,
-        "atm_strike": 145.0,
-        "atm_call_price": 17.13,
-        "atm_put_price": 7.35,
-        "atm_iv": 1.2263,
-        "expmove_pct": 16.85,
+        "atm_strike": 144.0,
+        "atm_call_price": 11.44,
+        "atm_put_price": 13.78,
+        "atm_iv": 1.2883,
+        "expmove_pct": 17.55,
         "activity": "HIGH",
-        "delta_exposure": 43838.0,
+        "delta_exposure": 3639.0,
         "top_delta_oi": [
           {
             "strike": 150.0,
             "type": "put",
             "delta_oi": 559,
-            "last_price": 9.2,
-            "notional": 514279.99999999994,
+            "last_price": 14.62,
+            "notional": 817258.0,
             "relevance": "OK",
-            "distance_pct": 3.3,
-            "volume": 2010.0,
+            "distance_pct": 4.4,
+            "volume": 62.0,
             "magnitude": "HIGH",
-            "r1": 27.81,
+            "r1": null,
             "contract_symbol": "BE261204P00150000"
           },
           {
             "strike": 170.0,
             "type": "call",
             "delta_oi": 406,
-            "last_price": 6.5,
-            "notional": 263900.0,
+            "last_price": 3.0,
+            "notional": 121800.0,
             "relevance": "OK",
-            "distance_pct": 17.0,
-            "volume": 920.0,
-            "magnitude": "HIGH",
-            "r1": 44.13,
+            "distance_pct": 18.3,
+            "volume": 100.0,
+            "magnitude": "MEDIUM",
+            "r1": null,
             "contract_symbol": "BE261204C00170000"
           },
           {
             "strike": 182.5,
             "type": "call",
             "delta_oi": 183,
-            "last_price": 3.6,
-            "notional": 65880.0,
-            "relevance": "OK",
-            "distance_pct": 25.7,
-            "volume": 272.0,
-            "magnitude": "HIGH",
-            "r1": 67.28,
+            "last_price": 1.09,
+            "notional": 19947.000000000004,
+            "relevance": "LOW",
+            "distance_pct": 27.0,
+            "volume": 6.0,
+            "magnitude": "MEDIUM",
+            "r1": null,
             "contract_symbol": "BE261204C00182500"
           }
         ],
         "roll_candidates": [],
-        "significant": [
-          {
-            "strike": 150.0,
-            "type": "put",
-            "delta_oi": 559,
-            "last_price": 9.2,
-            "notional": 514279.99999999994,
-            "relevance": "OK",
-            "distance_pct": 3.3,
-            "volume": 2010.0,
-            "magnitude": "HIGH",
-            "r1": 27.81,
-            "contract_symbol": "BE261204P00150000"
-          }
-        ],
+        "significant": [],
         "max_pain": 185.0,
         "call_wall": null,
         "put_wall": {
@@ -324,55 +317,55 @@
         "put_delta_oi": 66.0,
         "call_new_oi": 0.0,
         "put_new_oi": 0.0,
-        "call_volume": 1808.0,
-        "put_volume": 486.0,
+        "call_volume": 439.0,
+        "put_volume": 409.0,
         "has_prev": true,
         "new_listing": false,
-        "atm_strike": 145.0,
-        "atm_call_price": 31.96,
-        "atm_put_price": 10.3,
-        "atm_iv": 1.1659,
-        "expmove_pct": 29.1,
-        "activity": "HIGH",
-        "delta_exposure": 22360.0,
+        "atm_strike": 144.0,
+        "atm_call_price": 14.9,
+        "atm_put_price": 17.61,
+        "atm_iv": 1.2302,
+        "expmove_pct": 22.62,
+        "activity": "MEDIUM",
+        "delta_exposure": 14500.0,
         "top_delta_oi": [
           {
             "strike": 185.0,
             "type": "call",
             "delta_oi": 133,
-            "last_price": 5.27,
-            "notional": 70091.0,
-            "relevance": "OK",
-            "distance_pct": 27.4,
-            "volume": 229.0,
-            "magnitude": "HIGH",
-            "r1": 58.08,
+            "last_price": 2.8,
+            "notional": 37240.0,
+            "relevance": "LOW",
+            "distance_pct": 28.7,
+            "volume": 6.0,
+            "magnitude": "MEDIUM",
+            "r1": null,
             "contract_symbol": "BE261211C00185000"
           },
           {
             "strike": 170.0,
             "type": "call",
             "delta_oi": 101,
-            "last_price": 9.35,
-            "notional": 94434.99999999999,
+            "last_price": 5.55,
+            "notional": 56054.99999999999,
             "relevance": "OK",
-            "distance_pct": 17.0,
-            "volume": 136.0,
-            "magnitude": "HIGH",
-            "r1": 74.26,
+            "distance_pct": 18.3,
+            "volume": 18.0,
+            "magnitude": "MEDIUM",
+            "r1": null,
             "contract_symbol": "BE261211C00170000"
           },
           {
             "strike": 155.0,
             "type": "call",
             "delta_oi": 92,
-            "last_price": 15.52,
-            "notional": 142784.0,
+            "last_price": 9.05,
+            "notional": 83260.0,
             "relevance": "OK",
-            "distance_pct": 6.7,
-            "volume": 111.0,
-            "magnitude": "HIGH",
-            "r1": 82.88,
+            "distance_pct": 7.9,
+            "volume": 7.0,
+            "magnitude": "MEDIUM",
+            "r1": null,
             "contract_symbol": "BE261211C00155000"
           }
         ],
@@ -386,7 +379,7 @@
           "fallback_from_remote": {
             "strike": 230.0,
             "oi": 433.0,
-            "distance_pct": 58.36
+            "distance_pct": 60.06
           }
         },
         "put_wall": {
@@ -396,7 +389,7 @@
           "fallback_from_remote": {
             "strike": 175.0,
             "oi": 1249.0,
-            "distance_pct": 20.49
+            "distance_pct": 21.78
           }
         }
       },
@@ -411,55 +404,55 @@
         "put_delta_oi": 2484.0,
         "call_new_oi": 0,
         "put_new_oi": 0,
-        "call_volume": 9154.0,
-        "put_volume": 7460.0,
+        "call_volume": 1875.0,
+        "put_volume": 2061.0,
         "has_prev": true,
         "new_listing": false,
-        "atm_strike": 145.0,
-        "atm_call_price": 24.65,
-        "atm_put_price": 12.61,
-        "atm_iv": 1.1391,
-        "expmove_pct": 25.65,
+        "atm_strike": 144.0,
+        "atm_call_price": 15.25,
+        "atm_put_price": 17.2,
+        "atm_iv": 1.1906,
+        "expmove_pct": 22.58,
         "activity": "HIGH",
-        "delta_exposure": 46923.0,
+        "delta_exposure": 3933.0,
         "top_delta_oi": [
           {
             "strike": 150.0,
             "type": "call",
             "delta_oi": 1060,
-            "last_price": 21.05,
-            "notional": 2231300.0,
+            "last_price": 14.39,
+            "notional": 1525340.0000000002,
             "relevance": "OK",
-            "distance_pct": 3.3,
-            "volume": 1694.0,
+            "distance_pct": 4.4,
+            "volume": 40.0,
             "magnitude": "HIGH",
-            "r1": 62.57,
+            "r1": null,
             "contract_symbol": "BE261218C00150000"
           },
           {
             "strike": 147.0,
             "type": "put",
             "delta_oi": 702,
-            "last_price": 13.55,
-            "notional": 951210.0,
+            "last_price": 19.35,
+            "notional": 1358370.0,
             "relevance": "OK",
-            "distance_pct": 1.2,
-            "volume": 722.0,
+            "distance_pct": 2.3,
+            "volume": 24.0,
             "magnitude": "HIGH",
-            "r1": 97.23,
+            "r1": null,
             "contract_symbol": "BE261218P00147000"
           },
           {
             "strike": 90.0,
             "type": "put",
             "delta_oi": 330,
-            "last_price": 1.05,
-            "notional": 34650.0,
-            "relevance": "LOW",
-            "distance_pct": -38.0,
-            "volume": 370.0,
-            "magnitude": "HIGH",
-            "r1": 89.19,
+            "last_price": 2.05,
+            "notional": 67649.99999999999,
+            "relevance": "OK",
+            "distance_pct": -37.4,
+            "volume": 57.0,
+            "magnitude": "MEDIUM",
+            "r1": null,
             "contract_symbol": "BE261218P00090000"
           }
         ],
@@ -473,7 +466,7 @@
           "fallback_from_remote": {
             "strike": 200.0,
             "oi": 4563.0,
-            "distance_pct": 37.7
+            "distance_pct": 39.18
           }
         },
         "put_wall": {
@@ -483,7 +476,7 @@
           "fallback_from_remote": {
             "strike": 200.0,
             "oi": 6300.0,
-            "distance_pct": 37.7
+            "distance_pct": 39.18
           }
         }
       }
@@ -493,15 +486,15 @@
     "spy_return": null,
     "qqq_return": null,
     "sector_relative": null,
-    "vix": 31.389999389648438,
+    "vix": 31.6200008392334,
     "vol_environment": {
       "vix": {
-        "value": 31.389999389648438,
-        "timestamp": "2026-11-25T09:08:39-05:00",
+        "value": 31.6200008392334,
+        "timestamp": "2026-11-25T10:20:34-05:00",
         "basis": "intraday",
         "prior_close": 26.360000610351562,
-        "change_1d_pct": 19.08,
-        "change_5d_pct": 27.81
+        "change_1d_pct": 19.95,
+        "change_5d_pct": 28.75
       },
       "regime": {
         "label": "STRESS",
@@ -509,9 +502,9 @@
         "classification_type": "descriptive",
         "calibration_status": "uncalibrated",
         "inputs": {
-          "vix_level": 31.389999389648438,
-          "vix_1d_pct": 19.08,
-          "vix_5d_pct": 27.81,
+          "vix_level": 31.6200008392334,
+          "vix_1d_pct": 19.95,
+          "vix_5d_pct": 28.75,
           "vix_percentile_20d": 95.0,
           "vix_term_structure": null
         },
@@ -529,9 +522,9 @@
         "display": false
       }
     },
-    "day_high": 164.17999267578125,
-    "day_low": 151.41000366210938,
-    "day_open": 162.69000244140625,
+    "day_high": 144.85000610351562,
+    "day_low": 137.72000122070312,
+    "day_open": 144.82000732421875,
     "max_pain": 162.5,
     "max_pain_monthly": 175.0,
     "notes": null
@@ -545,12 +538,10 @@
   "data_sufficiency": {
     "momentum.volume_ratio": "INSUFFICIENT_DATA",
     "location.call_wall": "INSUFFICIENT_DATA",
-    "location.flip_levels": "NO_CROSS",
-    "location.price_location": "INSUFFICIENT_DATA",
     "confirmation.volume_surge": "INSUFFICIENT_DATA",
     "confirmation.put_buy_flow": "INSUFFICIENT_DATA"
   },
   "zero_dte": null,
   "data_as_of": "2026-11-25",
-  "snapshot_hash": "d78060d826d5511f4ca50eb5148b1d022bb73ba7c22a803006fe891a98c1d399"
+  "snapshot_hash": "fa8732baf7691d0bec1823a34f1093cd0a972366b47eaf56ba7b81e54c9cd6e3"
 }
