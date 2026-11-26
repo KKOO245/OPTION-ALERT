@@ -1,4 +1,4 @@
-# 期权晚报 2026-11-25（快照 16:40 ET）
+# 期权晚报 2026-11-25（快照 21:00 ET）
 
 📊 市场环境
 
@@ -37,15 +37,15 @@ Options: P/C成交量 0.14 | OI比 0.60 | ATM IV 35.2% | Skew 3.6pp | Term 0.98 
    ⇒ 当日成交 vs 存量仓位：当日成交偏 Call，存量Call-dominant
    ExpMove 期限化（expmove_v1）: 11-27（2D）±3.3% ｜ 12-04（9D）±4.1% ｜ 12-11（16D）±0.0% ｜ 12-18（23D）±0.0%
 🔧 结构（未验证研究层：Mechanism Scenario A/B——OI 开仓方向不可观测）
-Gamma Regime: POSITIVE（模型分类） | GEX(存量) 1,800,361 | GEX Change vs 上次快照 34,142 | Flip: Primary Flip: 400.99（PRIMARY，全链重定价 + 覆盖达标）
+Gamma Regime: POSITIVE（模型分类） | GEX(存量) 1,824,869 | GEX Change vs 上次快照 58,651 | Flip: Primary Flip: 401.96（PRIMARY，全链重定价 + 覆盖达标）
 🔎 测量完整性: GEX 符号契约 gex_sign_v1（Model A: Call+ / Put−）｜ Gamma 口径 全链重定价 ｜ Effective GEX 覆盖: 95%（带内） ｜ IV 有效性: VALID 243 / LOW 170 / INVALID 571
-结构观察区: Primary Flip 400.99（全链重定价，覆盖 95%）
+结构观察区: Primary Flip 401.96（全链重定价，覆盖 95%）
 Call Wall 400（弱结构｜现价高于该位 6.8%）
-最近结构参考: Flip 401（现价高于该位 6.5%）
-量化视角： 正 Gamma（180万，无历史分位）｜正 Gamma 增强（+3万）｜现价位于 Flip 上方 6.53%——观察点，非方向信号
+最近结构参考: Flip 402（现价高于该位 6.3%）
+量化视角： 正 Gamma（182万，无历史分位）｜正 Gamma 增强（+6万）｜现价位于 Flip 上方 6.27%——观察点，非方向信号
 🧭 结构解读（全部依赖上方假设）
 • 支撑/压力参考：下方 410（MaxPain，仅结算参考） / 400（Call Wall，弱结构）。
-• Gamma 区域：切换参考 401（全链重定价，覆盖 95%）。
+• Gamma 区域：切换参考 402（全链重定价，覆盖 95%）。
 • 做市商（条件机制）：若 Scenario A + 负 Gamma 成立，跌破关键位下方可能对应顺周期卖出压力增加；实际做市商对冲流量不可观测。Scenario B → 方向相反。不进入方向决策。
 • 失效参考：跌破关键位结构参考失效（结构性参考，非预测）。
 🔺 Activity（事实层，方向 Unknown）
