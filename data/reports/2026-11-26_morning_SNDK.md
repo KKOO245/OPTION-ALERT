@@ -69,9 +69,9 @@ Put Wall 75（现价高于该位 2.4%）
 Setup A v1 — Core Conditions
 Price Regime DOWN | Location below_flip | Gamma Regime NEGATIVE（模型层）
 Confirmation: ✓ 2 ｜ ✗ 1 ｜ ? 1（? put_buy_confirmation）
-验证状态: N=107 ｜ OOS Lift N/A ｜ CI 下界 N/A
+验证状态: N=108 ｜ OOS Lift N/A ｜ CI 下界 N/A
 Target: 3D_close_return <= -0.02 — PENDING（evaluation date 待窗口结束）
-Status: 实验中，样本不足（N=107）
+Status: 实验中，样本不足（N=108）
 环境: Vol STRESS（仅环境标签，不参与计票）
 
 数据溯源：完整表见附录 / thesis / analytics/daily/2026-11-26/SNDK_morning.json

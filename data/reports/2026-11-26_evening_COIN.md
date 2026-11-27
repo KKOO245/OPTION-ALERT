@@ -1,4 +1,4 @@
-# 期权晚报 2026-11-26（快照 16:40 ET）
+# 期权晚报 2026-11-26（快照 21:00 ET）
 
 📊 市场环境
 
@@ -34,16 +34,16 @@ Options: P/C成交量 0.31 | OI比 0.61 | ATM IV 73.5% | Skew 4.6pp | Term 1.07 
    ExpMove 期限化（expmove_v1）: 11-27（1D）±4.2% ｜ 12-04（8D）±10.3% ｜ 12-11（15D）±17.3% ｜ 12-18（22D）±19.0%
    ⇒ IV–VIX Spread: +46.7pp*（*近月 ATM IV − VIX；期限未对齐，仅作相对波动率 Proxy，不直接代表期权定价贵/便宜）
 🔧 结构（未验证研究层：Mechanism Scenario A/B——OI 开仓方向不可观测）
-Gamma Regime: NEGATIVE（模型分类） | GEX(存量) -10,909,395 | GEX Change vs 上次快照 -9,258,427 | Flip: Primary Flip: 106.50（PRIMARY，全链重定价 + 覆盖达标）
+Gamma Regime: NEGATIVE（模型分类） | GEX(存量) -11,189,724 | GEX Change vs 上次快照 -9,538,756 | Flip: Primary Flip: 106.55（PRIMARY，全链重定价 + 覆盖达标）
 🔎 测量完整性: GEX 符号契约 gex_sign_v1（Model A: Call+ / Put−）｜ Gamma 口径 全链重定价 ｜ Effective GEX 覆盖: 97%（带内） ｜ IV 有效性: VALID 439 / LOW 240 / INVALID 311
    ⇒ 全链负Gamma，波动易被放大（模型层）
-结构观察区: Primary Flip 106.50（全链重定价，覆盖 97%）
+结构观察区: Primary Flip 106.55（全链重定价，覆盖 97%）
 Put Wall 110（弱结构｜现价低于该位 5.7%）
-最近结构参考: Flip 106（现价低于该位 2.6%）
-量化视角： 负 Gamma（1091万，无历史分位）｜负 Gamma 加深（926万）｜现价位于 Flip 下方 2.61%｜⚠️ 重点观察：负 Gamma 且日内加深——观察点，非方向信号
+最近结构参考: Flip 107（现价低于该位 2.7%）
+量化视角： 负 Gamma（1119万，无历史分位）｜负 Gamma 加深（954万）｜现价位于 Flip 下方 2.66%｜⚠️ 重点观察：负 Gamma 且日内加深——观察点，非方向信号
 🧭 结构解读（全部依赖上方假设）
 • 支撑/压力参考：上方 110（Put Wall，弱结构） / 109（MaxPain，仅结算参考）。
-• Gamma 区域：切换参考 106（全链重定价，覆盖 97%）。
+• Gamma 区域：切换参考 107（全链重定价，覆盖 97%）。
 • 做市商（条件机制）：若 Scenario A + 负 Gamma 成立，跌破关键位下方可能对应顺周期卖出压力增加；实际做市商对冲流量不可观测。Scenario B → 方向相反。不进入方向决策。
 • 失效参考：跌破关键位结构参考失效（结构性参考，非预测）。
 🔺 Activity（事实层，方向 Unknown）
@@ -70,9 +70,9 @@ Put Wall 110（弱结构｜现价低于该位 5.7%）
 Setup A v1 — Core Conditions
 Price Regime DOWN | Location below_flip | Gamma Regime NEGATIVE（模型层）
 Confirmation: ✓ 0 ｜ ✗ 3 ｜ ? 1（? put_buy_confirmation）
-验证状态: N=107 ｜ OOS Lift N/A ｜ CI 下界 N/A
+验证状态: N=108 ｜ OOS Lift N/A ｜ CI 下界 N/A
 Target: 3D_close_return <= -0.02 — PENDING（evaluation date 待窗口结束）
-Status: 实验中，样本不足（N=107）
+Status: 实验中，样本不足（N=108）
 环境: Vol STRESS（仅环境标签，不参与计票）
 
 数据溯源：完整表见附录 / thesis / analytics/daily/2026-11-26/COIN_evening.json

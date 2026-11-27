@@ -1,4 +1,4 @@
-# 期权晚报 2026-11-26（快照 16:40 ET）
+# 期权晚报 2026-11-26（快照 21:00 ET）
 
 📊 市场环境
 
@@ -30,20 +30,20 @@ Options: P/C成交量 1.15 | OI比 0.90 | ATM IV 36.5% | Skew 6.4pp | Term 0.94 
    ⇒ Put/Call Volume: 1.15×（Put 与 Call 成交量接近）→ 方向 Unknown
    ⇒ Put/Call OI: 0.90×（两侧接近均衡）
    ⇒ 当日成交 vs 存量仓位：当日成交接近均衡，存量接近均衡
-   ⇒ 历史分位（15年 lambdaclass 全链口径）: GEX 24% ｜ P/C OI(近端) 3%
-量化视角的组合解读： Gamma 异常偏负（GEX 分位 24%）｜近端持仓极端 Call 重（P/C OI 分位 3%，历史极低区）｜⚠️ 需重点观察：持仓极端 + Gamma 异常侧组合——观察点，非方向信号
+   ⇒ 历史分位（15年 lambdaclass 全链口径）: GEX 23% ｜ P/C OI(近端) 3%
+量化视角的组合解读： Gamma 异常偏负（GEX 分位 23%）｜近端持仓极端 Call 重（P/C OI 分位 3%，历史极低区）｜⚠️ 需重点观察：持仓极端 + Gamma 异常侧组合——观察点，非方向信号
    ExpMove 期限化（expmove_v1）: 11-27（1D）±2.1% ｜ 11-30（4D）±3.2% ｜ 12-01（5D）±4.0% ｜ 12-02（6D）±4.3%
    ⇒ IV–VIX Spread: +9.7pp*（*近月 ATM IV − VIX；期限未对齐，仅作相对波动率 Proxy，不直接代表期权定价贵/便宜）
 🔧 结构（未验证研究层：Mechanism Scenario A/B——OI 开仓方向不可观测）
-Gamma Regime: NEGATIVE（模型分类） | GEX(存量) -406,188,138 | GEX Change vs 上次快照 -48,668,791 | Flip: Primary Flip: 652.30（PRIMARY，全链重定价 + 覆盖达标）
+Gamma Regime: NEGATIVE（模型分类） | GEX(存量) -430,313,962 | GEX Change vs 上次快照 -72,794,616 | Flip: Primary Flip: 652.90（PRIMARY，全链重定价 + 覆盖达标）
 🔎 测量完整性: GEX 符号契约 gex_sign_v1（Model A: Call+ / Put−）｜ Gamma 口径 全链重定价 ｜ Effective GEX 覆盖: 97%（带内） ｜ IV 有效性: VALID 2979 / LOW 447 / INVALID 1866
    ⇒ 全链负Gamma，波动易被放大（模型层）
-结构观察区: Primary Flip 652.30（全链重定价，覆盖 97%）
-最近结构参考: Flip 652（现价低于该位 2.8%）
-量化视角： 负 Gamma（4.06亿，历史分位偏负区，比 76% 的交易日更负）｜负 Gamma 加深（4867万）｜现价位于 Flip 下方 2.82%｜⚠️ 重点观察：负 Gamma 且日内加深——观察点，非方向信号
+结构观察区: Primary Flip 652.90（全链重定价，覆盖 97%）
+最近结构参考: Flip 653（现价低于该位 2.9%）
+量化视角： 负 Gamma（4.30亿，历史分位偏负区，比 77% 的交易日更负）｜负 Gamma 加深（7279万）｜现价位于 Flip 下方 2.91%｜⚠️ 重点观察：负 Gamma 且日内加深——观察点，非方向信号
 🧭 结构解读（全部依赖上方假设）
 • 支撑/压力参考：上方 644（MaxPain，仅结算参考）。
-• Gamma 区域：切换参考 652（全链重定价，覆盖 97%）。
+• Gamma 区域：切换参考 653（全链重定价，覆盖 97%）。
 • 做市商（条件机制）：若 Scenario A + 负 Gamma 成立，跌破关键位下方可能对应顺周期卖出压力增加；实际做市商对冲流量不可观测。Scenario B → 方向相反。不进入方向决策。
 • 失效参考：跌破关键位结构参考失效（结构性参考，非预测）。
 🔺 Activity（事实层，方向 Unknown）

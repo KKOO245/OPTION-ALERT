@@ -1,4 +1,4 @@
-# 期权晚报 2026-11-26（快照 16:40 ET）
+# 期权晚报 2026-11-26（快照 21:00 ET）
 
 📊 市场环境
 
@@ -34,13 +34,13 @@ Options: P/C成交量 0.60 | OI比 0.44 | ATM IV 114.4% | Skew 6.8pp | Term 1.02
    ExpMove 期限化（expmove_v1）: 11-27（1D）±6.7% ｜ 12-04（8D）±16.2% ｜ 12-11（15D）±21.1% ｜ 12-18（22D）±24.4%
    ⇒ IV–VIX Spread: +87.6pp*（*近月 ATM IV − VIX；期限未对齐，仅作相对波动率 Proxy，不直接代表期权定价贵/便宜）
 🔧 结构（未验证研究层：Mechanism Scenario A/B——OI 开仓方向不可观测）
-Gamma Regime: NEGATIVE（模型分类） | GEX(存量) -43,317,603 | GEX Change vs 上次快照 -6,375,125 | Flip: NO_CROSS
+Gamma Regime: NEGATIVE（模型分类） | GEX(存量) -44,735,205 | GEX Change vs 上次快照 -7,792,727 | Flip: NO_CROSS
 🔎 测量完整性: GEX 符号契约 gex_sign_v1（Model A: Call+ / Put−）｜ Gamma 口径 全链重定价 ｜ Effective GEX 覆盖: 100%（带内） ｜ IV 有效性: VALID 1123 / LOW 1023 / INVALID 3824
    ⇒ 全链负Gamma，波动易被放大（模型层）
 结构观察区: NO_CROSS
 Put Wall 75（现价低于该位 1.9%）
 最近结构参考: Put Wall 75（现价低于该位 1.9%）
-量化视角： 负 Gamma（4332万，无历史分位）｜负 Gamma 加深（638万）｜⚠️ 重点观察：负 Gamma 且日内加深——观察点，非方向信号
+量化视角： 负 Gamma（4474万，无历史分位）｜负 Gamma 加深（779万）｜⚠️ 重点观察：负 Gamma 且日内加深——观察点，非方向信号
 🧭 结构解读（全部依赖上方假设）
 • 支撑/压力参考：上方 75（Put Wall） / 90（MaxPain，仅结算参考）。
 • 做市商（条件机制）：若 Scenario A + 负 Gamma 成立，跌破关键位下方可能对应顺周期卖出压力增加；实际做市商对冲流量不可观测。Scenario B → 方向相反。不进入方向决策。
@@ -69,9 +69,9 @@ Put Wall 75（现价低于该位 1.9%）
 Setup A v1 — Core Conditions
 Price Regime DOWN | Location near_put_concentration | Gamma Regime NEGATIVE（模型层）
 Confirmation: ✓ 1 ｜ ✗ 2 ｜ ? 1（? put_buy_confirmation）
-验证状态: N=107 ｜ OOS Lift N/A ｜ CI 下界 N/A
+验证状态: N=108 ｜ OOS Lift N/A ｜ CI 下界 N/A
 Target: 3D_close_return <= -0.02 — PENDING（evaluation date 待窗口结束）
-Status: 实验中，样本不足（N=107）
+Status: 实验中，样本不足（N=108）
 环境: Vol STRESS（仅环境标签，不参与计票）
 
 数据溯源：完整表见附录 / thesis / analytics/daily/2026-11-26/SNDK_evening.json
